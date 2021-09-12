@@ -31,7 +31,7 @@ public class YoutubePageDownloader {
         this.restTemplate = new RestTemplate();
     }
 
-    public HtmlPage download() {
+    public HtmlPage downloadPage() {
         String protocol = url.extractProtocol();
         String videoId = url.extractVideoId();
         YoutubeUrl youtubeUrl = new YoutubeUrl(
@@ -55,9 +55,9 @@ public class YoutubePageDownloader {
     @SneakyThrows
     public static void main(String[] args) {
         YoutubePageDownloader youtubePageDownloader = new YoutubePageDownloader("https://www.youtube.com/watch?v=C4MpzSMkinw");
-        HtmlPage htmlPage = youtubePageDownloader.download();
-        YoutubeJsonParser youtubeJsonParser = new YoutubeJsonParser(htmlPage);
-        Map<String, String> result = youtubeJsonParser.parse();
+        HtmlPage htmlPage = youtubePageDownloader.downloadPage();
+        YoutubePageParser youtubePageParser = new YoutubePageParser(htmlPage);
+        Map<String, String> result = youtubePageParser.parse();
         System.out.println(result);
 
         ReadableByteChannel readableByteChannel = Channels.newChannel(new URI(result.get("url")).toURL().openStream());

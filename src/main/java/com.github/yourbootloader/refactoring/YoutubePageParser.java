@@ -15,17 +15,17 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class YoutubeJsonParser {
+public class YoutubePageParser {
     private final HtmlPage htmlPage;
     private final ObjectMapper objectMapper;
 
-    public YoutubeJsonParser(HtmlPage htmlPage) {
+    public YoutubePageParser(HtmlPage htmlPage) {
         this.htmlPage = htmlPage;
         this.objectMapper = new ObjectMapper();
     }
 
     public Map<String, String> parse() {
-        String videoWebPage = htmlPage.getHtml();
+        String html = htmlPage.getHtml();
 
         Map<Object, String> query = null;
         try {
@@ -40,7 +40,7 @@ public class YoutubeJsonParser {
         String videoId = Objects.requireNonNull(query).getOrDefault("v", htmlPage.getVideoId());
 
         // Get video info
-        final JsonNode youtubePlayerConfig = getPlayerConfig(videoId, videoWebPage);
+        final JsonNode youtubePlayerConfig = getPlayerConfig(videoId, html);
         if (youtubePlayerConfig != null) {
             if (youtubePlayerConfig.has("args")) {
                 final JsonNode args = youtubePlayerConfig.get("args");
