@@ -8,7 +8,7 @@ import static java.lang.String.format;
 
 public class YoutubeUrl {
     private static final String YOUTUBE_URL_PATTERN = "^((?:https?://|//)(?:www\\.)?www\\.youtube\\.com/(?:watch|movie)(?:\\?|#!\\?)v=)([0-9A-Za-z_-]{11})$";
-    private static final Pattern youtubePatternCompile = Pattern.compile(YOUTUBE_URL_PATTERN);
+    private static final Pattern patternCompile = Pattern.compile(YOUTUBE_URL_PATTERN);
 
     private String url;
 
@@ -17,14 +17,14 @@ public class YoutubeUrl {
     }
 
     public String extractVideoId() {
-        Matcher matcher = youtubePatternCompile.matcher(url);
+        Matcher matcher = patternCompile.matcher(url);
         if (matcher.find()) {
             return matcher.group(2);
         }
         throw new RuntimeException("Не удалось распарсить url!");
     }
 
-    public String getProtocol() {
+    public String extractProtocol() {
         return url.startsWith("https")
                 ? "https" : "http";
     }
@@ -37,7 +37,7 @@ public class YoutubeUrl {
         url = urlBuilder.toString();
     }
 
-    public String getUri() {
+    public String getUrl() {
         return url;
     }
 }

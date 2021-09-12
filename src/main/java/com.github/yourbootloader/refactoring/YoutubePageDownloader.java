@@ -1,15 +1,20 @@
 package com.github.yourbootloader.refactoring;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.FileOutputStream;
+import java.net.URI;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.UUID;
 
 import static java.lang.String.format;
 
@@ -27,7 +32,7 @@ public class YoutubePageDownloader {
     }
 
     public HtmlPage download() {
-        String protocol = url.getProtocol();
+        String protocol = url.extractProtocol();
         String videoId = url.extractVideoId();
         YoutubeUrl youtubeUrl = new YoutubeUrl(
                 format("%s://www.youtube.com/watch?v=%s&gl=US&hl=en&has_verified=1&bpctr=9999999999", protocol, videoId)
@@ -35,35 +40,40 @@ public class YoutubePageDownloader {
 
         youtubeUrl.addQuery(disablePolymer);
 
-        ResponseEntity<String> response = restTemplate.getForEntity(youtubeUrl.getUri(), String.class);
+        ResponseEntity<String> response = restTemplate.getForEntity(youtubeUrl.getUrl(), String.class);
         if (response.getStatusCode() != HttpStatus.OK) {
             throw new RuntimeException("Request web page is error!");
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("urlh", youtubeUrl.getUri());
-        response = ResponseEntity.status(response.getStatusCode())
-                .headers(response.getHeaders())
-                .headers(headers)
-                .body(response.getBody());
-
-        List<String> urlh = response.getHeaders().get("urlh");
-        if (Objects.requireNonNull(urlh).isEmpty() || urlh.size() != 1) {
-            throw new RuntimeException("Urlh illegal state exception!");
+        if (youtubeUrl.getUrl() == null || youtubeUrl.getUrl().length() <= 0) {
+            throw new RuntimeException("Url illegal state exception!");
         }
 
-        response = ResponseEntity.status(response.getStatusCode())
-                .headers(response.getHeaders())
-                .body(response.getBody());
-
-        return new HtmlPage(videoId, response.getBody(), response.getHeaders().get("urlh").get(1));
+        return new HtmlPage(videoId, response.getBody(), youtubeUrl.getUrl());
     }
 
+    @SneakyThrows
     public static void main(String[] args) {
-        YoutubePageDownloader youtubePageDownloader = new YoutubePageDownloader("https://www.youtube.com/watch?v=_zJrhqUBF5o");
+        YoutubePageDownloader youtubePageDownloader = new YoutubePageDownloader("https://www.youtube.com/watch?v=C4MpzSMkinw");
         HtmlPage htmlPage = youtubePageDownloader.download();
         YoutubeJsonParser youtubeJsonParser = new YoutubeJsonParser(htmlPage);
         Map<String, String> result = youtubeJsonParser.parse();
         System.out.println(result);
+
+        ReadableByteChannel readableByteChannel = Channels.newChannel(new URI(result.get("url")).toURL().openStream());
+        FileOutputStream fileOutputStream = new FileOutputStream("D:\\IdeaProjects\\your-bootloader\\src\\main\\resources\\" + UUID.randomUUID() + ".mp3");
+        FileChannel fileChannel = fileOutputStream.getChannel();
+
+        int pos = 0;
+        while (true) {
+            fileOutputStream.getChannel()
+                    .transferFrom(readableByteChannel, pos, 4 * 1024);
+            if (pos == -1) {
+                break;
+            }
+            pos += 4 * 1024;
+
+            System.out.println(DataSize.ofBytes(pos).toKilobytes());
+        }
     }
 }
