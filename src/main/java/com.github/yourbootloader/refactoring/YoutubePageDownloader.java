@@ -4,17 +4,10 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.unit.DataSize;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.FileOutputStream;
-import java.net.URI;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import static java.lang.String.format;
 
@@ -58,8 +51,9 @@ public class YoutubePageDownloader {
         HtmlPage htmlPage = youtubePageDownloader.downloadPage();
         YoutubePageParser youtubePageParser = new YoutubePageParser(htmlPage);
         Map<String, String> result = youtubePageParser.parse();
+        log.info(result.toString());
 
-        StreamDownloader streamDownloader = new StreamDownloader(result.get("url"));
-        streamDownloader.download();
+//        StreamDownloader streamDownloader = new StreamDownloader(result.get("url"));
+//        streamDownloader.download();
     }
 }
