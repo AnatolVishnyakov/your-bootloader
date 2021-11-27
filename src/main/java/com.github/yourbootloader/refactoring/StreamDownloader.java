@@ -21,8 +21,8 @@ public class StreamDownloader {
     private int count;
     private int retries;
 
-    public StreamDownloader(String fileName, Map<String, Object> infoDict) {
-        this.url = "https://r4---sn-jvhnu5g-c35l.googlevideo.com/videoplayback?expire=1637515460&ei=ZCyaYfHAKoWQyQXm1ZHYAQ&ip=2a00%3A1370%3A8127%3Ad967%3A6da5%3Ad65e%3A7d49%3A7b36&id=o-AIzDJYP_pQIbypMhuBxvxUuWS1VQCAKbsWhKaJqfBqUU&itag=22&source=youtube&requiressl=yes&mh=3L&mm=31%2C29&mn=sn-jvhnu5g-c35l%2Csn-jvhnu5g-n8ve7&ms=au%2Crdu&mv=m&mvi=4&pl=51&initcwndbps=2120000&vprv=1&mime=video%2Fmp4&ns=CSsm_RRY9nwNla8N0FJckPgG&cnr=14&ratebypass=yes&dur=3835.147&lmt=1513857691676377&mt=1637493655&fvip=4&fexp=24001373%2C24007246&c=WEB&n=WJlxaTf3qJCBRi8s&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cvprv%2Cmime%2Cns%2Ccnr%2Cratebypass%2Cdur%2Clmt&sig=AOq0QJ8wRgIhALNO4VNGpE7X5r7-DkafmYhLMKkSkpAFUYihv7m_8baZAiEA3a53V5WDvhvMqX060_Srt2_wIUXNZR0S9FT-Dm8mKsU%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRgIhAKArHzOzctiPJxfmgpJUlgeuUnnqzSN7HuOPgYvZTIFnAiEAtn_j7L1lzox4SeN19ppC3OX5LEDsS_jevK9zFMQ7PXQ%3D";
+    public StreamDownloader(String url, String fileName, Map<String, Object> infoDict) {
+        this.url = url;
 
         DownloadContext ctx = new DownloadContext();
         ctx.setFileName(fileName);
@@ -60,10 +60,10 @@ public class StreamDownloader {
 
     @SneakyThrows
     public void download() {
-        String filePath = "D:\\IdeaProjects\\your-bootloader\\src\\main\\resources\\" + UUID.randomUUID() + ".mp3";
+        String filePath = "D:\\IdeaProjects\\your-bootloader\\src\\main\\resources\\archive\\" + UUID.randomUUID() + ".mp3";
         FileOutputStream stream = new FileOutputStream(filePath);
 
-        AsyncHttpClient client = Dsl.asyncHttpClient();
+        AsyncHttpClient client = Dsl.asyncHttpClient(new DefaultAsyncHttpClientConfig.Builder().setRequestTimeout(600_000).setReadTimeout(600_000).setConnectTimeout(600_000));
         client.prepareGet(url).execute(new AsyncCompletionHandler<FileOutputStream>() {
             @Override
             public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
@@ -101,6 +101,7 @@ public class StreamDownloader {
         infoDict.put("Accept-Language", "en-us,en;q=0.5");
 
         StreamDownloader downloader = new StreamDownloader(
+                "https://r18---sn-n8v7znsz.googlevideo.com/videoplayback?expire=1638062525&ei=XYWiYdj6HYTryQXg2KYI&ip=2a00%3A1370%3A8174%3Ab2a6%3A5c91%3Ae269%3A4c96%3A7b06&id=o-AJQAb1Xh5TH7lMP9F97ZXjZ1o5b0Asc2tBJ1UNa48M2z&itag=22&source=youtube&requiressl=yes&mh=-P&mm=31%2C29&mn=sn-n8v7znsz%2Csn-jvhnu5g-n8ve7&ms=au%2Crdu&mv=m&mvi=18&pl=46&initcwndbps=1772500&vprv=1&mime=video%2Fmp4&ns=lrkd2KXSQzRwfK5pxwuej2gG&cnr=14&ratebypass=yes&dur=4278.555&lmt=1538268971961146&mt=1638040627&fvip=2&fexp=24001373%2C24007246&c=WEB&txp=2311222&n=Px9uEPP2STBozSvg&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cvprv%2Cmime%2Cns%2Ccnr%2Cratebypass%2Cdur%2Clmt&sig=AOq0QJ8wRgIhAK5nQv355GkyfbDqIm3tqCqVOEGjqp7DIT5RkM4Hhh0bAiEAxFS5nBB04MQOD9wIALT5OJpT-duOne69-FkrK0YZkEc%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRQIhAMJaAutP-YHxma2LBd9bPOXAuPGttMLjhcDYxND9Xk9fAiBywLMyqXlSwcvnlWULaMl8HKG5o0Oa70Y1s4p8EW4FGA%3D%3D",
                 "Productivity Music — Maximum Efficiency for Creators, Programmers, Designers-C4MpzSMkinw.mp4",
                 infoDict
         );
