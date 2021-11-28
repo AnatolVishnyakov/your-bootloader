@@ -1,6 +1,7 @@
 package com.github.yourbootloader.refactoring;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,8 @@ import java.util.UUID;
 
 @Slf4j
 public class StreamDownloader {
+    private static final int DEFAULT_TIMEOUT = 600_000;
+
     private final String url;
     private final String fileName;
     private final Map<String, Object> info;
@@ -35,30 +38,29 @@ public class StreamDownloader {
 
     @SneakyThrows
     private void download() {
-        FileOutputStream stream = new FileOutputStream(context.getAbsolutePath());
+        FileOutputStream outputStream = new FileOutputStream(context.getAbsolutePath());
 
         DefaultAsyncHttpClientConfig clientConfig = new DefaultAsyncHttpClientConfig.Builder()
-                .setRequestTimeout(600_000)
-                .setReadTimeout(600_000)
-                .setConnectTimeout(600_000)
+                .setRequestTimeout(DEFAULT_TIMEOUT)
+                .setReadTimeout(DEFAULT_TIMEOUT)
+                .setConnectTimeout(DEFAULT_TIMEOUT)
                 .build();
 
         AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig);
         client.prepareGet(url)
-                .addHeader("Youtubedl-no-compression", "True")
                 .setHeaders(((HttpHeaders) info.get("http_headers")))
                 .execute(new AsyncCompletionHandler<FileOutputStream>() {
                     @Override
                     public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
                         printContentWritten();
-                        stream.getChannel().write(bodyPart.getBodyByteBuffer());
+                        outputStream.getChannel().write(bodyPart.getBodyByteBuffer());
                         return State.CONTINUE;
                     }
 
                     @Override
                     public FileOutputStream onCompleted(Response response) {
                         System.out.println("Completed download!");
-                        return stream;
+                        return outputStream;
                     }
 
                     @SneakyThrows
@@ -83,6 +85,11 @@ public class StreamDownloader {
                 .fileName(fileName)
                 .tmpFileName(UUID.randomUUID() + ".mp3")
                 .build();
+
+        HttpHeaders headers = (DefaultHttpHeaders) info.get("http_headers");
+        if (headers != null) {
+            headers.add("Youtubedl-no-compression", "True");
+        }
 
         int count = 0;
 
