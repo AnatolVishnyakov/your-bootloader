@@ -1,10 +1,12 @@
 package com.github.yourbootloader.refactoring;
 
-import lombok.Data;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.time.Instant;
 
-@Data
+@Builder
+@Getter
 public class DownloadContext {
     private String fileName;
     private String tmpFileName;
