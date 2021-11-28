@@ -1,5 +1,6 @@
 package com.github.yourbootloader.refactoring;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,15 +20,18 @@ class StreamDownloaderTest {
     @Autowired
     BeanFactory beanFactory;
 
-    @Test
-    void realDownload() {
+    @BeforeEach
+    void init() {
         File temp = new File("D:\\IdeaProjects\\your-bootloader\\src\\main\\resources\\archive");
         if (temp.exists() && Arrays.stream(Objects.requireNonNull(temp.listFiles())).findAny().isPresent()) {
-            for (File file : temp.listFiles()) {
+            for (File file : Objects.requireNonNull(temp.listFiles())) {
                 file.deleteOnExit();
             }
         }
+    }
 
+    @Test
+    void realDownload() {
         Map<String, Object> infoDict = new HashMap<>();
         infoDict.put("Youtubedl-no-compression", "True");
         infoDict.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.13 Safari/537.36");

@@ -8,6 +8,7 @@ import java.time.Instant;
 @Builder
 @Getter
 public class DownloadContext {
+    private final String path = "D:\\IdeaProjects\\your-bootloader\\src\\main\\resources\\archive\\";
     private String fileName;
     private String tmpFileName;
     private Object stream;
@@ -20,4 +21,8 @@ public class DownloadContext {
     private boolean isResume;
     private boolean hasRange;
     private Object data;
+
+    public String getAbsolutePath() {
+        return path + fileName;
+    }
 }
