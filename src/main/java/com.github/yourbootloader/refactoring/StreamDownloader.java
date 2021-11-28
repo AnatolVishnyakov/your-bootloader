@@ -1,24 +1,33 @@
 package com.github.yourbootloader.refactoring;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.netty.handler.codec.http.HttpHeaders;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.unit.DataSize;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
 public class StreamDownloader {
     private final String url;
     private final String fileName;
+    private final Map<String, Object> info;
     private DownloadContext context;
 
-    public StreamDownloader(String url, String fileName) {
+    @Autowired
+    MeterRegistry meterRegistry;
+
+    public StreamDownloader(String url, String fileName, Map<String, Object> info) {
         this.url = url;
         this.fileName = fileName;
+        this.info = info;
     }
 
     private void establishConnection() {
@@ -35,27 +44,30 @@ public class StreamDownloader {
                 .build();
 
         AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig);
-        client.prepareGet(url).execute(new AsyncCompletionHandler<FileOutputStream>() {
-            @Override
-            public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
-                printContentWritten();
-                stream.getChannel().write(bodyPart.getBodyByteBuffer());
-                return State.CONTINUE;
-            }
+        client.prepareGet(url)
+                .addHeader("Youtubedl-no-compression", "True")
+                .setHeaders(((HttpHeaders) info.get("http_headers")))
+                .execute(new AsyncCompletionHandler<FileOutputStream>() {
+                    @Override
+                    public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
+                        printContentWritten();
+                        stream.getChannel().write(bodyPart.getBodyByteBuffer());
+                        return State.CONTINUE;
+                    }
 
-            @Override
-            public FileOutputStream onCompleted(Response response) {
-                System.out.println("Completed download!");
-                return stream;
-            }
+                    @Override
+                    public FileOutputStream onCompleted(Response response) {
+                        System.out.println("Completed download!");
+                        return stream;
+                    }
 
-            @SneakyThrows
-            private void printContentWritten() {
-                long fileSize = Files.size(new File(context.getAbsolutePath()).toPath());
-                DataSize dataSize = DataSize.ofBytes(fileSize);
-                if (dataSize.toMegabytes() == 0) {
-                    log.info(dataSize.toKilobytes() + " Kb");
-                } else {
+                    @SneakyThrows
+                    private void printContentWritten() {
+                        long fileSize = Files.size(new File(context.getAbsolutePath()).toPath());
+                        DataSize dataSize = DataSize.ofBytes(fileSize);
+                        if (dataSize.toMegabytes() == 0) {
+                            log.info(dataSize.toKilobytes() + " Kb");
+                        } else {
                     log.info(dataSize.toMegabytes() + " Mb (" + dataSize.toKilobytes() + " Kb)");
                 }
             }
