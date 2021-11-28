@@ -4,7 +4,7 @@ services:
     image: your-bootloader:latest
     container_name: 'your-bootloader'
     build:
-      context: ./
+      context: .
       dockerfile: Dockerfile
     environment:
       - "SPRING_PROFILES_ACTIVE=local"
