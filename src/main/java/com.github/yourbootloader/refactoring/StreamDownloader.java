@@ -70,10 +70,11 @@ public class StreamDownloader {
                         if (dataSize.toMegabytes() == 0) {
                             log.info(dataSize.toKilobytes() + " Kb");
                         } else {
-                    log.info(dataSize.toMegabytes() + " Mb (" + dataSize.toKilobytes() + " Kb)");
-                }
-            }
-        }).get();
+                            log.info(dataSize.toMegabytes() + " Mb (" + dataSize.toKilobytes() + " Kb)");
+                        }
+                        meterRegistry.gauge("download.kb." + UUID.randomUUID(), dataSize.toBytes());
+                    }
+        });
     }
 
     public void realDownload(int retries) {
