@@ -11,6 +11,7 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: ['your-bootloader:8080']
+#     доступ наружу контейнера через host.docker.internal
+      - targets: ['your-bootloader:8080', 'host.docker.internal:8080']
         labels:
           application: 'your-bootloader'
