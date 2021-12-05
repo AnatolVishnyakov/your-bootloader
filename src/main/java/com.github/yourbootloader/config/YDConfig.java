@@ -1,6 +1,8 @@
 package com.github.yourbootloader.config;
 
 import com.github.yourbootloader.refactoring.StreamDownloader;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -10,9 +12,14 @@ import java.util.Map;
 @Configuration
 public class YDConfig {
 
+    @Autowired
+    ApplicationContext context;
+
     @Bean
     @Scope(value = "prototype")
     public StreamDownloader streamDownloader(String url, String fileName, Map<String, Object> info) {
-        return new StreamDownloader(url, fileName, info);
+        StreamDownloader downloader = new StreamDownloader(url, fileName, info);
+        downloader.setYdProperties(context.getBean(YDProperties.class));
+        return downloader;
     }
 }

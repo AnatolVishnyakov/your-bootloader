@@ -1,16 +1,16 @@
-management:
+youtube:
+  download-path: 'D:\Trash'
 
+management:
   endpoints:
     web:
       exposure:
         include: "*"
-
   endpoint:
     prometheus:
       enabled: true
     shutdown:
       enabled: true
-
   metrics:
     export:
       prometheus:

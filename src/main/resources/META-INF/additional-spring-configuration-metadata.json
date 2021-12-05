@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "youtube.download-path",
+      "type": "java.lang.String",
+      "description": "Description for youtube.download-path."
+  }
+] }

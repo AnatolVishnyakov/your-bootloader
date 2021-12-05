@@ -4,11 +4,13 @@ import com.github.yourbootloader.refactoring.StreamDownloader;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.ApplicationContext;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@ConfigurationPropertiesScan
 @SpringBootApplication
 public class YourBootLoaderApplication {
     public static void main(String[] args) {
@@ -23,10 +25,10 @@ public class YourBootLoaderApplication {
         Map<String, Object> infoDict = new HashMap<>();
         infoDict.put("http_headers", headers);
 
-        String url = "https://r2---sn-jvhnu5g-c35z.googlevideo.com/videoplayback?expire=1638637820&ei=nEyrYciJDaKA0u8P_seqeA&ip=46.138.209.188&id=o-AAGwThEpWZ1plpiFKXWh4PaDT18SabXV9lvZeGE1sY5r&itag=22&source=youtube&requiressl=yes&mh=-P&mm=31%2C29&mn=sn-jvhnu5g-c35z%2Csn-jvhnu5g-n8ve7&ms=au%2Crdu&mv=m&mvi=2&pcm2cms=yes&pl=20&initcwndbps=2353750&vprv=1&mime=video%2Fmp4&ns=Ax79sKcYFkVvjAQNTQ7lp68G&cnr=14&ratebypass=yes&dur=4278.555&lmt=1538268971961146&mt=1638615887&fvip=2&fexp=24001373%2C24007246&c=WEB&txp=2311222&n=HRIJxZUtVo7z99-76V&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cvprv%2Cmime%2Cns%2Ccnr%2Cratebypass%2Cdur%2Clmt&sig=AOq0QJ8wRQIhALg5p6gPmz-aYtYOYlVhJFPfbDFN2X6HFXY4qbr8uMPgAiBhPdF4VAv4MlS2gWgZAO0uBzn8rLtFIHoWLtLvHNw5ag%3D%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpcm2cms%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRQIhALaPHq1PQxCO6MhfznDd215gcyvSnGtW2-FYEHuvMioaAiAKgBqen9isV_XaVvU52w6KRPWDu8Vji0iK3W5rXSPUEg%3D%3D";
+        String url = "https://r2---sn-jvhnu5g-c35z.googlevideo.com/videoplayback?expire=1638730618&ei=GresYfTnLJaUyQWAqK7YDg&ip=46.138.209.188&id=o-AO0CyttZQB3zrUY_NQanZ13JfM4wYf0DwYv8gUL5DSWe&itag=22&source=youtube&requiressl=yes&mh=-P&mm=31%2C29&mn=sn-jvhnu5g-c35z%2Csn-jvhnu5g-n8ve7&ms=au%2Crdu&mv=m&mvi=2&pl=20&initcwndbps=2108750&vprv=1&mime=video%2Fmp4&ns=sZX1Sq1kljOQIjeYzNOmr1kG&cnr=14&ratebypass=yes&dur=4278.555&lmt=1538268971961146&mt=1638708540&fvip=2&fexp=24001373%2C24007246&c=WEB&txp=2311222&n=-6wcPfj_kG9UAH3TJr&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cvprv%2Cmime%2Cns%2Ccnr%2Cratebypass%2Cdur%2Clmt&sig=AOq0QJ8wRQIhAIcNiW7n0pqopRmwiKqcrYiOmOmKcN9uNV-_o0ZnTHZ7AiA2jQINM9Wgr50SccBPQLn3nmZBXuZhZgZ4PXL_MZMzOg%3D%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRAIgWB8IJ1CZRntSLPHx-Hh8mwT_XmLMK0HrAQ_IMSl9V9sCIHAzrNPuRBG3fLT9EBq57n-An-pynsRFLWlBPR9eL_TX";
         String fileName = "Productivity Music — Maximum Efficiency for Creators, Programmers, Designers-C4MpzSMkinw.mp3";
 
         StreamDownloader downloader = context.getBean(StreamDownloader.class, url, fileName, infoDict);
-//        downloader.realDownload(3);
+        downloader.realDownload(3);
     }
 }
