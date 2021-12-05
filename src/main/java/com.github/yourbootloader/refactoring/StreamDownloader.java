@@ -52,7 +52,6 @@ public class StreamDownloader {
             }
         }
 
-
         DefaultAsyncHttpClientConfig clientConfig = new DefaultAsyncHttpClientConfig.Builder()
                 .setRequestTimeout(DEFAULT_TIMEOUT)
                 .setReadTimeout(DEFAULT_TIMEOUT)
@@ -62,27 +61,44 @@ public class StreamDownloader {
         FileOutputStream outputStream = new FileOutputStream(file);
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
             client.prepareGet(url)
-                    .setHeaders(((HttpHeaders) info.get("http_headers")))
-                    .execute(new AsyncCompletionHandler<FileOutputStream>() {
+                    .execute(new AsyncHandler<FileOutputStream>() {
                         @Override
-                        public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
-                            printContentWritten();
-                            outputStream.getChannel().write(bodyPart.getBodyByteBuffer());
+                        public State onStatusReceived(HttpResponseStatus responseStatus) throws Exception {
                             return State.CONTINUE;
                         }
 
                         @Override
-                        public FileOutputStream onCompleted(Response response) {
-                            System.out.println("Completed download!");
-                            return outputStream;
+                        public State onHeadersReceived(HttpHeaders headers) throws Exception {
+                            return State.CONTINUE;
+                        }
+
+                        @Override
+                        public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
+                            outputStream.getChannel().write(bodyPart.getBodyByteBuffer());
+                            printContentWritten();
+                            return State.CONTINUE;
+                        }
+
+                        @Override
+                        public void onThrowable(Throwable t) {
+
+                        }
+
+                        @Override
+                        public FileOutputStream onCompleted() throws Exception {
+                            return null;
                         }
 
                         @SneakyThrows
                         private void printContentWritten() {
                             long fileSize = Files.size(file.toPath());
-                            DataSize dataSize = DataSize.ofBytes(fileSize);
-                            log.info(dataSize.toString());
-                            meterRegistry.gauge("download.kb." + UUID.randomUUID(), dataSize.toBytes());
+                            if (fileSize < 1_024) {
+                                log.info("{} B", DataSize.ofBytes(fileSize));
+                            } else if (fileSize < 1_048_576) {
+                                log.info("{} Kb", DataSize.ofBytes(fileSize).toKilobytes());
+                            } else {
+                                log.info("{} Mb ({} Kb)", DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize).toKilobytes());
+                            }
                         }
                     }).get();
         }
