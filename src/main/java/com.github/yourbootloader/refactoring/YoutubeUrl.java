@@ -21,7 +21,7 @@ public class YoutubeUrl {
         this.url = url;
         this.videoId = parseVideoId();
         this.httpScheme = parseProtocol();
-        this.webPageUrl = format("%s//www.youtube.com/watch?v=%s", httpScheme, videoId);
+        this.webPageUrl = format("%s://www.youtube.com/watch?v=%s", httpScheme, videoId);
     }
 
     private String parseVideoId() {
