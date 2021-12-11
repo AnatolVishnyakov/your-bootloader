@@ -1,6 +1,5 @@
 package com.github.yourbootloader.refactoring;
 
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,12 +10,18 @@ public class YoutubeUrl {
     private static final Pattern patternCompile = Pattern.compile(YOUTUBE_URL_PATTERN);
 
     private String url;
+    private String videoId;
+    private String httpScheme;
+    private String webPageUrl;
 
     public YoutubeUrl(String url) {
         this.url = url;
+        this.videoId = parseVideoId();
+        this.httpScheme = parseProtocol();
+        this.webPageUrl = format("%s//www.youtube.com/watch?v=%s", httpScheme, videoId);
     }
 
-    public String extractVideoId() {
+    private String parseVideoId() {
         Matcher matcher = patternCompile.matcher(url);
         if (matcher.find()) {
             return matcher.group(2);
@@ -24,20 +29,13 @@ public class YoutubeUrl {
         throw new RuntimeException("Не удалось распарсить url!");
     }
 
-    public String extractProtocol() {
+    private String parseProtocol() {
+        // TODO анализ prefer_insecure
         return url.startsWith("https")
                 ? "https" : "http";
     }
 
-    public void addQuery(Map<String, Object> query) {
-        StringBuilder urlBuilder = new StringBuilder(url);
-        for (String key : query.keySet()) {
-            urlBuilder.append(format("&%s=%s", key, query.get(key)));
-        }
-        url = urlBuilder.toString();
-    }
-
-    public String getUrl() {
-        return url;
+    public String getWebPageUrl() {
+        return webPageUrl;
     }
 }
