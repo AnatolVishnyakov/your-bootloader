@@ -1,153 +1,76 @@
 package com.github.yourbootloader.refactoring;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
+import static java.lang.String.format;
 
 @Slf4j
 public class YoutubePageParser {
-    private final HtmlPage htmlPage;
-    private final ObjectMapper objectMapper;
+    private static final String YT_INITIAL_PLAYER_RESPONSE_RE = "ytInitialPlayerResponse\\s*=\\s*(\\{.+?})\\s*;";
+    private static final String YT_INITIAL_BOUNDARY_RE = "(?:var\\s+meta|</script|\n)";
+    private final YoutubeUrl youtubeUrl;
+    private final DownloadWebPage downloadWebPage;
 
-    public YoutubePageParser(HtmlPage htmlPage) {
-        this.htmlPage = htmlPage;
-        this.objectMapper = new ObjectMapper();
+    public YoutubePageParser(String url) {
+        this.youtubeUrl = new YoutubeUrl(url);
+        this.downloadWebPage = new DownloadWebPage(youtubeUrl);
     }
 
-    public Map<String, String> parse() {
-        String html = htmlPage.getHtml();
-
-        Map<Object, String> query = null;
-        try {
-            final URI uri = new URI(htmlPage.getUrlh());
-            query = Arrays.stream(uri.getQuery().split("&"))
-                    .map(s -> s.split("="))
-                    .collect(Collectors.toMap(s -> s[0], s -> s[1]));
-        } catch (URISyntaxException e) {
-            log.error("URI created error", e);
+    @SneakyThrows
+    public void parse() {
+        String content = downloadWebPage.download();
+        PlayerResponse playerResponse = null;
+        if (content != null) {
+            playerResponse = extractYtInitialVariable(content);
         }
 
-        String videoId = Objects.requireNonNull(query).getOrDefault("v", htmlPage.getVideoId());
-
-        // Get video info
-        final JsonNode youtubePlayerConfig = getPlayerConfig(videoId, html);
-        if (youtubePlayerConfig != null) {
-            if (youtubePlayerConfig.has("args")) {
-                final JsonNode args = youtubePlayerConfig.get("args");
-                if (args.has("url_encoded_fmt_stream_map") || args.has("hlsvp")) {
-                    log.warn("Args has url_encoded_fmt_stream_map [NOT IMPLEMENTED HANDLER]");
-                }
-
-                if (args.has("player_response")) {
-                    log.warn("Args has player_response [NOT IMPLEMENTED HANDLER]");
-                }
-            }
-
-            JsonNode videoDetails = youtubePlayerConfig.get("videoDetails");
-            final JsonNode microformat = youtubePlayerConfig.get("microformat");
-            final String videoTitle = videoDetails.get("title").asText();
-            final String videoDescription = videoDetails.get("shortDescription").asText();
-            final int viewCount = videoDetails.get("viewCount").asInt();
-
-            final ArrayNode streamingFormats = ((ArrayNode) youtubePlayerConfig.get("streamingData").get("formats"));
-            final ArrayNode streamingFormats2 = ((ArrayNode) youtubePlayerConfig.get("streamingData").get("adaptiveFormats"));
-            streamingFormats.addAll(streamingFormats2);
-
-            Map<String, Map<String, Object>> formatsSpec = new HashMap<>(streamingFormats.size());
-            for (JsonNode fmt : streamingFormats) {
-                final String itag = defaultOrValue(fmt.get("itag"), null, JsonNode::asText);
-                final String quality = defaultOrValue(fmt.get("quality"), null, JsonNode::asText);
-                final String qualityLabel = defaultOrValue(fmt.get("qualityLabel"), quality, JsonNode::asText);
-                formatsSpec.put(itag, new HashMap<String, Object>() {{
-                    put("asr", fmt.get("audioSampleRate"));
-                    put("filesize", defaultOrValue(fmt.get("contentLength"), 0, JsonNode::asInt));
-                    put("fps", defaultOrValue(fmt.get("fps"), 0, JsonNode::asInt));
-                    put("height", defaultOrValue(fmt.get("height"), 0, JsonNode::asInt));
-                    put("width", defaultOrValue(fmt.get("width"), 0, JsonNode::asInt));
-                    put("format_note", qualityLabel);
-                    final double bitrate = fmt.has("averageBitrate")
-                            ? fmt.get("averageBitrate").asDouble()
-                            : fmt.has("bitrate")
-                            ? fmt.get("bitrate").asDouble()
-                            : 1000;
-                    put("tbr", bitrate);
-                }});
-            }
-
-            Map<String, String> result = null;
-            for (JsonNode fmt : streamingFormats) {
-                final JsonNode url = fmt.get("url");
-                if (url == null) {
-                    throw new UnsupportedOperationException("Not imlemented url handler");
-                } else {
-                    try {
-                        final URI uri = new URI(url.asText());
-                        final Map<String, Object> urlData = Arrays.stream(uri.getQuery().split("&"))
-                                .map(s -> s.split("="))
-                                .collect(Collectors.toMap(s -> s[0], s -> s[1]));
-                        final String formatId = fmt.has("itag")
-                                ? fmt.get("itag").asText()
-                                : ((String) urlData.get("itag"));
-
-                        result = new HashMap<>();
-                        result.put("format_id", formatId);
-                        result.put("url", url.asText());
-                        result.put("player_url", null); // TODO Implements player url handler
-                    } catch (URISyntaxException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            return result;
+        if (playerResponse == null) {
+            // TODO реализовать вызов по API
+            throw new RuntimeException("Player not found!");
         }
-        return null;
+
+        if (playerResponse.getReason().equals("Sign in to confirm your age")) {
+            // TODO реализовать подтверждение возраста
+            throw new RuntimeException("Refetching age-gated info webpage");
+        }
+
+        // TODO реализовать пропуск трейлера,
+        //  сбор информации о видео
+        JSONObject videoDetails = playerResponse.getVideoDetails();
+        JSONObject microformat = playerResponse.getMicroformat();
+        String videoTitle = videoDetails.getString("title");
+        String videoDescription = videoDetails.getString("shortDescription");
+        JSONObject streamingData = playerResponse.getStreamingData();
+        JSONArray streamingFormats = streamingData.getJSONArray("formats");
+        JSONArray adaptiveFormats = streamingData.getJSONArray("adaptiveFormats");
     }
 
-    private <T, R> R defaultOrValue(T value, R defaultValue, Function<T, R> function) {
-        return Optional.ofNullable(value)
-                .map(function)
-                .orElse(defaultValue);
-    }
-
-    private JsonNode getPlayerConfig(String videoId, String videoWebPage) {
+    private PlayerResponse extractYtInitialVariable(String content) {
         Pattern[] patterns = {
-                Pattern.compile("ytInitialPlayerResponse\\s*=\\s*(\\{.+?});"),
-                Pattern.compile(";ytplayer\\.config\\s*=\\s*(\\{.+?});ytplayer"),
-                Pattern.compile("ytplayer\\.config\\s*=\\s*(\\{.+?});")
+                Pattern.compile(format("%s\\s*%s", YT_INITIAL_PLAYER_RESPONSE_RE, YT_INITIAL_BOUNDARY_RE)),
+                Pattern.compile(YT_INITIAL_PLAYER_RESPONSE_RE)
         };
 
-        String config = searchPattern(patterns, videoWebPage, "ytplayer.config");
-        log.info(config);
-
-        if (config != null) {
-            try {
-                return objectMapper.readTree(config);
-            } catch (JsonProcessingException e) {
-                log.error("Parsing error", e);
+        Matcher matcher = null;
+        for (Pattern pattern : patterns) {
+            matcher = pattern.matcher(content);
+            if (matcher.find()) {
+                return new PlayerResponse(matcher.group(1), youtubeUrl.getVideoId());
             }
         }
 
-        throw new IllegalStateException("Config player is not found");
+        throw new RuntimeException(format("Unable to extract %s", "initial player response"));
     }
 
-    private String searchPattern(Pattern[] patterns, String videoWebPage, String player) {
-        for (Pattern pattern : patterns) {
-            final Matcher matcher = pattern.matcher(videoWebPage);
-            if (matcher.find()) {
-                return matcher.group(1);
-            }
-        }
-        throw new IllegalStateException("Youtube player pattern not found");
+    public static void main(String[] args) {
+        String url = "https://www.youtube.com/watch?v=nui3hXzcbK0";
+        YoutubePageParser youtubePageParser = new YoutubePageParser(url);
+        youtubePageParser.parse();
     }
 }

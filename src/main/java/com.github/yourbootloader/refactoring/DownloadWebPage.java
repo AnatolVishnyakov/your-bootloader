@@ -23,6 +23,7 @@ public class DownloadWebPage {
 
     @SneakyThrows
     public String download() {
+        // TODO нужно поретраить (если по какой то причине не скачал)
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
         MediaType contentType = response.getHeaders().getContentType();
@@ -53,7 +54,6 @@ public class DownloadWebPage {
     }
 
     private void checkBlocked(String content) {
-        // TODO implements checker
         String firstBlock = content.substring(0, 512);
         if (firstBlock.contains("<title>Access to this site is blocked</title>") && firstBlock.contains("Websense")) {
             String msg = "Access to this webpage has been blocked by Websense filtering software in your network.";
