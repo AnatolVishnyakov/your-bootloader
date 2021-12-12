@@ -93,11 +93,11 @@ public class StreamDownloader {
                         private void printContentWritten() {
                             long fileSize = Files.size(file.toPath());
                             if (fileSize < 1_024) {
-                                log.info("{} B", DataSize.ofBytes(fileSize));
+                                log.info("{} B ({} Kb)", DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize));
                             } else if (fileSize < 1_048_576) {
-                                log.info("{} Kb", DataSize.ofBytes(fileSize).toKilobytes());
+                                log.info("{} Kb ({} Kb)", DataSize.ofBytes(fileSize).toKilobytes(), DataSize.ofBytes(fileSize));
                             } else {
-                                log.info("{} Mb ({} Kb)", DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize).toKilobytes());
+                                log.info("{} Mb ({} Kb)", DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize));
                             }
                         }
                     }).get();

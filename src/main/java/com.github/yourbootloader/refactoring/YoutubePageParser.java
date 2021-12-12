@@ -24,7 +24,7 @@ public class YoutubePageParser {
     }
 
     @SneakyThrows
-    public void parse() {
+    public List<Map<String, Object>> parse() {
         String content = downloadWebPage.download();
         PlayerResponse playerResponse = null;
         if (content != null) {
@@ -136,7 +136,7 @@ public class YoutubePageParser {
         // TODO обработка keywords
         // TODO обработка thumbnails
 
-        System.out.println();
+        return formats;
     }
 
     private String mimeType2Ext(String mt) {

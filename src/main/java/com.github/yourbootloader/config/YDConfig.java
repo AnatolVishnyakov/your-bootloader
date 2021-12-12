@@ -1,6 +1,7 @@
 package com.github.yourbootloader.config;
 
 import com.github.yourbootloader.refactoring.StreamDownloader;
+import com.github.yourbootloader.refactoring.YoutubePageParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -21,5 +22,11 @@ public class YDConfig {
         StreamDownloader downloader = new StreamDownloader(url, fileName, info);
         downloader.setYdProperties(context.getBean(YDProperties.class));
         return downloader;
+    }
+
+    @Bean
+    @Scope(value = "prototype")
+    public YoutubePageParser youtubePageParser(String url) {
+        return new YoutubePageParser(url);
     }
 }
