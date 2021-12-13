@@ -6,6 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.ApplicationContext;
+import org.springframework.util.unit.DataSize;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +21,10 @@ public class YourBootLoaderApplication {
         String url = "https://www.youtube.com/watch?v=nui3hXzcbK0";
         YoutubePageParser youtubePageParser = context.getBean(YoutubePageParser.class, url);
         List<Map<String, Object>> formats = youtubePageParser.parse();
-        StreamDownloader downloader = context.getBean(StreamDownloader.class, formats.get(2).get("url"), UUID.randomUUID().toString(), Collections.emptyMap());
+
+        Map<String, Object> format = formats.get(2);
+        System.out.println(DataSize.ofBytes(((Integer) format.get("filesize")).longValue()).toMegabytes() + " Mb");
+        StreamDownloader downloader = context.getBean(StreamDownloader.class, format.get("url"), UUID.randomUUID().toString(), Collections.emptyMap());
         downloader.realDownload(3);
     }
 }
