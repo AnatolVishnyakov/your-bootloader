@@ -11,6 +11,8 @@ import static java.lang.String.format;
 public class YoutubeUrl {
     private static final String YOUTUBE_URL_PATTERN = "^((?:https?://|//)(?:www\\.)?www\\.youtube\\.com/(?:watch|movie)(?:\\?|#!\\?)v=)([0-9A-Za-z_-]{11})$";
     private static final Pattern patternCompile = Pattern.compile(YOUTUBE_URL_PATTERN);
+    private static String YOUTUBE_URL_PATTERNS = "" +
+            "^((?:https?:)?\\/\\/)?((?:www|m)\\.)?((?:youtube\\.com|youtu.be))(\\/(?:[\\w\\-]+\\?v=|embed\\/|v\\/)?)([\\w\\-]+)(\\S+)?$";
 
     String url;
     String videoId;
@@ -28,6 +30,11 @@ public class YoutubeUrl {
         Matcher matcher = patternCompile.matcher(url);
         if (matcher.find()) {
             return matcher.group(2);
+        } else {
+            matcher = Pattern.compile(YOUTUBE_URL_PATTERNS).matcher(url);
+            if (matcher.find()) {
+                return matcher.group(2);
+            }
         }
         throw new RuntimeException("Не удалось распарсить url!");
     }

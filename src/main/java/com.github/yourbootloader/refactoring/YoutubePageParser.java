@@ -68,7 +68,7 @@ public class YoutubePageParser {
             String itag = null;
             String quality = null;
             if (fmt.has("itag") && fmt.has("quality")) {
-                itag = fmt.getString("itag");
+                itag = String.valueOf(fmt.getInt("itag"));
                 quality = fmt.getString("quality");
                 itagQualities.put(itag, quality);
             }
