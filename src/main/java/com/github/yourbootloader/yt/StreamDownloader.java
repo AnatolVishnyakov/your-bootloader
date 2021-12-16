@@ -54,12 +54,11 @@ public class StreamDownloader {
             }
         }
 
-        Long filesize = ((Long) info.get("filesize"));
-        if (filesize == null) {
-            filesize = file.length();
-        }
-        if (DataSize.ofBytes(filesize).toMegabytes() > ydProperties.getMaxFileSize()) {
-            throw new RuntimeException("Лимит на скачивание файлов не более " + ydProperties.getMaxFileSize() + " Mb.");
+        long filesize = ((Integer) info.get("filesize")).longValue();
+        long actualFileSize = file.length();
+        if (DataSize.ofBytes(filesize).toMegabytes() > ydProperties.getMaxFileSize() ||
+                DataSize.ofBytes(actualFileSize).toMegabytes() > ydProperties.getMaxFileSize()) {
+            throw new RuntimeException("Лимит на скачивание файла превысил " + ydProperties.getMaxFileSize() + " Mb.");
         }
 
         DefaultAsyncHttpClientConfig clientConfig = new DefaultAsyncHttpClientConfig.Builder()
