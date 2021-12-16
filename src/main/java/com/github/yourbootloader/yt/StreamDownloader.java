@@ -92,6 +92,11 @@ public class StreamDownloader {
                 @SneakyThrows
                 private void printContentWritten() {
                     long fileSize = Files.size(file.toPath());
+
+                    if (DataSize.ofBytes(filesize).toMegabytes() > ydProperties.getMaxFileSize()) {
+                        throw new RuntimeException("Лимит на скачивание файла превысил " + ydProperties.getMaxFileSize() + " Mb.");
+                    }
+
                     if (fileSize < 1_024) {
                         log.info("{} B ({} Kb)", DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize));
                     } else if (fileSize < 1_048_576) {
