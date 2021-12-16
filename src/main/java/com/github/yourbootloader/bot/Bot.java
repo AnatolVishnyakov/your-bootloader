@@ -1,16 +1,21 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.config.BotConfig;
-import com.github.yourbootloader.StreamDownloader;
-import com.github.yourbootloader.YoutubePageParser;
+import com.github.yourbootloader.config.YDProperties;
+import com.github.yourbootloader.yt.StreamDownloader;
+import com.github.yourbootloader.yt.YoutubePageParser;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +33,16 @@ public class Bot extends TelegramLongPollingBot {
         this.context = context;
     }
 
+    @SneakyThrows
     public void onUpdateReceived(Update update) {
         log.info("onUpdateReceived: {}", update.getMessage());
 
         Message message = update.getMessage();
         String url = message.getText();
+
+        if (url.equals("/download")) {
+            url = "https://www.youtube.com/watch?v=sXGFDSs07qQ";
+        }
 
         YoutubePageParser youtubePageParser = context.getBean(YoutubePageParser.class, url);
         List<Map<String, Object>> formats = youtubePageParser.parse();
@@ -40,41 +50,14 @@ public class Bot extends TelegramLongPollingBot {
         Map<String, Object> format = formats.get(2);
         System.out.println(DataSize.ofBytes(((Integer) format.get("filesize")).longValue()).toMegabytes() + " Mb");
         StreamDownloader downloader = context.getBean(StreamDownloader.class, format.get("url"), UUID.randomUUID().toString(), Collections.emptyMap());
-        downloader.realDownload(3);
+        File downloadFile = downloader.realDownload(3);
 
-//        update.getUpdateId();
-//        SendMessage.SendMessageBuilder builder = SendMessage.builder();
-//        String messageText;
-//        String chatId;
-//        if (update.getMessage() != null) {
-//            chatId = update.getMessage().getChatId().toString();
-//            builder.chatId(chatId);
-//            messageText = update.getMessage().getText();
-//        } else {
-//            chatId = update.getChannelPost().getChatId().toString();
-//            builder.chatId(chatId);
-//            messageText = update.getChannelPost().getText();
-//        }
-//
-//        if (messageText.contains("/hello")) {
-//            builder.text("Привет");
-//            try {
-//                execute(builder.build());
-//            } catch (TelegramApiException e) {
-//                log.debug(e.toString());
-//            }
-//        }
-//
-//        if (messageText.contains("/chartId")) {
-//            builder.text("ID Канала : " + chatId);
-//            try {
-//                execute(builder.build());
-//            } catch (TelegramApiException e) {
-//                log.debug(e.toString());
-//            }
-//        }
+        SendDocument sendDocumentRequest = new SendDocument();
+        sendDocumentRequest.setChatId(String.valueOf(message.getChatId()));
+        sendDocumentRequest.setDocument(new InputFile(downloadFile));
+        sendDocumentRequest.setCaption(downloadFile.getName());
+        execute(sendDocumentRequest);
     }
-
 
     public String getBotUsername() {
         return config.getBotUserName();

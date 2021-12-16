@@ -1,4 +1,4 @@
-package com.github.yourbootloader;
+package com.github.yourbootloader.yt;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

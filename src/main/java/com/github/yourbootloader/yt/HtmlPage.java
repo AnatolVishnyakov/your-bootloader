@@ -1,4 +1,4 @@
-package com.github.yourbootloader;
+package com.github.yourbootloader.yt;
 
 import lombok.Getter;
 

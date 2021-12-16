@@ -1,4 +1,4 @@
-package com.github.yourbootloader;
+package com.github.yourbootloader.yt;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -190,10 +190,5 @@ public class YoutubeInfoExtractor extends YoutubeBaseInfoExtractor {
             return matcher.group(2);
         }
         throw new RuntimeException("Не удалось распарсить url");
-    }
-
-    public static void main(String[] args) {
-        new YoutubeInfoExtractor("https://www.youtube.com/watch?v=_zJrhqUBF5o")
-                .download();
     }
 }

@@ -1,4 +1,4 @@
-package com.github.yourbootloader;
+package com.github.yourbootloader.yt;
 
 import com.github.yourbootloader.config.YDProperties;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -39,7 +39,7 @@ public class StreamDownloader {
     }
 
     @SneakyThrows
-    private void download() {
+    private File download() {
         File file = ydProperties.getDownloadPath().resolve(fileName).toFile();
         if (file.exists()) {
             file.deleteOnExit();
@@ -102,9 +102,10 @@ public class StreamDownloader {
                         }
                     }).get();
         }
+        return file;
     }
 
-    public void realDownload(int retries) {
+    public File realDownload(int retries) {
         context = DownloadContext.builder()
                 .dataLen(0L)
                 .resumeLen(0L) // TODO надо вычислять
@@ -124,17 +125,20 @@ public class StreamDownloader {
         while (count <= retries) {
             try {
                 establishConnection();
-                download();
+                File downloadFile = download();
+                log.info("Download finished...");
+                return downloadFile;
             } catch (Exception exc) {
                 count++;
                 if (count <= retries) {
                     log.error("Exit downloading by error. Attempt {} of {}.", count, retries);
                     exc.printStackTrace();
-                    return;
+                    return null;
                 }
                 log.error("[download] Got server HTTP error: {}. Retrying (attempt {} of {})...", exc.getMessage(), count, retries);
                 exc.printStackTrace();
             }
         }
+        return null;
     }
 }

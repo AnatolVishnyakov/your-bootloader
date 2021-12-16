@@ -1,4 +1,4 @@
-package com.github.yourbootloader;
+package com.github.yourbootloader.yt;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -80,12 +80,5 @@ public class DownloadWebPage {
             throw new RuntimeException("'Access to this webpage has been blocked by decision of the Russian government. " +
                     "Visit http://blocklist.rkn.gov.ru/ for a block reason.");
         }
-    }
-
-    public static void main(String[] args) {
-        YoutubeUrl youtubeUrl = new YoutubeUrl("https://www.youtube.com/watch?v=nui3hXzcbK0");
-        DownloadWebPage downloadWebPage = new DownloadWebPage(youtubeUrl);
-        String page = downloadWebPage.download();
-        System.out.println();
     }
 }
