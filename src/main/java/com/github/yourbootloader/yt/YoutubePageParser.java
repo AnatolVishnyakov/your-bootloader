@@ -109,6 +109,7 @@ public class YoutubePageParser {
             dct.put("tbr", tbr);
             dct.put("url", fmtUrl);
             dct.put("width", fmt.optString("width"));
+            dct.put("title", videoTitle);
 
             if (fmt.has("mimeType")) {
                 Pattern pattern = Pattern.compile("((?:[^/]+)/(?:[^;]+))(?:;\\s*codecs=\"([^\"]+)\")?");
