@@ -1,7 +1,7 @@
 package com.github.yourbootloader.config;
 
-import com.github.yourbootloader.refactoring.StreamDownloader;
-import com.github.yourbootloader.refactoring.YoutubePageParser;
+import com.github.yourbootloader.StreamDownloader;
+import com.github.yourbootloader.YoutubePageParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;

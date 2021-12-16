@@ -1,8 +1,8 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.config.BotConfig;
-import com.github.yourbootloader.refactoring.StreamDownloader;
-import com.github.yourbootloader.refactoring.YoutubePageParser;
+import com.github.yourbootloader.StreamDownloader;
+import com.github.yourbootloader.YoutubePageParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
