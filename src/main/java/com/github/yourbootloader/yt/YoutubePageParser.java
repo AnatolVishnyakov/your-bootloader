@@ -1,6 +1,5 @@
 package com.github.yourbootloader.yt;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -196,7 +195,7 @@ public class YoutubePageParser {
     }
 
     public static void main(String[] args) {
-        String url = "https://www.youtube.com/watch?v=nui3hXzcbK0";
+        String url = "https://youtu.be/zcjKJ7FHDLM";
         YoutubePageParser youtubePageParser = new YoutubePageParser(url);
         youtubePageParser.parse();
     }

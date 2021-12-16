@@ -11,6 +11,8 @@ import java.nio.file.Paths;
 public class YDProperties {
     private String downloadPath;
 
+    private Long maxFileSize;
+
     public Path getDownloadPath() {
         return Paths.get(downloadPath);
     }
