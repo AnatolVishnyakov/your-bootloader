@@ -3,6 +3,10 @@ services:
   app:
     image: your-bootloader:latest
     container_name: 'your-bootloader'
+    volumes:
+      - type: bind
+        source: /home/tolya/trash
+        target: /home/document/trash
     build:
       context: .
       dockerfile: Dockerfile
