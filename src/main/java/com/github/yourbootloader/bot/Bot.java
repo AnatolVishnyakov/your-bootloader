@@ -9,7 +9,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
+import org.telegram.telegrambots.meta.api.methods.send.SendAudio;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -17,7 +17,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -52,8 +51,8 @@ public class Bot extends TelegramLongPollingBot {
 
         sendNotification(message.getChatId(), "Идет скачивание аудио: " + format.get("title"));
         sendNotification(message.getChatId(), getFilesize(format));
-        StreamDownloader downloader = context.getBean(StreamDownloader.class, format.get("url"), format.get("title"), Collections.emptyMap());
-        File downloadFile = null;
+        StreamDownloader downloader = context.getBean(StreamDownloader.class, format.get("url"), format.get("title"), format);
+        File downloadFile;
         try {
             downloadFile = downloader.realDownload(3);
         } catch (Exception e) {
@@ -61,12 +60,12 @@ public class Bot extends TelegramLongPollingBot {
             return;
         }
 
-        SendDocument sendDocumentRequest = new SendDocument();
-        sendDocumentRequest.setChatId(String.valueOf(message.getChatId()));
-        sendDocumentRequest.setDocument(new InputFile(downloadFile));
-        sendDocumentRequest.setCaption(downloadFile.getName());
+        SendAudio SendAudioRequest = new SendAudio();
+        SendAudioRequest.setChatId(String.valueOf(message.getChatId()));
+        SendAudioRequest.setAudio(new InputFile(downloadFile));
+        SendAudioRequest.setCaption(downloadFile.getName());
         try {
-            execute(sendDocumentRequest);
+            execute(SendAudioRequest);
         } catch (TelegramApiException e) {
             log.error("Возникла непредвиденная ошибка", e);
             sendNotification(message.getChatId(), "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());

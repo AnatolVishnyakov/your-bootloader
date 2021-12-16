@@ -7,12 +7,17 @@ import io.netty.handler.codec.http.HttpHeaders;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.asynchttpclient.*;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import org.asynchttpclient.Dsl;
+import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
+import org.asynchttpclient.handler.resumable.ResumableListener;
 import org.springframework.util.unit.DataSize;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Map;
 import java.util.UUID;
@@ -41,9 +46,6 @@ public class StreamDownloader {
     @SneakyThrows
     private File download() {
         File file = ydProperties.getDownloadPath().resolve(fileName.trim().replaceAll("\\W+", "-")).toFile();
-        if (file.exists()) {
-            file.deleteOnExit();
-        }
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -58,49 +60,42 @@ public class StreamDownloader {
                 .setConnectTimeout(DEFAULT_TIMEOUT)
                 .build();
 
-        FileOutputStream outputStream = new FileOutputStream(file);
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            client.prepareGet(url)
-                    .execute(new AsyncHandler<FileOutputStream>() {
-                        @Override
-                        public State onStatusReceived(HttpResponseStatus responseStatus) throws Exception {
-                            return State.CONTINUE;
-                        }
+            final RandomAccessFile resumeFile = new RandomAccessFile(file, "rw");
+            ResumableAsyncHandler a = new ResumableAsyncHandler();
+            a.setResumableListener(new ResumableListener() {
 
-                        @Override
-                        public State onHeadersReceived(HttpHeaders headers) throws Exception {
-                            return State.CONTINUE;
-                        }
+                public void onBytesReceived(ByteBuffer byteBuffer) throws IOException {
+                    resumeFile.seek(resumeFile.length());
+                    resumeFile.write(byteBuffer.array());
+                    printContentWritten();
+                }
 
-                        @Override
-                        public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
-                            outputStream.getChannel().write(bodyPart.getBodyByteBuffer());
-                            printContentWritten();
-                            return State.CONTINUE;
-                        }
+                @SneakyThrows
+                public void onAllBytesReceived() {
+                    log.info("Файл полностью загружен.");
+                    resumeFile.close();
+                }
 
-                        @Override
-                        public void onThrowable(Throwable t) {
+                @SneakyThrows
+                public long length() {
+                    return Long.valueOf(((Integer) info.get("filesize")));
+                }
 
-                        }
+                @SneakyThrows
+                private void printContentWritten() {
+                    long fileSize = Files.size(file.toPath());
+                    if (fileSize < 1_024) {
+                        log.info("{} B ({} Kb)", DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize));
+                    } else if (fileSize < 1_048_576) {
+                        log.info("{} Kb ({} Kb)", DataSize.ofBytes(fileSize).toKilobytes(), DataSize.ofBytes(fileSize));
+                    } else {
+                        log.info("{} Mb ({} Kb)", DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize));
+                    }
+                }
+            });
 
-                        @Override
-                        public FileOutputStream onCompleted() throws Exception {
-                            return null;
-                        }
-
-                        @SneakyThrows
-                        private void printContentWritten() {
-                            long fileSize = Files.size(file.toPath());
-                            if (fileSize < 1_024) {
-                                log.info("{} B ({} Kb)", DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize));
-                            } else if (fileSize < 1_048_576) {
-                                log.info("{} Kb ({} Kb)", DataSize.ofBytes(fileSize).toKilobytes(), DataSize.ofBytes(fileSize));
-                            } else {
-                                log.info("{} Mb ({} Kb)", DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize));
-                            }
-                        }
-                    }).get();
+            client.prepareGet(url).execute(a).get();
         }
         return file;
     }
