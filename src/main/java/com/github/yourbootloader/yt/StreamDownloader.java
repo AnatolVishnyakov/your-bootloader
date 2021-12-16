@@ -54,7 +54,7 @@ public class StreamDownloader {
             }
         }
 
-        Long filesize = (Long) info.get("filesize");
+        Long filesize = ((Long) info.get("filesize"));
         if (filesize == null) {
             filesize = file.length();
         }
