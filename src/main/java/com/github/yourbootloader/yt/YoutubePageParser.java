@@ -23,7 +23,6 @@ public class YoutubePageParser {
         this.downloadWebPage = new DownloadWebPage(youtubeUrl);
     }
 
-    @SneakyThrows
     public List<Map<String, Object>> parse() {
         String content = downloadWebPage.download();
         PlayerResponse playerResponse = null;

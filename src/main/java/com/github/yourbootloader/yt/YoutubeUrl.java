@@ -33,7 +33,7 @@ public class YoutubeUrl {
         } else {
             matcher = Pattern.compile(YOUTUBE_URL_PATTERNS).matcher(url);
             if (matcher.find()) {
-                return matcher.group(2);
+                return matcher.group(5);
             }
         }
         throw new RuntimeException("Не удалось распарсить url!");
