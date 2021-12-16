@@ -51,9 +51,15 @@ public class Bot extends TelegramLongPollingBot {
                 .findFirst().orElseThrow(RuntimeException::new);
 
         sendNotification(message.getChatId(), "Идет скачивание аудио: " + format.get("title"));
-        System.out.println(DataSize.ofBytes(((Integer) format.get("filesize")).longValue()).toMegabytes() + " Mb");
+        sendNotification(message.getChatId(), getFilesize(format));
         StreamDownloader downloader = context.getBean(StreamDownloader.class, format.get("url"), format.get("title"), Collections.emptyMap());
-        File downloadFile = downloader.realDownload(3);
+        File downloadFile = null;
+        try {
+            downloadFile = downloader.realDownload(3);
+        } catch (Exception e) {
+            sendNotification(message.getChatId(), "Возникла непредвиденная ошибка: " + e.getMessage());
+            return;
+        }
 
         SendDocument sendDocumentRequest = new SendDocument();
         sendDocumentRequest.setChatId(String.valueOf(message.getChatId()));
@@ -65,6 +71,14 @@ public class Bot extends TelegramLongPollingBot {
             log.error("Возникла непредвиденная ошибка", e);
             sendNotification(message.getChatId(), "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());
         }
+    }
+
+    private String getFilesize(Map<String, Object> format) {
+        DataSize filesize = DataSize.ofBytes(((Integer) format.get("filesize")).longValue());
+        if (filesize.toMegabytes() != 0) {
+            return filesize.toMegabytes() + " Mb";
+        }
+        return filesize.toKilobytes() + " Kb";
     }
 
     @SneakyThrows

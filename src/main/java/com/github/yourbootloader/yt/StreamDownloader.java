@@ -40,7 +40,7 @@ public class StreamDownloader {
 
     @SneakyThrows
     private File download() {
-        File file = ydProperties.getDownloadPath().resolve(fileName).toFile();
+        File file = ydProperties.getDownloadPath().resolve(fileName.trim().replaceAll("\\W+", "-")).toFile();
         if (file.exists()) {
             file.deleteOnExit();
         }
@@ -105,7 +105,7 @@ public class StreamDownloader {
         return file;
     }
 
-    public File realDownload(int retries) {
+    public File realDownload(int retries) throws Exception {
         context = DownloadContext.builder()
                 .dataLen(0L)
                 .resumeLen(0L) // TODO надо вычислять
@@ -133,10 +133,10 @@ public class StreamDownloader {
                 if (count <= retries) {
                     log.error("Exit downloading by error. Attempt {} of {}.", count, retries);
                     exc.printStackTrace();
-                    return null;
+                    continue;
                 }
                 log.error("[download] Got server HTTP error: {}. Retrying (attempt {} of {})...", exc.getMessage(), count, retries);
-                exc.printStackTrace();
+                throw new Exception(exc);
             }
         }
         return null;
