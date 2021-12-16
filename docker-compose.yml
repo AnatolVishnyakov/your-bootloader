@@ -9,7 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - "SPRING_PROFILES_ACTIVE=local"
+      - "SPRING_PROFILES_ACTIVE=prod"
     ports:
       - '8080:8080'
 
