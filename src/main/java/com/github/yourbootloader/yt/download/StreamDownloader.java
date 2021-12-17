@@ -1,7 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -28,13 +27,14 @@ import java.util.UUID;
 public class StreamDownloader {
     private static final int DEFAULT_TIMEOUT = 600_000;
 
+    private final YDProperties ydProperties;
+
+    // TODO вынести
     private String url;
     private String fileName;
     private Long fileSize;
     private HttpHeaders headers;
     private DownloadContext context;
-    private final YDProperties ydProperties;
-    private final MeterRegistry meterRegistry;
 
     private void establishConnection() {
     }
