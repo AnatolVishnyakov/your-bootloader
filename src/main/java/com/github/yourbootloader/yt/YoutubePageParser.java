@@ -1,6 +1,7 @@
 package com.github.yourbootloader.yt;
 
 import com.github.yourbootloader.yt.download.StreamDownloader;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -205,7 +206,7 @@ public class YoutubePageParser {
 
         url = ((String) format.get("url"));
         String title = (String) format.get("title");
-        StreamDownloader downloader = new StreamDownloader(url, title, format);
+        StreamDownloader downloader = new StreamDownloader(url, title, ((Integer) format.get("filesize")).longValue(), ((DefaultHttpHeaders) format.get("http_headers")));
         downloader.realDownload(3);
     }
 }

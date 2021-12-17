@@ -2,7 +2,6 @@ package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -19,7 +18,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -29,15 +27,17 @@ public class StreamDownloader {
 
     private final String url;
     private final String fileName;
-    private final Map<String, Object> info;
+    private final Long fileSize;
+    private final HttpHeaders headers;
     private DownloadContext context;
     private YDProperties ydProperties;
     private MeterRegistry meterRegistry;
 
-    public StreamDownloader(String url, String fileName, Map<String, Object> info) {
+    public StreamDownloader(String url, String fileName, Long fileSize, HttpHeaders headers) {
         this.url = url;
         this.fileName = fileName;
-        this.info = info;
+        this.fileSize = fileSize;
+        this.headers = headers;
     }
 
     private void establishConnection() {
@@ -54,9 +54,8 @@ public class StreamDownloader {
             }
         }
 
-        long filesize = ((Integer) info.get("filesize")).longValue();
         long actualFileSize = file.length();
-        if (DataSize.ofBytes(filesize).toMegabytes() > ydProperties.getMaxFileSize() ||
+        if (DataSize.ofBytes(fileSize).toMegabytes() > ydProperties.getMaxFileSize() ||
                 DataSize.ofBytes(actualFileSize).toMegabytes() > ydProperties.getMaxFileSize()) {
             throw new RuntimeException("Лимит на скачивание файла превысил " + ydProperties.getMaxFileSize() + " Mb.");
         }
@@ -86,7 +85,7 @@ public class StreamDownloader {
 
                 @SneakyThrows
                 public long length() {
-                    return Long.valueOf(((Integer) info.get("filesize")));
+                    return fileSize;
                 }
 
                 @SneakyThrows
@@ -122,7 +121,6 @@ public class StreamDownloader {
                 .tmpFileName(UUID.randomUUID() + ".mp3")
                 .build();
 
-        HttpHeaders headers = (DefaultHttpHeaders) info.get("http_headers");
         if (headers != null) {
             headers.add("Youtubedl-no-compression", "True");
         }
