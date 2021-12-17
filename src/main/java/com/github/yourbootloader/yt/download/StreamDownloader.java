@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt;
+package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
 import io.micrometer.core.instrument.MeterRegistry;

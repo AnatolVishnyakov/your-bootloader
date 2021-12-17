@@ -1,6 +1,6 @@
 package com.github.yourbootloader.refactoring;
 
-import com.github.yourbootloader.yt.StreamDownloader;
+import com.github.yourbootloader.yt.download.StreamDownloader;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.SneakyThrows;
