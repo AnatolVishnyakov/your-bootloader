@@ -3,7 +3,7 @@ package com.github.yourbootloader.yt.download;
 import com.github.yourbootloader.config.YDProperties;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.handler.codec.http.HttpHeaders;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
@@ -11,6 +11,8 @@ import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
 import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
 import org.asynchttpclient.handler.resumable.ResumableListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 
 import java.io.File;
@@ -21,24 +23,18 @@ import java.nio.file.Files;
 import java.util.UUID;
 
 @Slf4j
-@Data
+@Component
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class StreamDownloader {
     private static final int DEFAULT_TIMEOUT = 600_000;
 
-    private final String url;
-    private final String fileName;
-    private final Long fileSize;
-    private final HttpHeaders headers;
+    private String url;
+    private String fileName;
+    private Long fileSize;
+    private HttpHeaders headers;
     private DownloadContext context;
-    private YDProperties ydProperties;
-    private MeterRegistry meterRegistry;
-
-    public StreamDownloader(String url, String fileName, Long fileSize, HttpHeaders headers) {
-        this.url = url;
-        this.fileName = fileName;
-        this.fileSize = fileSize;
-        this.headers = headers;
-    }
+    private final YDProperties ydProperties;
+    private final MeterRegistry meterRegistry;
 
     private void establishConnection() {
     }
@@ -111,7 +107,12 @@ public class StreamDownloader {
         return file;
     }
 
-    public File realDownload(int retries) throws Exception {
+    public File realDownload(int retries, String url, String fileName, Long fileSize, HttpHeaders headers) throws Exception {
+        this.url = url;
+        this.fileName = fileName;
+        this.fileSize = fileSize;
+        this.headers = headers;
+
         context = DownloadContext.builder()
                 .dataLen(0L)
                 .resumeLen(0L) // TODO надо вычислять

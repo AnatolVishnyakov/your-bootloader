@@ -1,8 +1,5 @@
 package com.github.yourbootloader.yt;
 
-import com.github.yourbootloader.yt.download.StreamDownloader;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -195,18 +192,5 @@ public class YoutubePageParser {
         }
 
         throw new RuntimeException(format("Unable to extract %s", "initial player response"));
-    }
-
-    @SneakyThrows
-    public static void main(String[] args) {
-        String url = "https://youtu.be/zcjKJ7FHDLM";
-        YoutubePageParser youtubePageParser = new YoutubePageParser(url);
-        List<Map<String, Object>> formats = youtubePageParser.parse();
-        Map<String, Object> format = formats.get(0);
-
-        url = ((String) format.get("url"));
-        String title = (String) format.get("title");
-        StreamDownloader downloader = new StreamDownloader(url, title, ((Integer) format.get("filesize")).longValue(), ((DefaultHttpHeaders) format.get("http_headers")));
-        downloader.realDownload(3);
     }
 }

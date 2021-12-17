@@ -1,8 +1,9 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.config.BotConfig;
-import com.github.yourbootloader.yt.download.StreamDownloader;
 import com.github.yourbootloader.yt.YoutubePageParser;
+import com.github.yourbootloader.yt.download.StreamDownloader;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
@@ -51,10 +52,15 @@ public class Bot extends TelegramLongPollingBot {
 
         sendNotification(message.getChatId(), "Идет скачивание аудио: " + format.get("title"));
         sendNotification(message.getChatId(), getFilesize(format));
-        StreamDownloader downloader = context.getBean(StreamDownloader.class, format.get("url"), format.get("title"), format);
+        StreamDownloader downloader = context.getBean(StreamDownloader.class);
         File downloadFile;
         try {
-            downloadFile = downloader.realDownload(3);
+            downloadFile = downloader.realDownload(3,
+                    ((String) format.get("url")),
+                    ((String) format.get("title")),
+                    ((Integer) format.get("filesize")).longValue(),
+                    ((DefaultHttpHeaders) format.get("http_headers"))
+            );
         } catch (Exception e) {
             sendNotification(message.getChatId(), "Возникла непредвиденная ошибка: " + e.getMessage());
             return;
