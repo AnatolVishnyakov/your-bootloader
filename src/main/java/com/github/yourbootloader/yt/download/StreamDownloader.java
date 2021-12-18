@@ -3,25 +3,16 @@ package com.github.yourbootloader.yt.download;
 import com.github.yourbootloader.config.YDProperties;
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
-import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
-import org.asynchttpclient.handler.resumable.ResumableListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Component
@@ -50,13 +41,15 @@ public class StreamDownloader {
     private void establishConnection() {
     }
 
-    @SneakyThrows
-    private File download() {
+    private File download() throws Exception {
         File file = tempFileGenerator.create(fileName);
 
         validate(file);
 
-        execute(file, clientConfig);
+        try (AsyncHttpClient client = Dsl.asyncHttpClient(StreamDownloader.clientConfig)) {
+            DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(file);
+            client.prepareGet(url).execute(downloaderAsyncHandler).get();
+        }
         return file;
     }
 
@@ -64,61 +57,6 @@ public class StreamDownloader {
         if (DataSize.ofBytes(fileSize).toMegabytes() > ydProperties.getMaxFileSize() ||
                 DataSize.ofBytes(file.length()).toMegabytes() > ydProperties.getMaxFileSize()) {
             throw new RuntimeException("Лимит на скачивание файла превысил " + ydProperties.getMaxFileSize() + " Mb.");
-        }
-    }
-
-    private void execute(File file, DefaultAsyncHttpClientConfig clientConfig) throws IOException, InterruptedException, ExecutionException {
-        AtomicLong prevFileSize = new AtomicLong(Files.size(file.toPath()));
-        try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            final RandomAccessFile resumeFile = new RandomAccessFile(file, "rw");
-            ResumableAsyncHandler a = new ResumableAsyncHandler();
-            a.setResumableListener(new ResumableListener() {
-
-                public void onBytesReceived(ByteBuffer byteBuffer) throws IOException {
-                    resumeFile.seek(resumeFile.length());
-                    resumeFile.write(byteBuffer.array());
-                    printContentWritten();
-                }
-
-                @SneakyThrows
-                public void onAllBytesReceived() {
-                    log.info("Файл полностью загружен.");
-                    resumeFile.close();
-                }
-
-                @SneakyThrows
-                public long length() {
-                    return fileSize;
-                }
-
-                @SneakyThrows
-                private void printContentWritten() {
-                    long fileSize = Files.size(file.toPath());
-
-                    if (DataSize.ofBytes(resumeFile.length()).toMegabytes() > ydProperties.getMaxFileSize()) {
-                        throw new RuntimeException("Лимит на скачивание файла превысил " + ydProperties.getMaxFileSize() + " Mb.");
-                    }
-
-                    if (fileSize < 1_024) {
-                        log.info("{} B ({} Kb) speed: {}", DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize), calcSpeed(fileSize));
-                    } else if (fileSize < 1_048_576) {
-                        log.info("{} Kb ({} Kb) speed: {}", DataSize.ofBytes(fileSize).toKilobytes(), DataSize.ofBytes(fileSize), calcSpeed(fileSize));
-                    } else {
-                        log.info("{} Mb ({} Kb) speed: {}", DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize), calcSpeed(fileSize));
-                    }
-                    prevFileSize.set(fileSize);
-                }
-
-                private String calcSpeed(long fileSize) {
-                    DataSize dataSize = DataSize.ofBytes(fileSize - prevFileSize.get());
-                    if (dataSize.toKilobytes() == 0) {
-                        return dataSize.toBytes() + " Bytes";
-                    }
-                    return dataSize.toKilobytes() + " Kb (" + dataSize.toBytes() + " Bytes)";
-                }
-            });
-
-            client.prepareGet(url).execute(a).get();
         }
     }
 
