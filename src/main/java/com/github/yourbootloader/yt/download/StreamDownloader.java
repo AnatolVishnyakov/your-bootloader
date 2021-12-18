@@ -26,6 +26,9 @@ public class StreamDownloader {
                 .setRequestTimeout(DEFAULT_TIMEOUT)
                 .setReadTimeout(DEFAULT_TIMEOUT)
                 .setConnectTimeout(DEFAULT_TIMEOUT)
+                .setMaxRequestRetry(3)
+                .setThreadPoolName(StreamDownloader.class.getSimpleName())
+                .setHttpClientCodecMaxChunkSize(16_384)
                 .build();
     }
 

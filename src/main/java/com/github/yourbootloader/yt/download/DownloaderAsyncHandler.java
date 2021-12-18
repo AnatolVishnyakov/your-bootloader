@@ -23,6 +23,8 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     private ApplicationEventPublisher publisher;
 
     public DownloaderAsyncHandler(File originalFile) throws FileNotFoundException {
+        super();
+
         this.originalFile = originalFile;
         setResumableListener(new ResumableRandomAccessFileListener(new RandomAccessFile(originalFile, "rw")));
     }
