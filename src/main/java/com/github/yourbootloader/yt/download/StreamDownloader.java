@@ -42,6 +42,8 @@ public class StreamDownloader {
     }
 
     private File download() throws Exception {
+        DataSize dataSize = DataSize.ofBytes(fileSize);
+        log.info("Размер скачиваемого содержимого: {} Mb ({} Kb)", dataSize.toMegabytes(), dataSize.toKilobytes());
         File file = tempFileGenerator.create(fileName);
 
         validate(file);
