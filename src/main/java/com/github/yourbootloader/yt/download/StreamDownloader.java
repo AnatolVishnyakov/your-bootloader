@@ -8,6 +8,7 @@ import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 
@@ -30,6 +31,7 @@ public class StreamDownloader {
 
     private final YDProperties ydProperties;
     private final TempFileGenerator tempFileGenerator;
+    private final ApplicationEventPublisher publisher;
 
     // TODO вынести
     private String url;
@@ -50,6 +52,7 @@ public class StreamDownloader {
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(StreamDownloader.clientConfig)) {
             DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(file);
+            downloaderAsyncHandler.setApplicationEventPublisher(publisher);
             client.prepareGet(url).execute(downloaderAsyncHandler).get();
         }
         return file;

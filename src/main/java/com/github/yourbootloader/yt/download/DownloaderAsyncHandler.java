@@ -1,16 +1,15 @@
 package com.github.yourbootloader.yt.download;
 
-import lombok.SneakyThrows;
+import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.HttpResponseBodyPart;
 import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
 import org.asynchttpclient.handler.resumable.ResumableRandomAccessFileListener;
-import org.springframework.util.unit.DataSize;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
 
 /**
  * Возобновляемый обработчик, позволяет продолжить
@@ -21,29 +20,21 @@ import java.nio.file.Files;
 class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     private final File originalFile;
+    private ApplicationEventPublisher publisher;
 
     public DownloaderAsyncHandler(File originalFile) throws FileNotFoundException {
         this.originalFile = originalFile;
         setResumableListener(new ResumableRandomAccessFileListener(new RandomAccessFile(originalFile, "rw")));
     }
 
+    public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
+    }
+
     @Override
     public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
         State state = super.onBodyPartReceived(bodyPart);
-        loggerProgressDownload(bodyPart.getBodyPartBytes().length);
+        publisher.publishEvent(new ProgressIndicatorEvent(originalFile.length(), bodyPart.getBodyPartBytes().length));
         return state;
-    }
-
-    @SneakyThrows
-    private void loggerProgressDownload(int receivedLength) {
-        long fileSize = Files.size(originalFile.toPath());
-
-        if (fileSize < 1_024) {
-            log.info("{} B ({}) block_size: {}", DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize), receivedLength);
-        } else if (fileSize < 1_048_576) {
-            log.info("{} Kb ({}) block_size: {}", DataSize.ofBytes(fileSize).toKilobytes(), DataSize.ofBytes(fileSize), receivedLength);
-        } else {
-            log.info("{} Mb ({}) block_size: {}", DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize), receivedLength);
-        }
     }
 }
