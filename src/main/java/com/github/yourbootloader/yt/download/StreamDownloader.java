@@ -7,6 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
+import org.asynchttpclient.RequestBuilder;
+import org.asynchttpclient.filter.ThrottleRequestFilter;
+import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -20,17 +23,6 @@ import java.util.UUID;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class StreamDownloader {
     private static final int DEFAULT_TIMEOUT = 600_000;
-    private static final DefaultAsyncHttpClientConfig clientConfig;
-    static {
-        clientConfig = new DefaultAsyncHttpClientConfig.Builder()
-                .setRequestTimeout(DEFAULT_TIMEOUT)
-                .setReadTimeout(DEFAULT_TIMEOUT)
-                .setConnectTimeout(DEFAULT_TIMEOUT)
-                .setMaxRequestRetry(3)
-                .setThreadPoolName(StreamDownloader.class.getSimpleName())
-                .setHttpClientCodecMaxChunkSize(16_384)
-                .build();
-    }
 
     private final YDProperties ydProperties;
     private final TempFileGenerator tempFileGenerator;
@@ -53,10 +45,30 @@ public class StreamDownloader {
 
         validate(file);
 
-        try (AsyncHttpClient client = Dsl.asyncHttpClient(StreamDownloader.clientConfig)) {
-            DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(file);
+        DefaultAsyncHttpClientConfig clientConfig = new DefaultAsyncHttpClientConfig.Builder()
+                .setRequestTimeout(DEFAULT_TIMEOUT)
+                .setReadTimeout(DEFAULT_TIMEOUT)
+                .setConnectTimeout(DEFAULT_TIMEOUT)
+                .setMaxRequestRetry(3)
+                .setThreadPoolName(StreamDownloader.class.getSimpleName())
+                .setHttpClientCodecMaxChunkSize(16_384)
+                .addIOExceptionFilter(new ResumableIOExceptionFilter())
+                .addRequestFilter(new ThrottleRequestFilter(10))
+                .build();
+
+        try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
+            DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(url, fileSize, file);
             downloaderAsyncHandler.setApplicationEventPublisher(publisher);
-            client.prepareGet(url).execute(downloaderAsyncHandler).get();
+            client
+                    .executeRequest(
+                            new RequestBuilder()
+                                    .setUrl(url)
+                                    .setRangeOffset(file.length())
+                                    .build(),
+                            downloaderAsyncHandler
+                    ).get();
+//            .prepareGet(url)
+//                    .execute(downloaderAsyncHandler).get();
         }
         return file;
     }

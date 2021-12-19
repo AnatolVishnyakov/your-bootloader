@@ -3,13 +3,16 @@ package com.github.yourbootloader.yt.download;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.HttpResponseBodyPart;
+import org.asynchttpclient.RequestBuilder;
 import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
 import org.asynchttpclient.handler.resumable.ResumableRandomAccessFileListener;
+import org.asynchttpclient.util.HttpConstants;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 
 /**
  * Возобновляемый обработчик, позволяет продолжить
@@ -20,13 +23,23 @@ import java.io.RandomAccessFile;
 class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     private final File originalFile;
+    private final Long fileSize;
     private ApplicationEventPublisher publisher;
 
-    public DownloaderAsyncHandler(File originalFile) throws FileNotFoundException {
-        super();
-
+    public DownloaderAsyncHandler(String url, Long fileSize, File originalFile) throws IOException {
+        super(originalFile.length());
         this.originalFile = originalFile;
-        setResumableListener(new ResumableRandomAccessFileListener(new RandomAccessFile(originalFile, "rw")));
+        this.fileSize = fileSize;
+
+        this.adjustRequestRange(new RequestBuilder(HttpConstants.Methods.GET, true).setUrl(url).build());
+        RandomAccessFile randomAccessFile = new RandomAccessFile(originalFile, "rw");
+        this.setResumableListener(new ResumableRandomAccessFileListener(randomAccessFile) {
+            @Override
+            public void onBytesReceived(ByteBuffer buffer) throws IOException {
+                randomAccessFile.seek(randomAccessFile.length());
+                randomAccessFile.write(buffer.array());
+            }
+        });
     }
 
     public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
