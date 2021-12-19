@@ -27,6 +27,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private final BotConfig config;
     private final ApplicationContext context;
+    private Long chatId;
 
     public Bot(BotConfig config, ApplicationContext context) {
         this.config = config;
@@ -35,6 +36,7 @@ public class Bot extends TelegramLongPollingBot {
 
     public void onUpdateReceived(Update update) {
         log.info("onUpdateReceived: {}", update.getMessage());
+        chatId = update.getMessage().getChatId();
 
         Message message = update.getMessage();
         String url = message.getText();
@@ -76,6 +78,10 @@ public class Bot extends TelegramLongPollingBot {
             log.error("Возникла непредвиденная ошибка", e);
             sendNotification(message.getChatId(), "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());
         }
+    }
+
+    public Long getChatId() {
+        return chatId;
     }
 
     private String getFilesize(Map<String, Object> format) {

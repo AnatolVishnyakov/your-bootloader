@@ -33,15 +33,18 @@ public class BotCommandService {
 
     @EventListener
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
-        DataSize dataSize = DataSize.ofBytes(event.getFileSize());
-        long downloadedContent = dataSize.toMegabytes() == 0
-                ? dataSize.toKilobytes()
-                : dataSize.toMegabytes();
-        EditMessageText message = new EditMessageText("Скачано " + downloadedContent);
-        try {
-            bot.execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Возникла непредвиденная ошибка", e);
+        if (bot.getChatId() != null) {
+            DataSize dataSize = DataSize.ofBytes(event.getFileSize());
+            long downloadedContent = dataSize.toMegabytes() == 0
+                    ? dataSize.toKilobytes()
+                    : dataSize.toMegabytes();
+            EditMessageText message = new EditMessageText("Скачано " + downloadedContent);
+            message.setChatId(bot.getChatId().toString());
+            try {
+                bot.execute(message);
+            } catch (TelegramApiException e) {
+                log.error("Возникла непредвиденная ошибка", e);
+            }
         }
     }
 }
