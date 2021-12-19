@@ -18,6 +18,7 @@ public class BotCommandService {
 
     private final Bot bot;
     private Long chatId;
+    private Integer messageId;
 
     @EventListener
     public void onProgressIndicatorEventLogging(ProgressIndicatorEvent event) {
@@ -41,9 +42,11 @@ public class BotCommandService {
                     ? dataSize.toKilobytes()
                     : dataSize.toMegabytes();
             if (chatId == null) {
-                chatId = bot.getChatId();
                 SendMessage message = new SendMessage(String.valueOf(bot.getChatId()), "Скачано " + downloadedContent);
                 message.setChatId(bot.getChatId().toString());
+
+                messageId = message.getReplyToMessageId();
+                chatId = bot.getChatId();
                 try {
                     bot.execute(message);
                 } catch (TelegramApiException e) {
@@ -52,6 +55,7 @@ public class BotCommandService {
             } else {
                 EditMessageText message = new EditMessageText("Скачано " + downloadedContent);
                 message.setChatId(bot.getChatId().toString());
+                message.setMessageId(messageId);
                 try {
                     bot.execute(message);
                 } catch (TelegramApiException e) {
