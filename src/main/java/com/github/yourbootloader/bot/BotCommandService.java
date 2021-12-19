@@ -8,6 +8,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Slf4j
@@ -16,6 +17,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class BotCommandService {
 
     private final Bot bot;
+    private Long chatId;
 
     @EventListener
     public void onProgressIndicatorEventLogging(ProgressIndicatorEvent event) {
@@ -38,12 +40,23 @@ public class BotCommandService {
             long downloadedContent = dataSize.toMegabytes() == 0
                     ? dataSize.toKilobytes()
                     : dataSize.toMegabytes();
-            SendMessage message = new SendMessage(String.valueOf(bot.getChatId()), "Скачано " + downloadedContent);
-            message.setChatId(bot.getChatId().toString());
-            try {
-                bot.execute(message);
-            } catch (TelegramApiException e) {
-                log.error("Возникла непредвиденная ошибка", e);
+            if (chatId == null) {
+                chatId = bot.getChatId();
+                SendMessage message = new SendMessage(String.valueOf(bot.getChatId()), "Скачано " + downloadedContent);
+                message.setChatId(bot.getChatId().toString());
+                try {
+                    bot.execute(message);
+                } catch (TelegramApiException e) {
+                    log.error("Возникла непредвиденная ошибка", e);
+                }
+            } else {
+                EditMessageText message = new EditMessageText("Скачано " + downloadedContent);
+                message.setChatId(bot.getChatId().toString());
+                try {
+                    bot.execute(message);
+                } catch (TelegramApiException e) {
+                    log.error("Возникла непредвиденная ошибка", e);
+                }
             }
         }
     }
