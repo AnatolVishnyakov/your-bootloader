@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.unit.DataSize;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Slf4j
@@ -38,7 +38,7 @@ public class BotCommandService {
             long downloadedContent = dataSize.toMegabytes() == 0
                     ? dataSize.toKilobytes()
                     : dataSize.toMegabytes();
-            EditMessageText message = new EditMessageText("Скачано " + downloadedContent);
+            SendMessage message = new SendMessage(String.valueOf(bot.getChatId()), "Скачано " + downloadedContent);
             message.setChatId(bot.getChatId().toString());
             try {
                 bot.execute(message);

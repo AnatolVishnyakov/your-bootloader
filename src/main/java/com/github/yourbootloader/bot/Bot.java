@@ -36,9 +36,9 @@ public class Bot extends TelegramLongPollingBot {
 
     public void onUpdateReceived(Update update) {
         log.info("onUpdateReceived: {}", update.getMessage());
-        chatId = update.getMessage().getChatId();
 
         Message message = update.getMessage();
+        chatId = message.getChatId();
         String url = message.getText();
 
         if (url.equals("/test")) {
