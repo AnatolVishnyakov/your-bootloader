@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
-import org.asynchttpclient.RequestBuilder;
 import org.asynchttpclient.filter.ThrottleRequestFilter;
 import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,18 +56,10 @@ public class StreamDownloader {
                 .build();
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(url, fileSize, file);
+            DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(file);
             downloaderAsyncHandler.setApplicationEventPublisher(publisher);
-            client
-                    .executeRequest(
-                            new RequestBuilder()
-                                    .setUrl(url)
-                                    .setRangeOffset(file.length())
-                                    .build(),
-                            downloaderAsyncHandler
-                    ).get();
-//            .prepareGet(url)
-//                    .execute(downloaderAsyncHandler).get();
+            client.prepareGet(url).setRangeOffset(file.length())
+                    .execute(downloaderAsyncHandler).get();
         }
         return file;
     }

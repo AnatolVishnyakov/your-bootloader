@@ -3,10 +3,8 @@ package com.github.yourbootloader.yt.download;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.HttpResponseBodyPart;
-import org.asynchttpclient.RequestBuilder;
 import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
 import org.asynchttpclient.handler.resumable.ResumableRandomAccessFileListener;
-import org.asynchttpclient.util.HttpConstants;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.File;
@@ -23,15 +21,11 @@ import java.nio.ByteBuffer;
 class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     private final File originalFile;
-    private final Long fileSize;
     private ApplicationEventPublisher publisher;
 
-    public DownloaderAsyncHandler(String url, Long fileSize, File originalFile) throws IOException {
-        super(originalFile.length());
+    public DownloaderAsyncHandler(File originalFile) throws IOException {
         this.originalFile = originalFile;
-        this.fileSize = fileSize;
 
-        this.adjustRequestRange(new RequestBuilder(HttpConstants.Methods.GET, true).setUrl(url).build());
         RandomAccessFile randomAccessFile = new RandomAccessFile(originalFile, "rw");
         this.setResumableListener(new ResumableRandomAccessFileListener(randomAccessFile) {
             @Override
