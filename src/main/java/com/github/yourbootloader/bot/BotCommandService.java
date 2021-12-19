@@ -34,7 +34,7 @@ public class BotCommandService {
         }
     }
 
-    @EventListener
+//    @EventListener
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
         if (bot.getChatId() != null) {
             DataSize dataSize = DataSize.ofBytes(event.getFileSize());
