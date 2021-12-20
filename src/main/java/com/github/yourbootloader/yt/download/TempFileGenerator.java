@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -26,8 +27,7 @@ public class TempFileGenerator {
     }
 
     private String prepareFileName(String fileName) {
-        return fileName.trim()
-                .replaceAll("\\W+", "-")
+        return new String(fileName.trim().getBytes(StandardCharsets.UTF_8))
                 .concat(FILE_EXTENSION);
     }
 }
