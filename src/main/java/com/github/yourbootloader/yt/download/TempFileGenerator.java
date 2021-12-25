@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -17,7 +18,9 @@ public class TempFileGenerator {
     private final YDProperties ydProperties;
 
     public File create(String fileName) throws IOException {
-        File newTempFile = ydProperties.getDownloadPath().resolve(prepareFileName(fileName)).toFile();
+        File newTempFile = Paths.get(ydProperties.getDownloadPath())
+                .resolve(prepareFileName(fileName))
+                .toFile();
         if (!newTempFile.exists()) {
             if (!newTempFile.createNewFile()) {
                 throw new RuntimeException("Не удалось создать временный файл!");
