@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt;
+package com.github.yourbootloader.yt.trash;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

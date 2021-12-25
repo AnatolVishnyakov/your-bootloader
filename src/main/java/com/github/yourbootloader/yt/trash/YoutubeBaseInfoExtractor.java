@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt;
+package com.github.yourbootloader.yt.trash;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

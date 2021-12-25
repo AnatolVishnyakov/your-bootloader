@@ -1,7 +1,7 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.config.BotConfig;
-import com.github.yourbootloader.yt.YoutubePageParser;
+import com.github.yourbootloader.yt.extractor.YoutubePageParser;
 import com.github.yourbootloader.yt.download.StreamDownloader;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.SneakyThrows;

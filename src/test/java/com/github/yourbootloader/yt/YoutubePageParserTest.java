@@ -2,6 +2,7 @@ package com.github.yourbootloader.yt;
 
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import com.github.yourbootloader.yt.download.StreamDownloader;
+import com.github.yourbootloader.yt.extractor.YoutubePageParser;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
