@@ -20,6 +20,7 @@ public class TempFileGenerator {
     private final YDProperties ydProperties;
 
     public File create(String fileName) {
+        log.info("Создание временного файла {} в директории {}", fileName, ydProperties.getDownloadPath());
         File newTempFile = Paths.get(ydProperties.getDownloadPath())
                 .resolve(prepareFileName(fileName))
                 .toFile();
@@ -29,9 +30,9 @@ public class TempFileGenerator {
                     throw new RuntimeException("Не удалось создать временный файл!");
                 }
             } catch (IOException e) {
-                log.error("Не удалось создать файл {} в директории {}.", fileName, ydProperties.getDownloadPath());
                 throw new RuntimeException(e);
             }
+            log.info("Файл успешно создан!");
         }
         return newTempFile;
     }
