@@ -27,11 +27,11 @@ public class BotCommandService {
         DataSize contentSize = event.getContentSize();
 
         if (fileSize < 1_024) {
-            log.info("Content-Length: {} <---> {} B ({}) block_size: {}", contentSize.toMegabytes(), DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize), receivedLength);
+            log.info("Content-Length: {} Mb <---> {} B ({}) block_size: {}", contentSize.toMegabytes(), DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize), receivedLength);
         } else if (fileSize < 1_048_576) {
-            log.info("Content-Length: {} <---> {} Kb ({}) block_size: {}", contentSize.toMegabytes(), DataSize.ofBytes(fileSize).toKilobytes(), DataSize.ofBytes(fileSize), receivedLength);
+            log.info("Content-Length: {} Mb <---> {} Kb ({}) block_size: {}", contentSize.toMegabytes(), DataSize.ofBytes(fileSize).toKilobytes(), DataSize.ofBytes(fileSize), receivedLength);
         } else {
-            log.info("Content-Length: {} <---> {} Mb ({}) block_size: {}", contentSize.toMegabytes(), DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize), receivedLength);
+            log.info("Content-Length: {} Mb <---> {} Mb ({}) block_size: {}", contentSize.toMegabytes(), DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize), receivedLength);
         }
     }
 
