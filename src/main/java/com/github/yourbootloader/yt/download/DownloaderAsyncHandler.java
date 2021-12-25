@@ -6,6 +6,7 @@ import org.asynchttpclient.HttpResponseBodyPart;
 import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
 import org.asynchttpclient.handler.resumable.ResumableRandomAccessFileListener;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.util.unit.DataSize;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +23,7 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     private final File originalFile;
     private ApplicationEventPublisher publisher;
+    private DataSize contentSize;
 
     public DownloaderAsyncHandler(File originalFile) throws IOException {
         this.originalFile = originalFile;
@@ -43,7 +45,11 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     @Override
     public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
         State state = super.onBodyPartReceived(bodyPart);
-        publisher.publishEvent(new ProgressIndicatorEvent(originalFile.length(), bodyPart.getBodyPartBytes().length));
+        publisher.publishEvent(new ProgressIndicatorEvent(contentSize, originalFile.length(), bodyPart.getBodyPartBytes().length));
         return state;
+    }
+
+    public void setContentSize(DataSize contentSize) {
+        this.contentSize = contentSize;
     }
 }

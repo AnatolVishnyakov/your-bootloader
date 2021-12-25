@@ -24,13 +24,14 @@ public class BotCommandService {
     public void onProgressIndicatorEventLogging(ProgressIndicatorEvent event) {
         long fileSize = event.getFileSize();
         int receivedLength = event.getBlockSize();
+        DataSize contentSize = event.getContentSize();
 
         if (fileSize < 1_024) {
-            log.info("{} B ({}) block_size: {}", DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize), receivedLength);
+            log.info("Content-Length: {} <---> {} B ({}) block_size: {}", contentSize.toMegabytes(), DataSize.ofBytes(fileSize), DataSize.ofBytes(fileSize), receivedLength);
         } else if (fileSize < 1_048_576) {
-            log.info("{} Kb ({}) block_size: {}", DataSize.ofBytes(fileSize).toKilobytes(), DataSize.ofBytes(fileSize), receivedLength);
+            log.info("Content-Length: {} <---> {} Kb ({}) block_size: {}", contentSize.toMegabytes(), DataSize.ofBytes(fileSize).toKilobytes(), DataSize.ofBytes(fileSize), receivedLength);
         } else {
-            log.info("{} Mb ({}) block_size: {}", DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize), receivedLength);
+            log.info("Content-Length: {} <---> {} Mb ({}) block_size: {}", contentSize.toMegabytes(), DataSize.ofBytes(fileSize).toMegabytes(), DataSize.ofBytes(fileSize), receivedLength);
         }
     }
 

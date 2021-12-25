@@ -58,6 +58,7 @@ public class StreamDownloader {
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
             DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(file);
             downloaderAsyncHandler.setApplicationEventPublisher(publisher);
+            downloaderAsyncHandler.setContentSize(dataSize);
             client.prepareGet(url).setRangeOffset(file.length())
                     .execute(downloaderAsyncHandler).get();
         }
