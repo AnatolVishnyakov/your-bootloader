@@ -24,16 +24,20 @@ public class TempFileGenerator {
         File newTempFile = Paths.get(ydProperties.getDownloadPath())
                 .resolve(prepareFileName(fileName))
                 .toFile();
-        if (!newTempFile.exists()) {
-            try {
-                if (!newTempFile.createNewFile()) {
-                    throw new RuntimeException("File can't create!");
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            log.info("File created success!");
+
+        if (newTempFile.exists()) {
+            log.warn("File {} already exists!", fileName);
+            return newTempFile;
         }
+
+        try {
+            if (!newTempFile.createNewFile()) {
+                throw new RuntimeException("File can't create!");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        log.info("File created success!");
         return newTempFile;
     }
 
