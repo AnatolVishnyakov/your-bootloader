@@ -1,9 +1,10 @@
 FROM openjdk:11
 EXPOSE 8080
 
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG ru_RU.UTF-8
+ENV LANGUAGE ru_RU:ru
+ENV LC_LANG ru_RU.UTF-8
+ENV LC_ALL ru_RU.UTF-8
 
 RUN mkdir -p '/home/document/trash'
 WORKDIR /app
