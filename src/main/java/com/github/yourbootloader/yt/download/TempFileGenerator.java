@@ -37,7 +37,7 @@ public class TempFileGenerator {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        log.info("File created success!");
+        log.info("File {} created success!", newTempFile.getName());
         return newTempFile;
     }
 
