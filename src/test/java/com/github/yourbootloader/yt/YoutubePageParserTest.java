@@ -2,7 +2,7 @@ package com.github.yourbootloader.yt;
 
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import com.github.yourbootloader.yt.download.StreamDownloader;
-import com.github.yourbootloader.yt.extractor.YoutubePageParser;
+import com.github.yourbootloader.yt.extractor.legacy.YoutubePageParser;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @YoutubeDownloaderTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))

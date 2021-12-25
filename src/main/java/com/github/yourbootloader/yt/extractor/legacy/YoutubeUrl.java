@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt.extractor;
+package com.github.yourbootloader.yt.extractor.legacy;
 
 import lombok.Value;
 

@@ -1,10 +1,11 @@
-package com.github.yourbootloader.yt.extractor;
+package com.github.yourbootloader.yt.extractor.legacy;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Objects;
@@ -21,9 +22,10 @@ public class DownloadWebPage {
         this.url = youtubeUrl.getWebPageUrl() + "&bpctr=9999999999&has_verified=1";
     }
 
+
+    @Retryable
     @SneakyThrows
     public String download() {
-        // TODO нужно поретраить (если по какой то причине не скачал)
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
         MediaType contentType = response.getHeaders().getContentType();
