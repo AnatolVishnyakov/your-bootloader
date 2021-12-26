@@ -3,8 +3,11 @@ package com.github.yourbootloader.yt.extractor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.regex.Pattern;
+
+import static java.lang.String.format;
 
 /**
  * Provide base functions for Youtube extractors
@@ -42,13 +45,14 @@ public abstract class YoutubeBaseInfoExtractor extends InfoExtractor {
 
     // TODO реализовать авторизацию
     public boolean login() {
-        log.warn("Not implemented!");
-        return false;
+        log.error("Not implemented!");
+        throw new NotImplementedException();
     }
 
     // TODO реализовать работу с куками
     public void initializeConsent() {
-        log.warn("Not implemented!");
+        log.error("Not implemented!");
+        throw new NotImplementedException();
     }
 
     // TODO implement
@@ -57,12 +61,37 @@ public abstract class YoutubeBaseInfoExtractor extends InfoExtractor {
         if (this.downloader == null || !login()) {
             return;
         }
-        if (!login()) {
-            return;
-        }
     }
 
     public void callApi() {
-        log.warn("Not implemented!");
+        log.error("Not implemented!");
+        throw new NotImplementedException();
+    }
+
+    public JSONObject extractYtInitialData(String videoId, String webPage) {
+        return this.parseJson(
+                this.searchRegex(
+                        format("%s\\s*%s %s", _YT_INITIAL_DATA_RE, _YT_INITIAL_BOUNDARY_RE, _YT_INITIAL_DATA_RE),
+                        webPage,
+                        "yt initial data"
+                ),
+                videoId
+        );
+    }
+
+    public JSONObject extractYtcfg(String videoId, String webPage) {
+        return this.parseJson(
+                this.searchRegex(
+                        "ytcfg\\.set\\s*\\(\\s*({.+?})\\s*\\)\\s*;",
+                        webPage,
+                        "ytcfg"
+                ),
+                videoId
+        );
+    }
+
+    public void extractVideo() {
+        log.error("Not implemented!");
+        throw new NotImplementedException();
     }
 }
