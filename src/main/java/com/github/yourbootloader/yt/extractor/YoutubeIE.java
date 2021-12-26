@@ -1,16 +1,23 @@
 package com.github.yourbootloader.yt.extractor;
 
+import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
+import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import static java.lang.String.format;
+
+@Slf4j
 @Service
 public class YoutubeIE extends YoutubeBaseInfoExtractor {
 
-    public static String IE_DESC = "YouTube.com";
-    public static List<String> _INVIDIOUS_SITES = Arrays.asList(
+    private static String IE_DESC = "YouTube.com";
+    private static List<String> _INVIDIOUS_SITES = Arrays.asList(
             // invidious-redirect websites
             "(?:www\\.)?redirect\\.invidious\\.io",
             "(?:(?:www|dev)\\.)?invidio\\.us",
@@ -70,44 +77,118 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             "(?:www\\.)?grwp24hodrefzvjjuccrkw3mjq4tzhaaq32amf33dzpmuxe7ilepcmad\\.onion",
             "(?:www\\.)?hpniueoejy4opn7bc4ftgazyqjoeqwlvh2uiku2xqku6zpoa4bf5ruid\\.onion"
     );
-    public static String _VALID_URL = ("(?x)^\n" +
-            "(\n" +
-            "    (?:https?://|//)\n" +                                                              // http(s):// or protocol-independent URL
-            "    (?:(?:(?:(?:\\w+\\.)?[yY][oO][uU][tT][uU][bB][eE](?:-nocookie|kids)?\\.com|\n" +
-            "       (?:www\\.)?deturl\\.com/www\\.youtube\\.com|\n" +
-            "       (?:www\\.)?pwnyoutube\\.com|\n" +
-            "       (?:www\\.)?hooktube\\.com|\n" +
-            "       (?:www\\.)?yourepeat\\.com|\n" +
-            "       tube\\.majestyc\\.net|\n" +
-            "       %{invidious}|\n" +
-            "       youtube\\.googleapis\\.com)/\n" +                                               // the various hostnames, with wildcard subdomains
-            "    (?:.*?\\#/)?\n" +                                                                  // handle anchor (#/) redirect urls
-            "    (?:\n" +                                                                           // the various things that can precede the ID:
-            "        (?:(?:v|embed|e)/(?!videoseries))\n" +                                         // v/ or embed/ or e/
-            "        |(?:\n" +                                                                      // or the v= param in all its forms
-            "            (?:(?:watch|movie)(?:_popup)?(?:\\.php)?/?)?\n" +                          // preceding watch(_popup|.php) or nothing (like /?v=xxxx)
-            "            (?:\\?|\\#!?)\n" +                                                         // the params delimiter ? or # or #!
-            "            (?:.*?[&;])??\n" +                                                         // any other preceding param (like /?s=tuff&v=xxxx or ?s=tuff&amp;v=V36LpHqtcDY)
-            "            v=\n" +
-            "        )\n" +
-            "    ))\n" +
-            "    |(?:\n" +
-            "       youtu\\.be|\n" +                                                                // just youtu.be/xxxx
-            "       vid\\.plus|\n" +                                                                // or vid.plus/xxxx
-            "       zwearz\\.com/watch|\n" +                                                        // or zwearz.com/watch/xxxx
-            "       %{invidious}\n" +
-            "    )/\n" +
-            "    |(?:www\\.)?cleanvideosearch\\.com/media/action/yt/watch\\?videoId=\n" +
-            "    )\n" +
-            ")?\n" +                                                                                // all until now is optional -> you can pass the naked ID
-            "(?P<id>[0-9A-Za-z_-]{11})\n" +                                                         // here is it! the YouTube video ID
-            "(?(1).+)?\n" +                                                                         // if we found the ID, everything can follow
+    private static String _VALID_URL = ("(?x)^" +
+            "(" +
+            "    (?:https?://|//)" +                                                              // http(s):// or protocol-independent URL
+            "    (?:(?:(?:(?:\\w+\\.)?[yY][oO][uU][tT][uU][bB][eE](?:-nocookie|kids)?\\.com|" +
+            "       (?:www\\.)?deturl\\.com/www\\.youtube\\.com|" +
+            "       (?:www\\.)?pwnyoutube\\.com|" +
+            "       (?:www\\.)?hooktube\\.com|" +
+            "       (?:www\\.)?yourepeat\\.com|" +
+            "       tube\\.majestyc\\.net|" +
+            "       %\\{invidious}|" +
+            "       youtube\\.googleapis\\.com)/" +                                               // the various hostnames, with wildcard subdomains
+            "    (?:.*?\\#/)?" +                                                                  // handle anchor (#/) redirect urls
+            "    (?:" +                                                                           // the various things that can precede the ID:
+            "        (?:(?:v|embed|e)/(?!videoseries))" +                                         // v/ or embed/ or e/
+            "        |(?:" +                                                                      // or the v= param in all its forms
+            "            (?:(?:watch|movie)(?:_popup)?(?:\\.php)?/?)?" +                          // preceding watch(_popup|.php) or nothing (like /?v=xxxx)
+            "            (?:\\?|\\#!?)" +                                                         // the params delimiter ? or # or #!
+            "            (?:.*?[&;])??" +                                                         // any other preceding param (like /?s=tuff&v=xxxx or ?s=tuff&amp;v=V36LpHqtcDY)
+            "            v=" +
+            "        )" +
+            "    ))" +
+            "    |(?:" +
+            "       youtu\\.be|" +                                                                // just youtu.be/xxxx
+            "       vid\\.plus|" +                                                                // or vid.plus/xxxx
+            "       zwearz\\.com/watch|" +                                                        // or zwearz.com/watch/xxxx
+            "       %\\{invidious}" +
+            "    )/" +
+            "    |(?:www\\.)?cleanvideosearch\\.com/media/action/yt/watch\\?videoId=" +
+            "    )" +
+            ")?" +                                                                                // all until now is optional -> you can pass the naked ID
+//            "(?P<id>[0-9A-Za-z_-]{11})" +                                                         // here is it! the YouTube video ID
+//            "(?(1).+)?" +                                                                         // if we found the ID, everything can follow
             "$").replaceAll("%\\{invidious}", String.join("|", _INVIDIOUS_SITES));
+    private static List<String> _PLAYER_INFO_RE = Arrays.asList(
+            "/s/player/(?P<id>[a-zA-Z0-9_-]{8,})/player",
+            "/(?P<id>[a-zA-Z0-9_-]{8,})/player(?:_ias\\.vflset(?:/[a-zA-Z]{2,3}_[a-zA-Z]{2,3})?|-plasma-ias-(?:phone|tablet)-[a-z]{2}_[A-Z]{2}\\.vflset)/base\\.js$",
+            "\b(?P<id>vfl[a-zA-Z0-9_-]+)\b.*?\\.js$"
+    );
+    private static List<String> _SUBTITLE_FORMATS = Arrays.asList("srv1", "srv2", "srv3", "ttml", "vtt");
+    private static boolean _GEO_BYPASS = false;
+    private static String IE_NAME = "youtube";
+    private final Map<Object, Object> codeCache;
+    private final Map<Object, Object> playerCache;
 
     @Autowired
     protected YoutubeIE(YoutubeDLService youtubeDLService) {
         super(youtubeDLService);
+        this.codeCache = new HashMap<>();
+        this.playerCache = new HashMap<>();
     }
 
+    public boolean suitable(String url) {
+        log.warn("Not implemented!");
+        // TODO implements super.suitable(url)
+        Pattern pattern = Pattern.compile(_VALID_URL);
+        Matcher matcher = pattern.matcher(url);
+        return matcher.matches();
+    }
 
+    public void _signature_cache_id(String exampleSig) {
+        throw new MethodNotImplementedException();
+    }
+
+    public void extractPlayerInfo(String playerUrl) {
+        throw new MethodNotImplementedException();
+    }
+
+    public void _extract_signature_function(String videoId, String playerUrl, String exampleSig) {
+        throw new MethodNotImplementedException();
+    }
+
+    public void printSigCode() {
+        throw new MethodNotImplementedException();
+    }
+
+    public void parseSigJs() {
+        throw new MethodNotImplementedException();
+    }
+
+    public void decryptSignature() {
+        throw new MethodNotImplementedException();
+    }
+
+    public void markWatched() {
+        throw new MethodNotImplementedException();
+    }
+
+    public void extractUrls(String webPage) {
+        throw new MethodNotImplementedException();
+    }
+
+    public void extractUrl(String webPage) {
+        throw new MethodNotImplementedException();
+    }
+
+    public void extractId(String url) {
+        throw new MethodNotImplementedException();
+    }
+
+    public List<Object> extractChaptersFromJson(JSONObject data, String videoId, int duration) {
+        log.error("Not implemented!");
+        return Collections.emptyList();
+    }
+
+    public JSONObject extractYtInitialVariable(String webPage, String regex, String videoId, String name) {
+        return super.parseJson(
+                super.searchRegex(
+                        Arrays.asList(format("%s\\s*%s", regex, _YT_INITIAL_BOUNDARY_RE), regex),
+                        webPage,
+                        name
+                ),
+                videoId
+        );
+    }
 }
