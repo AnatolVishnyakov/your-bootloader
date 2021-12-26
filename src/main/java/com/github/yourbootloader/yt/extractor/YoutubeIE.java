@@ -107,7 +107,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             "    |(?:www\\.)?cleanvideosearch\\.com/media/action/yt/watch\\?videoId=" +
             "    )" +
             ")?" +                                                                                // all until now is optional -> you can pass the naked ID
-//            "(?P<id>[0-9A-Za-z_-]{11})" +                                                         // here is it! the YouTube video ID
+            "(?<id>[0-9A-Za-z_-]{11})" +                                                          // here is it! the YouTube video ID
 //            "(?(1).+)?" +                                                                         // if we found the ID, everything can follow
             "$").replaceAll("%\\{invidious}", String.join("|", _INVIDIOUS_SITES));
     private static List<String> _PLAYER_INFO_RE = Arrays.asList(
@@ -190,5 +190,10 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 ),
                 videoId
         );
+    }
+
+    // TODO требует обязательной реализации
+    public Info realExtract(String url) {
+        throw new MethodNotImplementedException();
     }
 }
