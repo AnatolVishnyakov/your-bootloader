@@ -17,7 +17,7 @@ import static java.lang.String.format;
 public class YoutubeIE extends YoutubeBaseInfoExtractor {
 
     private static String IE_DESC = "YouTube.com";
-    private static List<String> _INVIDIOUS_SITES = Arrays.asList(
+    public static List<String> _INVIDIOUS_SITES = Arrays.asList(
             // invidious-redirect websites
             "(?:www\\.)?redirect\\.invidious\\.io",
             "(?:(?:www|dev)\\.)?invidio\\.us",
@@ -77,7 +77,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             "(?:www\\.)?grwp24hodrefzvjjuccrkw3mjq4tzhaaq32amf33dzpmuxe7ilepcmad\\.onion",
             "(?:www\\.)?hpniueoejy4opn7bc4ftgazyqjoeqwlvh2uiku2xqku6zpoa4bf5ruid\\.onion"
     );
-    private static String _VALID_URL = ("(?x)^" +
+    public static String _VALID_URL = ("(?x)^" +
             "(" +
             "    (?:https?://|//)" +                                                              // http(s):// or protocol-independent URL
             "    (?:(?:(?:(?:\\w+\\.)?[yY][oO][uU][tT][uU][bB][eE](?:-nocookie|kids)?\\.com|" +
@@ -108,6 +108,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             "    )" +
             ")?" +                                                                                // all until now is optional -> you can pass the naked ID
             "(?<id>[0-9A-Za-z_-]{11})" +                                                          // here is it! the YouTube video ID
+            "(.+)?" +                                                                         // if we found the ID, everything can follow
 //            "(?(1).+)?" +                                                                         // if we found the ID, everything can follow
             "$").replaceAll("%\\{invidious}", String.join("|", _INVIDIOUS_SITES));
     private static List<String> _PLAYER_INFO_RE = Arrays.asList(
@@ -193,7 +194,13 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
     }
 
     // TODO требует обязательной реализации
-    public Info realExtract(String url) {
+    public Info realExtract(String _url) {
+        Map<Object, Object> smuggledData = Utils.unsmuggleUrl(_url).getTwo();
+        String url = Utils.unsmuggleUrl(_url).getOne();
+        String videoId = this.matchId(url);
+        String baseUrl = this.httpScheme() + "//www.youtube.com/";
+        String webPageUrl = baseUrl + "watch?v=" + videoId;
+        String webpage = this.downloadWebpage(webPageUrl + "&bpctr=9999999999&has_verified=1", videoId);
         throw new MethodNotImplementedException();
     }
 }
