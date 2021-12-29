@@ -198,9 +198,25 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         Map<Object, Object> smuggledData = Utils.unsmuggleUrl(_url).getTwo();
         String url = Utils.unsmuggleUrl(_url).getOne();
         String videoId = this.matchId(url);
-        String baseUrl = this.httpScheme() + "//www.youtube.com/";
+        String baseUrl = this.httpScheme() + ":" + "//www.youtube.com/";
         String webPageUrl = baseUrl + "watch?v=" + videoId;
-        String webpage = this.downloadWebpage(webPageUrl + "&bpctr=9999999999&has_verified=1", videoId);
-        throw new MethodNotImplementedException();
+        String webpage = this.downloadWebpage(webPageUrl + "&bpctr=9999999999&has_verified=1", videoId, 3);
+
+        JSONObject playerResponse = null;
+        if (webpage != null && !webpage.isEmpty()) {
+            playerResponse = this.extractYtInitialVariable(webpage, _YT_INITIAL_PLAYER_RESPONSE_RE, videoId, "initial player response");
+        }
+
+        if (playerResponse == null) {
+            throw new MethodNotImplementedException("Player response");
+        }
+
+        JSONObject playabilityStatus = playerResponse.getJSONObject("playabilityStatus");
+        if (playabilityStatus.has("reason") &&
+                playabilityStatus.getString("reason").equals("Sign in to confirm your age")) {
+            throw new MethodNotImplementedException("Player response playabilityStatus");
+        }
+
+        return null;
     }
 }

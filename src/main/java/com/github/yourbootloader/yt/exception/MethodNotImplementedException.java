@@ -4,4 +4,8 @@ public class MethodNotImplementedException extends RuntimeException {
     public MethodNotImplementedException() {
         super("Not implemented method!");
     }
+
+    public MethodNotImplementedException(String message) {
+        super(message);
+    }
 }

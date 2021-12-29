@@ -35,9 +35,9 @@ public abstract class YoutubeBaseInfoExtractor extends InfoExtractor {
                     "    }," +
                     "}"
     );
-    public static Pattern _YT_INITIAL_DATA_RE = Pattern.compile("(?:window\\s*\\[\\s*[\"\']ytInitialData[\"\']\\s*\\]|ytInitialData)\\s*=\\s*(\\{.+?})\\s*;");
-    public static Pattern _YT_INITIAL_PLAYER_RESPONSE_RE = Pattern.compile("ytInitialPlayerResponse\\s*=\\s*(\\{.+?})\\s*;");
-    public static Pattern _YT_INITIAL_BOUNDARY_RE = Pattern.compile("(?:var\\s+meta|</script|\n)");
+    public static String _YT_INITIAL_DATA_RE = "(?:window\\s*\\[\\s*[\"\']ytInitialData[\"\']\\s*\\]|ytInitialData)\\s*=\\s*(\\{.+?})\\s*;";
+    public static String _YT_INITIAL_PLAYER_RESPONSE_RE = "ytInitialPlayerResponse\\s*=\\s*(\\{.+?})\\s*;";
+    public static String _YT_INITIAL_BOUNDARY_RE = "(?:var\\s+meta|</script|\n)";
 
     @Autowired
     protected YoutubeBaseInfoExtractor(YoutubeDLService youtubeDLService) {

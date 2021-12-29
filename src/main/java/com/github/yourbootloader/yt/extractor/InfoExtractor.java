@@ -1,11 +1,14 @@
 package com.github.yourbootloader.yt.extractor;
 
-import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
+import com.github.yourbootloader.yt.extractor.dto.Pair;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,10 +28,17 @@ public abstract class InfoExtractor {
     }
 
     protected JSONObject parseJson(String json, String videoId) {
-        throw new NotImplementedException();
+        return new JSONObject(json);
     }
 
-    protected String searchRegex(List<String> pattern, String string, String name) {
+    protected String searchRegex(List<String> patterns, String string, String name) {
+        for (String p : patterns) {
+            Pattern pattern = Pattern.compile(p);
+            Matcher matcher = pattern.matcher(string);
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+        }
         throw new NotImplementedException();
     }
 
@@ -49,7 +59,79 @@ public abstract class InfoExtractor {
                 : "https";
     }
 
-    protected String downloadWebpage(String url, String videoId) {
-        throw new MethodNotImplementedException();
+    protected String downloadWebpage(String url, String videoId, int tries) {
+        boolean success = false;
+        int tryCount = 0;
+        Pair<String, ResponseEntity<String>> res = null;
+
+        while (!success) {
+            try {
+                res = this.downloadWebpageHandle(url, videoId);
+                success = true;
+            } catch (Exception exc) {
+                tryCount += 1;
+                if (tryCount >= tries) {
+                    break;
+                }
+                try {
+                    Thread.sleep(1_000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return res.getOne();
+    }
+
+    private Pair<String, ResponseEntity<String>> downloadWebpageHandle(String url, String videoId) {
+        // TODO Strip hashes from the URL (#1038)
+        ResponseEntity<String> urlh = this.requestWebpage(url, videoId);
+        if (urlh == null) {
+            return null;
+        }
+        String content = webpageReadContent(urlh, url, videoId);
+        return new Pair<>(content, urlh);
+    }
+
+    private String webpageReadContent(ResponseEntity<String> urlh, String url, String videoId) {
+        String contentType = Objects.requireNonNull(urlh.getHeaders().getContentType()).toString();
+        byte[] webpageBytes = Objects.requireNonNull(urlh.getBody()).getBytes();
+        String encoding = this.guessEncodingFromContent(contentType, webpageBytes);
+        String content = new String(webpageBytes, Charset.forName(encoding));
+
+        this.checkBlocked(content);
+
+        return content;
+    }
+
+    private void checkBlocked(String content) {
+        // TODO implements
+    }
+
+    private String guessEncodingFromContent(String contentType, byte[] webpageBytes) {
+        String content = new String(webpageBytes);
+        if (contentType != null) {
+            Pattern pattern = Pattern.compile("[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+\\s*;\\s*charset=(.+)");
+            Matcher matcher = pattern.matcher(contentType.toString());
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+        }
+
+        Pattern pattern = Pattern.compile("<meta[^>]+charset=[\\'\"]?([^\\'\")]+)[ /\\'\">]");
+        Matcher matcher = pattern.matcher(content.substring(0, 1024));
+        if (matcher.find()) {
+            return matcher.group(1);
+        } else if (content.startsWith("\\xff\\xfe")) {
+            return "UTF-16";
+        } else {
+            return "UTF-8";
+        }
+    }
+
+    private ResponseEntity<String> requestWebpage(String url, String videoId) {
+        // TODO CertificateError
+        return downloader.urlopen(url);
     }
 }
