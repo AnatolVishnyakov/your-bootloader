@@ -2,13 +2,16 @@ package com.github.yourbootloader.yt.extractor;
 
 import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -217,6 +220,192 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             throw new MethodNotImplementedException("Player response playabilityStatus");
         }
 
+        if (isTrailerVideoId(playabilityStatus)) {
+            throw new MethodNotImplementedException("Trailer video id handler not implements!");
+        }
+
+        JSONObject videoDetails = playerResponse.getJSONObject("videoDetails");
+        JSONObject microformat = playerResponse.getJSONObject("microformat").getJSONObject("playerMicroformatRenderer");
+        String videoTitle = videoDetails.getString("title");
+        String videoDescription = videoDetails.getString("shortDescription");
+
+        // TODO force_singlefeed
+
+        List<Map<String, Object>> formats = new ArrayList<>();
+        List<Integer> itags = new ArrayList<>();
+        Map<Integer, String> itagQualities = new HashMap<>();
+        Object player_url = null;
+        Function<String, Integer> q = key -> Arrays.asList("tiny", "small", "medium", "large", "hd720", "hd1080", "hd1440", "hd2160", "hd2880", "highres").indexOf(key);
+        JSONObject streamingData = playerResponse.getJSONObject("streamingData");
+        JSONArray streamingFormats = streamingData.getJSONArray("formats");
+        JSONArray adaptiveFormats = streamingData.getJSONArray("adaptiveFormats");
+
+        for (int i = 0; i < adaptiveFormats.length(); i++) {
+            streamingFormats.put(adaptiveFormats.get(i));
+        }
+
+        for (int i = 0; i < streamingFormats.length(); i++) {
+            JSONObject fmt = streamingFormats.getJSONObject(i);
+            if (fmt.has("targetDurationSec") || fmt.has("drmFamilies")) {
+                continue;
+            }
+
+            Integer itag = null;
+            String quality = null;
+            if (fmt.has("itag") && fmt.has("quality")) {
+                itag = fmt.getInt("itag");
+                quality = fmt.getString("quality");
+                itagQualities.put(itag, quality);
+            }
+
+            if (fmt.has("type") && fmt.getString("type").equals("FORMAT_STREAM_TYPE_OTF")) {
+                continue;
+            }
+
+            String fmtUrl = fmt.getString("url");
+            if (fmtUrl == null && !fmt.isEmpty()) {
+                throw new MethodNotImplementedException("Not implement fmtUrl");
+            }
+
+            if (itag != null) {
+                itags.add(itag);
+            }
+
+            float tbr = fmt.has("averageBitrate")
+                    ? fmt.getFloat("averageBitrate")
+                    : (fmt.has("bitrate") ? fmt.getFloat("bitrate") : 1000);
+
+            Integer finalItag = itag;
+            String finalQuality = quality;
+            Map<String, Object> dct = new HashMap<String, Object>() {{
+                put("asr", fmt.has("audioSampleRate") ? fmt.getInt("audioSampleRate") : null);
+                put("filesize", fmt.has("contentLength") ? fmt.getInt("contentLength") : null);
+                put("format_id", finalItag);
+                put("format_note", fmt.has("qualityLabel") ? fmt.getString("qualityLabel") : finalQuality);
+                put("fps", fmt.has("fps") ? fmt.getInt("fps") : null);
+                put("height", fmt.has("height") ? fmt.get("height") : null);
+                put("quality", q.apply(finalQuality));
+                put("tbr", tbr);
+                put("url", fmtUrl);
+                put("width", fmt.has("width") ? fmt.get("width") : null);
+            }};
+
+            String mimeType = null;
+            if (fmt.has("mimeType")) {
+                mimeType = fmt.getString("mimeType");
+                Pattern pattern = Pattern.compile("((?:[^/]+)/(?:[^;]+))(?:;\\s*codecs=\"([^\"]+)\")?");
+                Matcher matcher = pattern.matcher(mimeType);
+                if (matcher.find()) {
+                    dct.put("ext", mimeType2Ext(matcher.group(1)));
+                    dct.putAll(parseCodecs(matcher.group(2)));
+                }
+            }
+
+            boolean noAudio = dct.get("acodec") == null;
+            boolean noVideo = dct.get("vcodec") == null;
+
+            if (noAudio) {
+                dct.put("vbr", tbr);
+            }
+            if (noVideo) {
+                dct.put("abr", tbr);
+            }
+            if (noAudio || noVideo) {
+                dct.put("downloader_options", new HashMap<String, Object>() {{
+                    put("http_chunk_size", 10485760);
+                }});
+                if (dct.containsKey("ext")) {
+                    dct.put("container", dct.get("ext") + "_dash");
+                }
+            }
+
+            formats.add(dct);
+        }
         return null;
+    }
+
+    private Map<String, Object> parseCodecs(String codecs) {
+        if (codecs == null || codecs.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<String> splitCodecs = Arrays.stream(codecs.split(",")).map(String::trim).collect(Collectors.toList());
+        String vcodec = null;
+        String acodec = null;
+
+        for (String fullCodec : splitCodecs) {
+            String codec = fullCodec.split("\\.")[0];
+            if (Arrays.asList("avc1", "avc2", "avc3", "avc4", "vp9", "vp8", "hev1", "hev2", "h263", "h264", "mp4v", "hvc1", "av01", "theora").contains(codec)) {
+                if (vcodec == null) {
+                    vcodec = fullCodec;
+                }
+            } else if (Arrays.asList("mp4a", "opus", "vorbis", "mp3", "aac", "ac-3", "ec-3", "eac3", "dtsc", "dtse", "dtsh", "dtsl").contains(codec)) {
+                if (acodec == null) {
+                    acodec = fullCodec;
+                }
+            } else {
+                log.warn("WARNING: Unknown codec {}", fullCodec);
+            }
+        }
+
+        if (acodec != null && vcodec != null) {
+            if (splitCodecs.size() == 2) {
+                return new HashMap<String, Object>() {{
+                    put("vcodec", splitCodecs.get(0));
+                    put("acodec", splitCodecs.get(1));
+                }};
+            }
+        }
+
+        return new HashMap<String, Object>() {{
+            put("vcodec", null);
+            put("acodec", null);
+        }};
+    }
+
+    private boolean isTrailerVideoId(JSONObject playabilityStatus) {
+        return playabilityStatus.has("errorScreen")
+                && playabilityStatus.getJSONObject("errorScreen").has("playerLegacyDesktopYpcTrailerRenderer")
+                && playabilityStatus.getJSONObject("errorScreen").getJSONObject("playerLegacyDesktopYpcTrailerRenderer")
+                .has("trailerVideoId");
+    }
+
+    private String mimeType2Ext(String mt) {
+        if (mt == null || mt.isEmpty()) {
+            return null;
+        }
+
+        String ext = new HashMap<String, String>() {{
+            put("audio/mp4", "m4a");
+            put("audio/mpeg", "mp3");
+        }}.get(mt);
+
+        if (ext != null) {
+            return ext;
+        }
+
+        String res = mt.split("/", 2)[1];
+        res = res.split(";")[0].trim().toLowerCase();
+
+        return new HashMap<String, String>() {{
+            put("3gpp", "3gp");
+            put("smptett+xml", "tt");
+            put("ttaf+xml", "dfxp");
+            put("ttml+xml", "ttml");
+            put("x-flv", "flv");
+            put("x-mp4-fragmented", "mp4");
+            put("x-ms-sami", "sami");
+            put("x-ms-wmv", "wmv");
+            put("mpegurl", "m3u8");
+            put("x-mpegurl", "m3u8");
+            put("vnd.apple.mpegurl", "m3u8");
+            put("dash+xml", "mpd");
+            put("f4m+xml", "f4m");
+            put("hds+xml", "f4m");
+            put("vnd.ms-sstr+xml", "ism");
+            put("quicktime", "mov");
+            put("mp2t", "ts");
+            put("x-wav", "wav");
+        }}.getOrDefault(res, res);
     }
 }
