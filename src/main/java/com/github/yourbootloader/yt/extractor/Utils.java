@@ -15,4 +15,9 @@ public class Utils {
         }
         throw new UnsupportedOperationException("Not implemented unsmuggle");
     }
+
+
+    public static int parseDuration(String duration) {
+        return 0;
+    }
 }

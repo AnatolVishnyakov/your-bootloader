@@ -197,7 +197,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
     }
 
     // TODO требует обязательной реализации
-    public Info realExtract(String _url) {
+    public Map<String, Object> realExtract(String _url) {
         Map<Object, Object> smuggledData = Utils.unsmuggleUrl(_url).getTwo();
         String url = Utils.unsmuggleUrl(_url).getOne();
         String videoId = this.matchId(url);
@@ -321,6 +321,89 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
 
             formats.add(dct);
         }
+
+        if (streamingData.has("hlsManifestUrl")) {
+            String hlsManifestUrl = streamingData.getString("hlsManifestUrl");
+            throw new MethodNotImplementedException("Hls manifest url: " + hlsManifestUrl);
+        }
+
+        if (((boolean) downloader.getParams("youtube_include_dash_manifest"))) {
+            if (streamingData.has("dashManifestUrl")) {
+                String dashManifestUrl = streamingData.getString("dashManifestUrl");
+                if (dashManifestUrl != null && !dashManifestUrl.isEmpty()) {
+                    throw new MethodNotImplementedException("Manifest url not implemented!");
+                }
+            }
+        }
+
+        if (formats.isEmpty()) {
+            throw new MethodNotImplementedException("Formats not found. Implements another source");
+        }
+
+        // TODO implements sort formats
+        // TODO implements keywords
+
+        List<Map<String, Object>> thumbnails = new ArrayList<>();
+
+        for (JSONObject container : Arrays.asList(videoDetails, microformat)) {
+            container.optJSONObject("thumbnail").optJSONArray("thumbnails").forEach(i -> {
+                JSONObject thumbnail = (JSONObject) i;
+                String thumbnailUrl = thumbnail.optString("url");
+                if (thumbnailUrl == null || thumbnailUrl.isEmpty()) {
+                    return;
+                }
+                thumbnails.add(
+                        new HashMap<String, Object>() {{
+                            put("height", thumbnail.optInt("height"));
+                            put("url", thumbnailUrl);
+                            put("width", thumbnail.optInt("width"));
+                        }}
+                );
+            });
+            if (!thumbnails.isEmpty()) {
+                break;
+            }
+        }
+
+        String category = Optional.ofNullable(microformat.optString("category"))
+                .orElse(searchMeta("genre"));
+        String channelId = Optional.ofNullable(videoDetails.optString("channelId"))
+                .orElseGet(() -> Optional.ofNullable(microformat.optString("externalChannelId"))
+                        .orElse(searchMeta("channelId")));
+        int duration = Optional.ofNullable(videoDetails.optInt("lengthSeconds"))
+                .orElseGet(() -> Optional.ofNullable(microformat.optInt("lengthSeconds"))
+                        .orElse(Utils.parseDuration(searchMeta("duration"))));
+        boolean isLive = videoDetails.optBoolean("isLive");
+        String ownerProfileUrl = microformat.optString("ownerProfileUrl");
+
+        Map<String, Object> info = new HashMap<String, Object>() {{
+            put("id", videoId);
+            put("title", videoTitle);
+            put("formats", formats);
+            put("thumbnails", thumbnails);
+            put("description", videoDescription);
+            put("upload_date", microformat.optString("uploadDate"));
+            put("uploader", videoDetails.optString("author"));
+            put("uploader_id", null);
+            put("uploader_url", ownerProfileUrl);
+            put("channel_id", channelId);
+            put("channel_url", channelId != null && !channelId.isEmpty() ? "https://www.youtube.com/channel/" + channelId : null);
+            put("duration", duration);
+            put("view_count", Optional.ofNullable(videoDetails.optInt("viewCount"))
+                    .orElseGet(() -> microformat.optInt("viewCount")));
+            put("average_rating", videoDetails.optFloat("averageRating"));
+            put("age_limit", null);
+            put("webpage_url", webPageUrl);
+            put("categories", Collections.singletonList(category));
+            put("tags", null);
+            put("is_live", isLive);
+        }};
+
+        return info;
+    }
+
+    private String searchMeta(String word) {
+        log.warn("Not implement search meta");
         return null;
     }
 
