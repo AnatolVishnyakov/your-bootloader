@@ -1,5 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
+import com.github.yourbootloader.bot.event.StartDownloadEvent;
 import com.github.yourbootloader.config.YDProperties;
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.io.File;
 import java.util.UUID;
@@ -33,6 +35,7 @@ public class StreamDownloader {
     private Long fileSize;
     private HttpHeaders headers;
     private DownloadContext context;
+    private Chat chat;
 
     private void establishConnection() {
     }
@@ -55,8 +58,9 @@ public class StreamDownloader {
                 .addRequestFilter(new ThrottleRequestFilter(10))
                 .build();
 
+        publisher.publishEvent(new StartDownloadEvent(chat));
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(file);
+            DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
             downloaderAsyncHandler.setApplicationEventPublisher(publisher);
             downloaderAsyncHandler.setContentSize(dataSize);
             client.prepareGet(url).setRangeOffset(file.length())
@@ -112,5 +116,9 @@ public class StreamDownloader {
             }
         }
         return null;
+    }
+
+    public void setChat(Chat chat) {
+        this.chat = chat;
     }
 }

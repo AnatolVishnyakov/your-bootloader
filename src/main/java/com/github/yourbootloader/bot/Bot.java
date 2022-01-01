@@ -105,7 +105,7 @@ public class Bot extends TelegramLongPollingBot {
             String url = (String) format.get("url");
             String filename = (String) info.get("title");
             Long filesize = ((Integer) format.get("filesize")).longValue();
-            botCommandService.download(url, filename, filesize);
+            botCommandService.download(update.getCallbackQuery().getMessage().getChat(), url, filename, filesize);
         }
 
 //        YoutubePageParser youtubePageParser = context.getBean(YoutubePageParser.class, url);

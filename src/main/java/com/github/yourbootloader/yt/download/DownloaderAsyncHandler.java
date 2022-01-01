@@ -7,6 +7,7 @@ import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
 import org.asynchttpclient.handler.resumable.ResumableRandomAccessFileListener;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.unit.DataSize;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,10 +23,12 @@ import java.nio.ByteBuffer;
 class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     private final File originalFile;
+    private final Chat chat;
     private ApplicationEventPublisher publisher;
     private DataSize contentSize;
 
-    public DownloaderAsyncHandler(File originalFile) throws IOException {
+    public DownloaderAsyncHandler(Chat chat, File originalFile) throws IOException {
+        this.chat = chat;
         this.originalFile = originalFile;
 
         RandomAccessFile randomAccessFile = new RandomAccessFile(originalFile, "rw");
@@ -45,7 +48,7 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     @Override
     public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
         State state = super.onBodyPartReceived(bodyPart);
-        publisher.publishEvent(new ProgressIndicatorEvent(contentSize, originalFile.length(), bodyPart.getBodyPartBytes().length));
+        publisher.publishEvent(new ProgressIndicatorEvent(chat, contentSize, originalFile.length(), bodyPart.getBodyPartBytes().length));
         return state;
     }
 
