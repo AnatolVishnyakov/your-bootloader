@@ -15,7 +15,7 @@ public class BotQueryService {
 
     private final YoutubeIE youtubeIE;
 
-    public void getFormats(String url) {
-        Map<String, Object> formats = youtubeIE.realExtract(url);
+    public Map<String, Object> getVideoInfo(String url) {
+        return youtubeIE.realExtract(url);
     }
 }

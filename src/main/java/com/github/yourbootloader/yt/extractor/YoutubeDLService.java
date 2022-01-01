@@ -13,11 +13,9 @@ import java.util.Map;
 public class YoutubeDLService {
 
     private final RestTemplate restTemplate;
-    private final YoutubeIE youtubeIE;
     private Map<String, Object> params;
 
-    public YoutubeDLService(YoutubeIE youtubeIE) {
-        this.youtubeIE = youtubeIE;
+    public YoutubeDLService() {
         this.restTemplate = new RestTemplate();
         this.params = new HashMap<String, Object>() {{
             put("youtube_include_dash_manifest", true);
@@ -37,14 +35,14 @@ public class YoutubeDLService {
     }
 
     public Map<String, Object> extractInfo(String url, boolean isDownload, Map<String, Object> extraInfo, boolean isProcess) {
-        Map<String, Object> ieResult = youtubeIE.extract(url);
-        if (ieResult == null || ieResult.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        if (isProcess) {
-            return processIeResult(ieResult, isDownload, extraInfo);
-        }
+//        Map<String, Object> ieResult = youtubeIE.extract(url);
+//        if (ieResult == null || ieResult.isEmpty()) {
+//            return Collections.emptyMap();
+//        }
+//
+//        if (isProcess) {
+//            return processIeResult(ieResult, isDownload, extraInfo);
+//        }
 
         return Collections.emptyMap();
     }

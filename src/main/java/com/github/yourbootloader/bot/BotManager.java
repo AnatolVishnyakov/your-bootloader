@@ -7,9 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Slf4j
 @Component
@@ -36,32 +33,32 @@ public class BotManager {
 
     //    @EventListener
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
-        if (bot.getChatId() != null) {
-            DataSize dataSize = DataSize.ofBytes(event.getFileSize());
-            long downloadedContent = dataSize.toMegabytes() == 0
-                    ? dataSize.toKilobytes()
-                    : dataSize.toMegabytes();
-            if (chatId == null) {
-                SendMessage message = new SendMessage(String.valueOf(bot.getChatId()), "Скачано " + downloadedContent);
-                message.setChatId(bot.getChatId().toString());
-
-                messageId = message.getReplyToMessageId();
-                chatId = bot.getChatId();
-                try {
-                    bot.execute(message);
-                } catch (TelegramApiException e) {
-                    log.error("Возникла непредвиденная ошибка", e);
-                }
-            } else {
-                EditMessageText message = new EditMessageText("Скачано " + downloadedContent);
-                message.setChatId(bot.getChatId().toString());
-                message.setMessageId(messageId);
-                try {
-                    bot.execute(message);
-                } catch (TelegramApiException e) {
-                    log.error("Возникла непредвиденная ошибка", e);
-                }
-            }
-        }
+//        if (bot.getChatId() != null) {
+//            DataSize dataSize = DataSize.ofBytes(event.getFileSize());
+//            long downloadedContent = dataSize.toMegabytes() == 0
+//                    ? dataSize.toKilobytes()
+//                    : dataSize.toMegabytes();
+//            if (chatId == null) {
+//                SendMessage message = new SendMessage(String.valueOf(bot.getChatId()), "Скачано " + downloadedContent);
+//                message.setChatId(bot.getChatId().toString());
+//
+//                messageId = message.getReplyToMessageId();
+//                chatId = bot.getChatId();
+//                try {
+//                    bot.execute(message);
+//                } catch (TelegramApiException e) {
+//                    log.error("Возникла непредвиденная ошибка", e);
+//                }
+//            } else {
+//                EditMessageText message = new EditMessageText("Скачано " + downloadedContent);
+//                message.setChatId(bot.getChatId().toString());
+//                message.setMessageId(messageId);
+//                try {
+//                    bot.execute(message);
+//                } catch (TelegramApiException e) {
+//                    log.error("Возникла непредвиденная ошибка", e);
+//                }
+//            }
+//        }
     }
 }
