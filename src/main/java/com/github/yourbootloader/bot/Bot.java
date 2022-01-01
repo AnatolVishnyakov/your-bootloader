@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -27,7 +28,7 @@ public class Bot extends TelegramLongPollingBot {
     private final BotQueryService botQueryService;
     private final BotCommandService botCommandService;
 
-    private final ThreadLocal<List<Map<String, Object>>> data = new ThreadLocal<>();
+    private final ThreadLocal<Map<String, Object>> threadLocal = new ThreadLocal<>();
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -44,12 +45,17 @@ public class Bot extends TelegramLongPollingBot {
             Map<String, Object> info = botQueryService.getVideoInfo(url);
             List<Map<String, Object>> formats = ((List<Map<String, Object>>) info.get("formats"))
                     .stream()
-                    .sorted(Comparator.comparing(m -> ((Integer) m.get("format_id"))))
+                    .sorted(Comparator.comparing(m -> {
+                        String formatNote = (String) m.get("format_note");
+                        if (formatNote.matches("\\d+p")) {
+                            return Integer.parseInt(formatNote.replaceAll("p", ""));
+                        }
+                        return 0;
+                    }))
                     .collect(Collectors.toList());
-//             formats.stream().map(i -> ((Map<String, Object>) i).get("format_id")).sorted().collect(Collectors.toList())
 
-            if (data.get() == null) {
-                data.set(formats);
+            if (threadLocal.get() == null) {
+                threadLocal.set(info);
             }
 
             SendMessage sendMessage = new SendMessage();
@@ -89,6 +95,17 @@ public class Bot extends TelegramLongPollingBot {
             }
         } else if (update.hasCallbackQuery()) {
             System.out.println("Callback query: " + update.getCallbackQuery().toString());
+            CallbackQuery callbackQuery = update.getCallbackQuery();
+            Integer formatId = Integer.parseInt(callbackQuery.getData());
+            Map<String, Object> info = threadLocal.get();
+            Map<String, Object> format = ((List<Map<String, Object>>) info.get("formats")).stream()
+                    .filter(f -> f.get("format_id").equals(formatId))
+                    .findFirst()
+                    .orElse(Collections.emptyMap());
+            String url = (String) format.get("url");
+            String filename = (String) info.get("title");
+            Long filesize = ((Integer) format.get("filesize")).longValue();
+            botCommandService.download(url, filename, filesize);
         }
 
 //        YoutubePageParser youtubePageParser = context.getBean(YoutubePageParser.class, url);
