@@ -7,7 +7,9 @@ import org.springframework.http.ResponseEntity;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -134,4 +136,15 @@ public abstract class InfoExtractor {
         // TODO CertificateError
         return downloader.urlopen(url);
     }
+
+    public Map<String, Object> extract(String url) {
+        Map<String, Object> info = Collections.emptyMap();
+        for (int i = 0; i < 2; i++) {
+            info = realExtract(url);
+        }
+        return info;
+    }
+
+
+    public abstract Map<String, Object> realExtract(String url);
 }

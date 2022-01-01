@@ -2,6 +2,8 @@ package com.github.yourbootloader.yt.extractor;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InfoExtractorTest {
@@ -10,6 +12,11 @@ class InfoExtractorTest {
         @Override
         protected boolean suitable(String url) {
             return false;
+        }
+
+        @Override
+        public Map<String, Object> realExtract(String url) {
+            return null;
         }
     };
 

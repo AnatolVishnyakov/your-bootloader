@@ -197,6 +197,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
     }
 
     // TODO требует обязательной реализации
+    @Override
     public Map<String, Object> realExtract(String _url) {
         Map<Object, Object> smuggledData = Utils.unsmuggleUrl(_url).getTwo();
         String url = Utils.unsmuggleUrl(_url).getOne();
