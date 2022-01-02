@@ -1,6 +1,7 @@
 package com.github.yourbootloader.yt.extractor;
 
 import com.github.yourbootloader.yt.extractor.dto.Pair;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.util.regex.Pattern;
 
 import static com.github.yourbootloader.yt.extractor.YoutubeIE._VALID_URL;
 
+@Slf4j
 public abstract class InfoExtractor {
 
     boolean ready;
@@ -51,6 +53,11 @@ public abstract class InfoExtractor {
         Matcher matcher = pattern.matcher(url);
         if (matcher.find()) {
             return matcher.group("id");
+        }
+        if (url.matches(".*watch\\?v=.*")) {
+            log.warn("Incorrect valid url pattern!");
+            String[] values = url.split("v=");
+            return values[1];
         }
         throw new RuntimeException("Not match!");
     }

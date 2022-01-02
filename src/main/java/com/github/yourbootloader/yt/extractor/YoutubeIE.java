@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -112,7 +113,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             ")?" +                                                                                // all until now is optional -> you can pass the naked ID
             "(?<id>[0-9A-Za-z_-]{11})" +                                                          // here is it! the YouTube video ID
             "(.+)?" +                                                                         // if we found the ID, everything can follow
-//            "(?(1).+)?" +                                                                         // if we found the ID, everything can follow
+            "(\\?(1).+)?" +                                                                         // if we found the ID, everything can follow
             "$").replaceAll("%\\{invidious}", String.join("|", _INVIDIOUS_SITES));
     private static List<String> _PLAYER_INFO_RE = Arrays.asList(
             "/s/player/(?P<id>[a-zA-Z0-9_-]{8,})/player",
@@ -160,8 +161,17 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         throw new MethodNotImplementedException();
     }
 
-    public void decryptSignature() {
-        throw new MethodNotImplementedException();
+    public String decryptSignature(String s, String videoId, String playerUrl) {
+        if (playerUrl == null) {
+            throw new RuntimeException("Cannot decrypt signature without player_url");
+        }
+
+        if (playerUrl.startsWith("//")) {
+            playerUrl = "https:" + playerUrl;
+        } else if (!Pattern.compile("https?://").matcher(playerUrl).matches()) {
+            playerUrl = "https://www.youtube.com" + playerUrl;
+        }
+        return null;
     }
 
     public void markWatched() {
@@ -235,7 +245,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         List<Map<String, Object>> formats = new ArrayList<>();
         List<Integer> itags = new ArrayList<>();
         Map<Integer, String> itagQualities = new HashMap<>();
-        Object player_url = null;
+        String playerUrl = null;
         Function<String, Integer> q = key -> Arrays.asList("tiny", "small", "medium", "large", "hd720", "hd1080", "hd1440", "hd2160", "hd2880", "highres").indexOf(key);
         JSONObject streamingData = playerResponse.getJSONObject("streamingData");
         JSONArray streamingFormats = streamingData.getJSONArray("formats");
@@ -263,9 +273,33 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 continue;
             }
 
-            String fmtUrl = fmt.getString("url");
-            if (fmtUrl == null && !fmt.isEmpty()) {
-                throw new MethodNotImplementedException("Not implement fmtUrl");
+            AtomicReference<String> fmtUrl = new AtomicReference<>(fmt.optString("url"));
+            if (fmtUrl.get() == null || fmtUrl.get().isEmpty()) {
+                Map<String, String> sc = Utils.parseQs(fmt.optString("signatureCipher"));
+                fmtUrl.set(sc.get("url"));
+                String encryptedSig = sc.get("s");
+                if (sc == null && fmtUrl.get() == null && encryptedSig == null) {
+                    continue;
+                }
+
+                if (playerUrl == null) {
+                    if (webpage == null) {
+                        continue;
+                    }
+
+                    playerUrl = searchRegex(
+                            Arrays.asList("\"(?:PLAYER_JS_URL|jsUrl)\"\\s*:\\s*\"([^\"]+)\""),
+                            webpage,
+                            "player URL"
+                    );
+                }
+
+                if (playerUrl == null) {
+                    continue;
+                }
+
+                String signature = decryptSignature(sc.get("s"), videoId, playerUrl);
+                System.out.println();
             }
 
             if (itag != null) {
@@ -287,7 +321,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 put("height", fmt.has("height") ? fmt.get("height") : null);
                 put("quality", q.apply(finalQuality));
                 put("tbr", tbr);
-                put("url", fmtUrl);
+                put("url", fmtUrl.get());
                 put("width", fmt.has("width") ? fmt.get("width") : null);
             }};
 
