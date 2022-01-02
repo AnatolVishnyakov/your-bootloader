@@ -1,8 +1,10 @@
 package com.github.yourbootloader.yt.download;
 
+import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.HttpResponseBodyPart;
+import org.asynchttpclient.Response;
 import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
 import org.asynchttpclient.handler.resumable.ResumableRandomAccessFileListener;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,6 +52,12 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
         State state = super.onBodyPartReceived(bodyPart);
         publisher.publishEvent(new ProgressIndicatorEvent(chat, contentSize, originalFile.length(), bodyPart.getBodyPartBytes().length));
         return state;
+    }
+
+    @Override
+    public Response onCompleted() throws Exception {
+        publisher.publishEvent(new FinishDownloadEvent(chat, originalFile));
+        return super.onCompleted();
     }
 
     public void setContentSize(DataSize contentSize) {
