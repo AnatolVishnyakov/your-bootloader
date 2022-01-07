@@ -2,6 +2,7 @@ package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Slf4j
@@ -38,6 +40,29 @@ public class TempFileGenerator {
             throw new RuntimeException(e);
         }
         log.info("File {} created success!", newTempFile.getName());
+        return newTempFile;
+    }
+
+    @SneakyThrows
+    public File getOrCreate(String section, String fileName) {
+        log.info("getOrCreate temp file {} to directory {}", fileName, ydProperties.getDownloadPath());
+
+        Path folder = Paths.get(ydProperties.getDownloadPath())
+                .resolve(section);
+        if (!folder.toFile().exists()) {
+            folder.toFile().mkdirs();
+        }
+
+        File newTempFile = folder
+                .resolve(fileName)
+                .toFile();
+
+        if (newTempFile.exists()) {
+            log.warn("File {} already exists!", fileName);
+            return newTempFile;
+        }
+
+        newTempFile.createNewFile();
         return newTempFile;
     }
 

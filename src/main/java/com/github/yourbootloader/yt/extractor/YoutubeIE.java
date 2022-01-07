@@ -1,18 +1,23 @@
 package com.github.yourbootloader.yt.extractor;
 
+import com.github.yourbootloader.yt.download.TempFileGenerator;
 import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
+import com.github.yourbootloader.yt.extractor.dto.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.lang.String.format;
 
@@ -115,20 +120,22 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             "(.+)?" +                                                                         // if we found the ID, everything can follow
             "(\\?(1).+)?" +                                                                         // if we found the ID, everything can follow
             "$").replaceAll("%\\{invidious}", String.join("|", _INVIDIOUS_SITES));
-    private static List<String> _PLAYER_INFO_RE = Arrays.asList(
-            "/s/player/(?P<id>[a-zA-Z0-9_-]{8,})/player",
-            "/(?P<id>[a-zA-Z0-9_-]{8,})/player(?:_ias\\.vflset(?:/[a-zA-Z]{2,3}_[a-zA-Z]{2,3})?|-plasma-ias-(?:phone|tablet)-[a-z]{2}_[A-Z]{2}\\.vflset)/base\\.js$",
-            "\b(?P<id>vfl[a-zA-Z0-9_-]+)\b.*?\\.js$"
+    private static final List<Pattern> _PLAYER_INFO_RE = Arrays.asList(
+            Pattern.compile("/s/player/(?<id>[a-zA-Z0-9_-]{8,})/player"),
+            Pattern.compile("/(?<id>[a-zA-Z0-9_-]{8,})/player(?:_ias\\.vflset(?:/[a-zA-Z]{2,3}_[a-zA-Z]{2,3})?|-plasma-ias-(?:phone|tablet)-[a-z]{2}_[A-Z]{2}\\.vflset)/base\\.js$"),
+            Pattern.compile("\b(?<id>vfl[a-zA-Z0-9_-]+)\b.*?\\.js$")
     );
     private static List<String> _SUBTITLE_FORMATS = Arrays.asList("srv1", "srv2", "srv3", "ttml", "vtt");
     private static boolean _GEO_BYPASS = false;
     private static String IE_NAME = "youtube";
     private final Map<Object, Object> codeCache;
-    private final Map<Object, Object> playerCache;
+    private final Map<Pair<String, String>, Object> playerCache;
+    private final TempFileGenerator tempFileGenerator;
 
     @Autowired
-    protected YoutubeIE(YoutubeDLService youtubeDLService) {
+    protected YoutubeIE(YoutubeDLService youtubeDLService, TempFileGenerator tempFileGenerator) {
         super(youtubeDLService);
+        this.tempFileGenerator = tempFileGenerator;
         this.codeCache = new HashMap<>();
         this.playerCache = new HashMap<>();
     }
@@ -141,24 +148,85 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         return matcher.matches();
     }
 
-    public void _signature_cache_id(String exampleSig) {
-        throw new MethodNotImplementedException();
+    public String signatureCacheId(String exampleSig) {
+        StringBuilder result = new StringBuilder();
+        for (String part : exampleSig.split("\\.")) {
+            result.append(part.length());
+        }
+        return result.toString();
     }
 
-    public void extractPlayerInfo(String playerUrl) {
-        throw new MethodNotImplementedException();
+    public String extractPlayerInfo(String playerUrl) {
+        for (Pattern pattern : _PLAYER_INFO_RE) {
+            Matcher matcher = pattern.matcher(playerUrl);
+            if (matcher.find()) {
+                return matcher.group("id");
+            }
+        }
+        throw new RuntimeException("Cannot identify player " + playerUrl);
     }
 
-    public void _extract_signature_function(String videoId, String playerUrl, String exampleSig) {
-        throw new MethodNotImplementedException();
+    public void extractSignatureFunction(String videoId, String playerUrl, String exampleSig) {
+        String playerId = this.extractPlayerInfo(playerUrl);
+
+        String funcId = format("js_%s_%s", playerId, this.signatureCacheId(exampleSig));
+
+        String cacheFn = this.getCacheFn("youtube-sigfuncs", funcId, "json");
+        if (Files.exists(Paths.get(cacheFn))) {
+            // TODO
+        }
+
+        if (!codeCache.containsKey(playerId)) {
+            codeCache.put(playerId, this.downloadWebpage(playerUrl, videoId, 3));
+        }
+
+        String code = ((String) codeCache.get(playerId));
+        Function<String, String> res = this.parseSigJs(code);
+
+        String testString = IntStream.range(0, exampleSig.length())
+                .mapToObj(i -> ((char) i))
+                .map(String::valueOf)
+                .collect(Collectors.joining(""));
+
+        String cacheRes = res.apply(testString);
+        System.out.println();
+    }
+
+    private String getCacheFn(String section, String key, String dtype) {
+        return tempFileGenerator.getOrCreate(section, format("%s.%s", key, dtype))
+                .toString();
     }
 
     public void printSigCode() {
         throw new MethodNotImplementedException();
     }
 
-    public void parseSigJs() {
-        throw new MethodNotImplementedException();
+    public Function<String, String> parseSigJs(String jscode) {
+        String funcName = this.searchRegex(
+                Arrays.asList(
+                        "\b[cs]\\s*&&\\s*[adf]\\.set\\([^,]+\\s*,\\s*encodeURIComponent\\s*\\(\\s*(?<sig>[a-zA-Z0-9$]+)\\(",
+                        "\b[a-zA-Z0-9]+\\s*&&\\s*[a-zA-Z0-9]+\\.set\\([^,]+\\s*,\\s*encodeURIComponent\\s*\\(\\s*(?<sig>[a-zA-Z0-9$]+)\\(",
+                        "\bm=(?<sig>[a-zA-Z0-9$]{2})\\(decodeURIComponent\\(h\\.s\\)\\)",
+                        "\bc&&\\(c=(?<sig>[a-zA-Z0-9$]{2})\\(decodeURIComponent\\(c\\)\\)",
+//                        "(?:\b|[^a-zA-Z0-9$])(?<sig>[a-zA-Z0-9$]{2})\\s*=\\s*function\\(\\s*a\\s*\\)\\s*{\\s*a\\s*=\\s*a\\.split\\(\\s*\"\"\\s*\\);[a-zA-Z0-9$]{2}\\.[a-zA-Z0-9$]{2}\\(a,\\d+\\)",
+//                        "(?:\b|[^a-zA-Z0-9$])(?<sig>[a-zA-Z0-9$]{2})\\s*=\\s*function\\(\\s*a\\s*\\)\\s*{\\s*a\\s*=\\s*a\\.split\\(\\s*\"\"\\s*\\)",
+                        "(?<sig>[a-zA-Z0-9$]+)\\s*=\\s*function\\(\\s*a\\s*\\)\\s*\\{\\s*a\\s*=\\s*a\\.split\\(\\s*\"\"\\s*\\)",
+                        "([\"\\'])signature\\1\\s*,\\s*(?<sig>[a-zA-Z0-9$]+)\\(",
+                        "\\.sig\\|\\|(?<sig>[a-zA-Z0-9$]+)\\(",
+                        "yt\\.akamaized\\.net/\\)\\s*\\|\\|\\s*.*?\\s*[cs]\\s*&&\\s*[adf]\\.set\\([^,]+\\s*,\\s*(?:encodeURIComponent\\s*\\()?\\s*(?<sig>[a-zA-Z0-9$]+)\\(",
+                        "\b[cs]\\s*&&\\s*[adf]\\.set\\([^,]+\\s*,\\s*(?<sig>[a-zA-Z0-9$]+)\\(",
+                        "\b[a-zA-Z0-9]+\\s*&&\\s*[a-zA-Z0-9]+\\.set\\([^,]+\\s*,\\s*(?<sig>[a-zA-Z0-9$]+)\\(",
+                        "\bc\\s*&&\\s*a\\.set\\([^,]+\\s*,\\s*\\([^)]*\\)\\s*\\(\\s*(?<sig>[a-zA-Z0-9$]+)\\(",
+                        "\bc\\s*&&\\s*[a-zA-Z0-9]+\\.set\\([^,]+\\s*,\\s*\\([^)]*\\)\\s*\\(\\s*(?<sig>[a-zA-Z0-9$]+)\\(",
+                        "\bc\\s*&&\\s*[a-zA-Z0-9]+\\.set\\([^,]+\\s*,\\s*\\([^)]*\\)\\s*\\(\\s*(?<sig>[a-zA-Z0-9$]+)\\("
+                ),
+                jscode,
+                "Initial JS player signature function name"
+        );
+
+        JSInterpreter jsi = new JSInterpreter(jscode);
+        Function<String, String> initialFunction = jsi.extractFunction(jscode, funcName);
+        return initialFunction;
     }
 
     public String decryptSignature(String s, String videoId, String playerUrl) {
@@ -170,6 +238,15 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             playerUrl = "https:" + playerUrl;
         } else if (!Pattern.compile("https?://").matcher(playerUrl).matches()) {
             playerUrl = "https://www.youtube.com" + playerUrl;
+        }
+
+        Pair<String, String> playerId = new Pair<String, String>(
+                playerUrl,
+                this.signatureCacheId(s)
+        );
+        if (!playerCache.containsKey(playerId)) {
+            this.extractSignatureFunction(videoId, playerUrl, s);
+            System.out.println();
         }
         return null;
     }
@@ -278,7 +355,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 Map<String, String> sc = Utils.parseQs(fmt.optString("signatureCipher"));
                 fmtUrl.set(sc.get("url"));
                 String encryptedSig = sc.get("s");
-                if (sc == null && fmtUrl.get() == null && encryptedSig == null) {
+                if (sc.isEmpty() || fmtUrl.get() == null || encryptedSig == null) {
                     continue;
                 }
 
