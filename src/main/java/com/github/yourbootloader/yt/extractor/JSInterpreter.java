@@ -5,7 +5,7 @@ import com.github.yourbootloader.yt.extractor.dto.Pair;
 import org.apache.tomcat.util.security.Escape;
 
 import java.math.BigInteger;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,25 +13,25 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
 public class JSInterpreter {
 
     private static final Map<String, BiFunction<String, String, String>> OPERATORS = new HashMap<String, BiFunction<String, String, String>>() {{
-        put("|", (a, b) -> new BigInteger(a).or(new BigInteger(b)).toString());
+        put("\\|", (a, b) -> new BigInteger(a).or(new BigInteger(b)).toString());
         put("^", (a, b) -> new BigInteger(a).xor(new BigInteger(b)).toString());
         put("&", (a, b) -> new BigInteger(a).and(new BigInteger(b)).toString());
         put(">>", (a, b) -> new BigInteger(a).shiftRight(new BigInteger(b).intValue()).toString());
         put("<<", (a, b) -> new BigInteger(a).shiftLeft(new BigInteger(b).intValue()).toString());
         put("-", (a, b) -> new BigInteger(a).subtract(new BigInteger(b)).toString());
-        put("+", (a, b) -> new BigInteger(a).add(new BigInteger(b)).toString());
+        put("\\+", (a, b) -> new BigInteger(a).add(new BigInteger(b)).toString());
         put("%", (a, b) -> new BigInteger(a).mod(new BigInteger(b)).toString());
         put("/", (a, b) -> new BigInteger(a).divide(new BigInteger(b)).toString());
         put("\\*", (a, b) -> new BigInteger(a).multiply(new BigInteger(b)).toString());
     }};
     private static final Map<String, BiFunction<String, String, String>> ASSIGN_OPERATORS = new HashMap<>();
+    private final Map<String, Object> objects = new HashMap<>();
 
     static {
         OPERATORS.keySet().forEach(key -> ASSIGN_OPERATORS.put(key + "=", OPERATORS.get(key)));
@@ -39,8 +39,10 @@ public class JSInterpreter {
     }
 
     private static final String NAME_RE = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+    private final String jscode;
 
     public JSInterpreter(String jscode) {
+        this.jscode = jscode;
     }
 
     public Function<String, String> extractFunction(String jscode, String funcName) {
@@ -65,18 +67,18 @@ public class JSInterpreter {
                 localVars.put(argname, args);
             }
 
-            Pair<List<String>, Boolean> res = null;
+            Pair<Object, Boolean> res;
             for (String stmt : code.split(";")) {
                 res = this.interpretStatement(stmt, localVars, 100);
                 if (res.getTwo()) {
                     break;
                 }
             }
-            return res.getOne().stream().collect(Collectors.joining(""));
+            return null;
         };
     }
 
-    private Pair<List<String>, Boolean> interpretStatement(String stmt, HashMap<String, String> localVars, int allowRecursion) {
+    private Pair<Object, Boolean> interpretStatement(String stmt, HashMap<String, String> localVars, int allowRecursion) {
         if (allowRecursion < 0) {
             throw new RuntimeException("Recursion limit reached");
         }
@@ -97,18 +99,15 @@ public class JSInterpreter {
             }
         }
 
-        List<String> v = this.interpretExpression(expr, localVars, allowRecursion);
-        return new Pair<>(v, shouldAbort);
+        Object v = this.interpretExpression(expr, localVars, allowRecursion);
+        return new Pair<Object, Boolean>(v, shouldAbort);
     }
 
-    private <T> List<T> interpretExpression(String expr, HashMap<String, String> localVars, int allowRecursion) {
-        if (expr == null) {
+    private Object interpretExpression(String expr, HashMap<String, String> localVars, int allowRecursion) {
+        if (expr == null || expr.isEmpty() || expr.trim().isEmpty()) {
             return null;
         }
         expr = expr.trim();
-        if (expr.isEmpty()) {
-            return null;
-        }
 
         if (expr.startsWith("(")) {
             throw new MethodNotImplementedException("interpretExpression startWith '(' doesn't implemented!");
@@ -116,51 +115,50 @@ public class JSInterpreter {
 
         for (String op : ASSIGN_OPERATORS.keySet()) {
             BiFunction<String, String, String> opfunc = ASSIGN_OPERATORS.get(op);
-            Matcher matcher = Pattern.compile("'(?x)\\n" +
-                    "                (?<out>[a-zA-Z_$][a-zA-Z_$0-9]*)(?:\\[(?<index>[^\\]]+?)\\])?\\n" +
-                    "                \\s*\\|=\\n" +
-                    "                (?<expr>.*)$'").matcher(expr);
-            boolean b = matcher.find();
-            Matcher m = Pattern.compile(format("(?x)\\n" +
-                    "(?<out>%s)(?:\\[(?<index>[^\\]]+?)\\])?\\n" +
-                    "\\s*%s\\n" +
-                    "(?<expr>.*)$", NAME_RE, Escape.htmlElementContent(op))).matcher(expr);
+            String format = format("(?x)" +
+                    "(?<out>%s)(?:\\[(?<index>[^\\]]+?)\\])?" +
+                    "\\s*%s" +
+                    "(?<expr>.*)$", NAME_RE, op);
+            Matcher m = Pattern.compile(format).matcher(expr);
             if (!m.find()) {
                 continue;
             }
 
-            List<String> rightVal = this.interpretExpression(m.group("expr"), localVars, allowRecursion - 1);
+            Object rightVal = this.interpretExpression(m.group("expr"), localVars, allowRecursion - 1);
             if (m.group("index") != null) {
-
+                char[] lvar = localVars.get(m.group("out")).toCharArray();
+                Integer idx = (Integer) this.interpretExpression(m.group("index"), localVars, allowRecursion);
+                char cur = lvar[idx];
+                String val = opfunc.apply(String.valueOf(cur), (String) rightVal);
+                lvar[idx] = val.toCharArray()[0];
+                return val;
             } else {
                 String cur = localVars.get(m.group("out"));
-                String val = opfunc.apply(cur, String.join("", rightVal));
+                String val = opfunc.apply(cur, String.join("", String.valueOf((char[]) rightVal)));
                 localVars.put(m.group("out"), val);
-                return (List<T>) Arrays.asList(val);
-//                cur = local_vars.get(m.group('out'))
-//                val = opfunc(cur, right_val)
-//                local_vars[m.group('out')] = val
-//                return val
+                return val;
             }
         }
 
-        if (Pattern.compile("-?\\d+(\\.\\d+)?").matcher(expr).find()) {
-            return (List<T>) Arrays.asList(Integer.parseInt(expr));
+        if (Pattern.compile("\\d+").matcher(expr).find()) {
+            return Integer.parseInt(expr);
         }
-
 
         Matcher varm = Pattern.compile(format("(?!if|return|true|false)(?<name>%s)$", NAME_RE)).matcher(expr);
         if (varm.find()) {
-            return (List<T>) Arrays.asList(localVars.get(varm.group("name")));
+            return localVars.get(varm.group("name"));
         }
 
         // TODO json.loads
+        if (expr.equals("\"\"")) {
+            return "";
+        }
 
         Matcher m = Pattern.compile(format("(?<in>%s)\\[(?<idx>.+)\\]$", NAME_RE)).matcher(expr);
         if (m.find()) {
-            String val = localVars.get(m.group("in"));
-            List<Object> idx = this.interpretExpression(m.group("idx"), localVars, allowRecursion - 1);
-            throw new MethodNotImplementedException();
+            char[] val = localVars.get(m.group("in")).toCharArray();
+            Integer idx = (Integer) this.interpretExpression(m.group("idx"), localVars, allowRecursion - 1);
+            return val[idx];
         }
 
         m = Pattern.compile(format("(?<var>%s)(?:\\.(?<member>[^(]+)|\\[(?<member2>[^]]+)\\])\\s*(?:\\(+(?<args>[^()]*)\\))?$", NAME_RE)).matcher(expr);
@@ -170,19 +168,64 @@ public class JSInterpreter {
                     ? m.group("member").replaceAll("'", "").replaceAll("\"", "")
                     : m.group("member2").replaceAll("'", "").replaceAll("\"", "");
             String argstr = m.group("args");
-            String obj;
+            Object obj;
             if (localVars.containsKey(variable)) {
                 obj = localVars.get(variable);
             } else {
-                throw new MethodNotImplementedException();
+                if (!objects.containsKey(variable)) {
+                    objects.put(variable, this.extractObject(variable));
+                }
+                obj = objects.get(variable);
             }
 
-            if (argstr == null || argstr.isEmpty()) {
+            if (argstr == null) {
                 if (member.equals("length")) {
-//                    return obj.length();
+                    return ((String) obj).length();
                 }
             }
-            System.out.println();
+
+            List<Object> argvals = new ArrayList<>();
+            if (!argstr.isEmpty()) {
+                for (String v : argstr.split(",")) {
+                    argvals.add(this.interpretExpression(v, localVars, allowRecursion));
+                }
+            }
+
+            if (member.equals("split")) {
+                return ((String) obj).toCharArray();
+            }
+            if (member.equals("join")) {
+                throw new MethodNotImplementedException("join not implemented!");
+            }
+            if (member.equals("reverse")) {
+                throw new MethodNotImplementedException("reverse not implemented!");
+            }
+            if (member.equals("slice")) {
+                throw new MethodNotImplementedException("slice not implemented!");
+            }
+            if (member.equals("splice")) {
+                throw new MethodNotImplementedException("splice not implemented!");
+            }
+            throw new MethodNotImplementedException("obj[member](argvals) not implemented!");
+        }
+        throw new MethodNotImplementedException();
+    }
+
+    private Object extractObject(String variable) {
+        String FUNC_NAME_RE = "(?:[a-zA-Z$0-9]+|\"[a-zA-Z$0-9]+\"|'[a-zA-Z$0-9]+')";
+        Pattern pattern = Pattern.compile(format("(?x)" +
+                "(?<!this\\.)%s\\s*=\\s*{\\s*" +
+                "(?<fields>(%s\\s*:\\s*function\\s*\\(.*?\\)\\s*{.*?}(?:,\\s*)?)*)" +
+                "}\\s*;", Escape.htmlElementContent(variable), FUNC_NAME_RE));
+        Matcher objm = pattern.matcher(jscode);
+        objm.find();
+        String fields = objm.group("fields");
+
+        Matcher fieldsm = Pattern.compile(format("(?x)(?<key>%s)\\s*:\\s*function\\s*\\((?<args>[a-z,]+)\\)\\{(?<code>[^}]+)}", FUNC_NAME_RE)).matcher(fields);
+        fieldsm.find();
+        for (int i = 0; i < fieldsm.groupCount(); i++) {
+            fieldsm.group(1);
+            // TODO
         }
         return null;
     }
