@@ -44,7 +44,7 @@ public class TempFileGenerator {
     }
 
     @SneakyThrows
-    public File getOrCreate(String section, String fileName) {
+    public File create(String section, String fileName) {
         log.info("getOrCreate temp file {} to directory {}", fileName, ydProperties.getDownloadPath());
 
         Path folder = Paths.get(ydProperties.getDownloadPath())
@@ -64,6 +64,20 @@ public class TempFileGenerator {
 
         newTempFile.createNewFile();
         return newTempFile;
+    }
+
+    public File get(String section, String fileName) {
+        File file = Paths.get(ydProperties.getDownloadPath())
+                .resolve(section)
+                .resolve(fileName)
+                .toFile();
+
+        if (file.exists()) {
+            log.warn("File {} already exists!", fileName);
+            return file;
+        }
+
+        return null;
     }
 
     private String prepareFileName(String fileName) {

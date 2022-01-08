@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -129,7 +130,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
     private static boolean _GEO_BYPASS = false;
     private static String IE_NAME = "youtube";
     private final Map<Object, Object> codeCache;
-    private final Map<Pair<String, String>, Object> playerCache;
+    private final Map<Pair<String, String>, Function<String, String>> playerCache;
     private final TempFileGenerator tempFileGenerator;
 
     @Autowired
@@ -166,14 +167,15 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         throw new RuntimeException("Cannot identify player " + playerUrl);
     }
 
-    public void extractSignatureFunction(String videoId, String playerUrl, String exampleSig) {
+    public Function<String, String> extractSignatureFunction(String videoId, String playerUrl, String exampleSig) {
         String playerId = this.extractPlayerInfo(playerUrl);
 
         String funcId = format("js_%s_%s", playerId, this.signatureCacheId(exampleSig));
 
-        String cacheFn = this.getCacheFn("youtube-sigfuncs", funcId, "json");
-        if (Files.exists(Paths.get(cacheFn))) {
+        Optional<File> cacheSpec = this.getCacheFn("youtube-sigfuncs", funcId, "json");
+        if (cacheSpec.isPresent()) {
             // TODO
+            throw new MethodNotImplementedException("extractSignatureFunction doesn't implemented!");
         }
 
         if (!codeCache.containsKey(playerId)) {
@@ -189,12 +191,11 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 .collect(Collectors.joining(""));
 
         String cacheRes = res.apply(testString);
-        System.out.println();
+        return null;
     }
 
-    private String getCacheFn(String section, String key, String dtype) {
-        return tempFileGenerator.getOrCreate(section, format("%s.%s", key, dtype))
-                .toString();
+    private Optional<File> getCacheFn(String section, String key, String dtype) {
+        return Optional.ofNullable(tempFileGenerator.get(section, format("%s.%s", key, dtype)));
     }
 
     public void printSigCode() {
@@ -245,10 +246,12 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 this.signatureCacheId(s)
         );
         if (!playerCache.containsKey(playerId)) {
-            this.extractSignatureFunction(videoId, playerUrl, s);
-            System.out.println();
+            Function<String, String> func = this.extractSignatureFunction(videoId, playerUrl, s);
+            this.playerCache.put(playerId, func);
         }
-        return null;
+
+        Function<String, String> func = this.playerCache.get(playerId);
+        return func.apply(s);
     }
 
     public void markWatched() {
