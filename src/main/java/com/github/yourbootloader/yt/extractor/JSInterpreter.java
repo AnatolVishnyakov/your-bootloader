@@ -81,7 +81,12 @@ public class JSInterpreter {
             }
             return (R) Optional.ofNullable(res)
                     .map(v -> v.getOne())
-                    .map(v -> Integer.parseInt(((String) v)))
+                    .map(v -> {
+                        if (v instanceof String && ((String) v).chars().allMatch(Character::isDigit)) {
+                            return Integer.parseInt(((String) v));
+                        }
+                        return v;
+                    })
                     .orElse(null);
         };
     }
