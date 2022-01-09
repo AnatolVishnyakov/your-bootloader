@@ -5,10 +5,7 @@ import com.github.yourbootloader.yt.extractor.dto.Pair;
 import org.apache.tomcat.util.security.Escape;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -18,7 +15,7 @@ import static java.lang.String.format;
 
 public class JSInterpreter {
 
-    private static final Map<String, BiFunction<String, String, String>> OPERATORS = new HashMap<String, BiFunction<String, String, String>>() {{
+    private static final Map<String, BiFunction<String, String, String>> OPERATORS = new LinkedHashMap<String, BiFunction<String, String, String>>() {{
         put("\\|", (a, b) -> new BigInteger(a).or(new BigInteger(b)).toString());
         put("^", (a, b) -> new BigInteger(a).xor(new BigInteger(b)).toString());
         put("&", (a, b) -> new BigInteger(a).and(new BigInteger(b)).toString());
@@ -32,6 +29,7 @@ public class JSInterpreter {
     }};
     private static final Map<String, BiFunction<String, String, String>> ASSIGN_OPERATORS = new HashMap<>();
     private final Map<String, Object> objects = new HashMap<>();
+    private final Map<String, Function<Object, Object>> functions = new HashMap<>();
 
     static {
         OPERATORS.keySet().forEach(key -> ASSIGN_OPERATORS.put(key + "=", OPERATORS.get(key)));
@@ -45,40 +43,50 @@ public class JSInterpreter {
         this.jscode = jscode;
     }
 
-    public Function<String, String> extractFunction(String jscode, String funcName) {
-        Pattern pattern = Pattern.compile(format("(?x)" +
+    public <T, R> Function<T, R> extractFunction(String funcName) {
+        String _pattern = format("(?x)" +
                 "(?:function\\s+%s|[{;,]\\s*%s\\s*=\\s*function|var\\s+%s\\s*=\\s*function)\\s*" +
                 "\\((?<args>[^)]*)\\)\\s*" +
-                "\\{(?<code>[^}]+)\\}", funcName.trim(), funcName.trim(), funcName.trim()));
+                "\\{(?<code>[^}]+)\\}",
+                funcName.replace("$", "\\$").trim(),
+                funcName.replace("$", "\\$").trim(),
+                funcName.replace("$", "\\$").trim()
+        );
+        Pattern pattern = Pattern.compile(_pattern);
         Matcher funcM = pattern.matcher(jscode);
 
         if (!funcM.find()) {
-            throw new RuntimeException("JSInterpreter doesnt extract function!");
+            throw new RuntimeException("Could not find JS function " + funcName);
         }
 
         String[] argnames = funcM.group("args").split(",");
         return buildFunction(argnames, funcM.group("code"));
     }
 
-    private Function<String, String> buildFunction(String[] argnames, String code) {
+    private <T, R> Function<T, R> buildFunction(String[] argnames, String code) {
         return args -> {
-            HashMap<String, String> localVars = new HashMap<>();
+            HashMap<String, Object> localVars = new HashMap<>();
             for (String argname : argnames) {
-                localVars.put(argname, args);
+                if (!argname.isEmpty()) {
+                    localVars.put(argname, args);
+                }
             }
 
-            Pair<Object, Boolean> res;
+            Pair<Object, Boolean> res = null;
             for (String stmt : code.split(";")) {
                 res = this.interpretStatement(stmt, localVars, 100);
                 if (res.getTwo()) {
                     break;
                 }
             }
-            return null;
+            return (R) Optional.ofNullable(res)
+                    .map(v -> v.getOne())
+                    .map(v -> Integer.parseInt(((String) v)))
+                    .orElse(null);
         };
     }
 
-    private Pair<Object, Boolean> interpretStatement(String stmt, HashMap<String, String> localVars, int allowRecursion) {
+    private Pair<Object, Boolean> interpretStatement(String stmt, HashMap<String, Object> localVars, int allowRecursion) {
         if (allowRecursion < 0) {
             throw new RuntimeException("Recursion limit reached");
         }
@@ -103,7 +111,7 @@ public class JSInterpreter {
         return new Pair<Object, Boolean>(v, shouldAbort);
     }
 
-    private Object interpretExpression(String expr, HashMap<String, String> localVars, int allowRecursion) {
+    private Object interpretExpression(String expr, HashMap<String, Object> localVars, int allowRecursion) {
         if (expr == null || expr.isEmpty() || expr.trim().isEmpty()) {
             return null;
         }
@@ -126,26 +134,28 @@ public class JSInterpreter {
 
             Object rightVal = this.interpretExpression(m.group("expr"), localVars, allowRecursion - 1);
             if (m.group("index") != null) {
-                char[] lvar = localVars.get(m.group("out")).toCharArray();
+                char[] lvar = ((String) localVars.get(m.group("out"))).toCharArray();
                 Integer idx = (Integer) this.interpretExpression(m.group("index"), localVars, allowRecursion);
                 char cur = lvar[idx];
                 String val = opfunc.apply(String.valueOf(cur), (String) rightVal);
                 lvar[idx] = val.toCharArray()[0];
                 return val;
             } else {
-                String cur = localVars.get(m.group("out"));
-                String val = opfunc.apply(cur, String.join("", String.valueOf((char[]) rightVal)));
+                String cur = ((String) localVars.get(m.group("out")));
+                String val = opfunc.apply(cur, String.valueOf(rightVal));
                 localVars.put(m.group("out"), val);
                 return val;
             }
         }
 
-        if (Pattern.compile("\\d+").matcher(expr).find()) {
+        if (expr.chars().allMatch(Character::isDigit)) {
             return Integer.parseInt(expr);
         }
 
-        Matcher varm = Pattern.compile(format("(?!if|return|true|false)(?<name>%s)$", NAME_RE)).matcher(expr);
-        if (varm.find()) {
+        String varmPattern = format("(?!if|return|true|false)(?<name>%s)$", NAME_RE);
+        if (Pattern.matches(varmPattern, expr)) {
+            Matcher varm = Pattern.compile(varmPattern).matcher(expr);
+            varm.find();
             return localVars.get(varm.group("name"));
         }
 
@@ -156,7 +166,7 @@ public class JSInterpreter {
 
         Matcher m = Pattern.compile(format("(?<in>%s)\\[(?<idx>.+)\\]$", NAME_RE)).matcher(expr);
         if (m.find()) {
-            char[] val = localVars.get(m.group("in")).toCharArray();
+            char[] val = ((String) localVars.get(m.group("in"))).toCharArray();
             Integer idx = (Integer) this.interpretExpression(m.group("idx"), localVars, allowRecursion - 1);
             return val[idx];
         }
@@ -208,7 +218,45 @@ public class JSInterpreter {
             }
             throw new MethodNotImplementedException("obj[member](argvals) not implemented!");
         }
-        throw new MethodNotImplementedException();
+
+        for (String op : OPERATORS.keySet()) {
+            BiFunction<String, String, String> opfunc = OPERATORS.get(op);
+            m = Pattern.compile(format("(?<x>.+?)%s(?<y>.+)", op)).matcher(expr);
+            if (!m.find()) {
+                continue;
+            }
+            Pair<Object, Boolean> res = this.interpretStatement(m.group("x"), localVars, allowRecursion - 1);
+            String x = String.valueOf(res.getOne());
+            if (res.getTwo()) {
+                throw new RuntimeException(format("Premature left-side return of %s in %s", op, expr));
+            }
+            res = this.interpretStatement(m.group("y"), localVars, allowRecursion - 1);
+            String y = String.valueOf(res.getOne());
+            if (res.getTwo()) {
+                throw new RuntimeException(format("Premature left-side return of %s in %s", op, expr));
+            }
+            return opfunc.apply(x, y);
+        }
+
+        m = Pattern.compile(format("^(?<func>%s)\\((?<args>[a-zA-Z0-9_$,]*)\\)$", NAME_RE)).matcher(expr);
+        if (m.find()) {
+            String fname = m.group("func");
+            List<Integer> argvals = new ArrayList<>();
+            if (m.group("args").length() > 0) {
+                for (String v : m.group("args").split(",")) {
+                    if (v.chars().allMatch(Character::isDigit)) {
+                        argvals.add(Integer.parseInt(v));
+                    } else {
+                        argvals.add(Integer.parseInt(((String) localVars.get(v))));
+                    }
+                }
+            }
+            if (!functions.containsKey(fname)) {
+                functions.put(fname, this.extractFunction(fname));
+            }
+            return functions.get(fname).apply(argvals);
+        }
+        throw new MethodNotImplementedException("'Unsupported JS expression " + expr);
     }
 
     private Object extractObject(String variable) {
@@ -228,5 +276,10 @@ public class JSInterpreter {
             // TODO
         }
         return null;
+    }
+
+    public <T, R> Object callFunction(String funcName, T args) {
+        Function<T, R> f = this.extractFunction(funcName);
+        return f.apply(args);
     }
 }

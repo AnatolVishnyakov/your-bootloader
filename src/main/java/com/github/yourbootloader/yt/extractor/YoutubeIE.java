@@ -226,7 +226,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         );
 
         JSInterpreter jsi = new JSInterpreter(jscode);
-        return jsi.extractFunction(jscode, funcName);
+        return jsi.extractFunction(funcName);
     }
 
     public String decryptSignature(String s, String videoId, String playerUrl) {
