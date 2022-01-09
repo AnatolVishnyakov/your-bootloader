@@ -2,7 +2,9 @@ package com.github.yourbootloader.yt.extractor;
 
 import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
 import com.github.yourbootloader.yt.extractor.dto.Pair;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.security.Escape;
+import org.json.JSONArray;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -13,21 +15,22 @@ import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
+@Slf4j
 public class JSInterpreter {
 
-    private static final Map<String, BiFunction<String, String, String>> OPERATORS = new LinkedHashMap<String, BiFunction<String, String, String>>() {{
-        put("\\|", (a, b) -> new BigInteger(a).or(new BigInteger(b)).toString());
-        put("^", (a, b) -> new BigInteger(a).xor(new BigInteger(b)).toString());
-        put("&", (a, b) -> new BigInteger(a).and(new BigInteger(b)).toString());
-        put(">>", (a, b) -> new BigInteger(a).shiftRight(new BigInteger(b).intValue()).toString());
-        put("<<", (a, b) -> new BigInteger(a).shiftLeft(new BigInteger(b).intValue()).toString());
-        put("-", (a, b) -> new BigInteger(a).subtract(new BigInteger(b)).toString());
-        put("\\+", (a, b) -> new BigInteger(a).add(new BigInteger(b)).toString());
-        put("%", (a, b) -> new BigInteger(a).mod(new BigInteger(b)).toString());
-        put("/", (a, b) -> new BigInteger(a).divide(new BigInteger(b)).toString());
-        put("\\*", (a, b) -> new BigInteger(a).multiply(new BigInteger(b)).toString());
+    private static final Map<String, BiFunction<String, Object, Object>> OPERATORS = new LinkedHashMap<String, BiFunction<String, Object, Object>>() {{
+        put("\\|", (a, b) -> new BigInteger(a).or(new BigInteger(((String) b))).toString());
+        put("^", (a, b) -> new BigInteger(a).xor(new BigInteger((String) b)).toString());
+        put("&", (a, b) -> new BigInteger(a).and(new BigInteger((String) b)).toString());
+        put(">>", (a, b) -> new BigInteger(a).shiftRight(new BigInteger((String) b).intValue()).toString());
+        put("<<", (a, b) -> new BigInteger(a).shiftLeft(new BigInteger((String) b).intValue()).toString());
+        put("-", (a, b) -> new BigInteger(a).subtract(new BigInteger((String) b)).toString());
+        put("\\+", (a, b) -> new BigInteger(a).add(new BigInteger((String) b)).toString());
+        put("%", (a, b) -> new BigInteger(a).mod(new BigInteger((String) b)).toString());
+        put("/", (a, b) -> new BigInteger(a).divide(new BigInteger((String) b)).toString());
+        put("\\*", (a, b) -> new BigInteger(a).multiply(new BigInteger((String) b)).toString());
     }};
-    private static final Map<String, BiFunction<String, String, String>> ASSIGN_OPERATORS = new HashMap<>();
+    private static final Map<String, BiFunction<String, Object, Object>> ASSIGN_OPERATORS = new HashMap<>();
     private final Map<String, Object> objects = new HashMap<>();
     private final Map<String, Function<Object, Object>> functions = new HashMap<>();
 
@@ -45,9 +48,9 @@ public class JSInterpreter {
 
     public <T, R> Function<T, R> extractFunction(String funcName) {
         String _pattern = format("(?x)" +
-                "(?:function\\s+%s|[{;,]\\s*%s\\s*=\\s*function|var\\s+%s\\s*=\\s*function)\\s*" +
-                "\\((?<args>[^)]*)\\)\\s*" +
-                "\\{(?<code>[^}]+)\\}",
+                        "(?:function\\s+%s|[{;,]\\s*%s\\s*=\\s*function|var\\s+%s\\s*=\\s*function)\\s*" +
+                        "\\((?<args>[^)]*)\\)\\s*" +
+                        "\\{(?<code>[^}]+)\\}",
                 funcName.replace("$", "\\$").trim(),
                 funcName.replace("$", "\\$").trim(),
                 funcName.replace("$", "\\$").trim()
@@ -127,7 +130,7 @@ public class JSInterpreter {
         }
 
         for (String op : ASSIGN_OPERATORS.keySet()) {
-            BiFunction<String, String, String> opfunc = ASSIGN_OPERATORS.get(op);
+            BiFunction<String, Object, Object> opfunc = ASSIGN_OPERATORS.get(op);
             String format = format("(?x)" +
                     "(?<out>%s)(?:\\[(?<index>[^\\]]+?)\\])?" +
                     "\\s*%s" +
@@ -138,16 +141,16 @@ public class JSInterpreter {
             }
 
             Object rightVal = this.interpretExpression(m.group("expr"), localVars, allowRecursion - 1);
-            if (m.group("index") != null) {
-                char[] lvar = ((String) localVars.get(m.group("out"))).toCharArray();
+            if (m.group("index") != null) { // разбор массива
+                Object lvar = localVars.get(m.group("out"));
                 Integer idx = (Integer) this.interpretExpression(m.group("index"), localVars, allowRecursion);
-                char cur = lvar[idx];
-                String val = opfunc.apply(String.valueOf(cur), (String) rightVal);
-                lvar[idx] = val.toCharArray()[0];
+                Integer cur = ((List<Integer>) lvar).get(idx);
+                Object val = opfunc.apply(String.valueOf(cur), String.valueOf(rightVal));
+                ((List<Integer>) lvar).set(idx, Integer.parseInt(((String) val)));
                 return val;
             } else {
                 String cur = ((String) localVars.get(m.group("out")));
-                String val = opfunc.apply(cur, String.valueOf(rightVal));
+                Object val = opfunc.apply(cur, rightVal);
                 localVars.put(m.group("out"), val);
                 return val;
             }
@@ -164,9 +167,11 @@ public class JSInterpreter {
             return localVars.get(varm.group("name"));
         }
 
-        // TODO json.loads
-        if (expr.equals("\"\"")) {
-            return "";
+        try {
+            return new JSONArray(expr).toList();
+        } catch (Exception exc) {
+            // TODO json.loads
+            log.error("JSON loads", exc);
         }
 
         Matcher m = Pattern.compile(format("(?<in>%s)\\[(?<idx>.+)\\]$", NAME_RE)).matcher(expr);
@@ -225,7 +230,7 @@ public class JSInterpreter {
         }
 
         for (String op : OPERATORS.keySet()) {
-            BiFunction<String, String, String> opfunc = OPERATORS.get(op);
+            BiFunction<String, Object, Object> opfunc = OPERATORS.get(op);
             m = Pattern.compile(format("(?<x>.+?)%s(?<y>.+)", op)).matcher(expr);
             if (!m.find()) {
                 continue;
