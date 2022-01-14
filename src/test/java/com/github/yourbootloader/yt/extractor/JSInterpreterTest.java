@@ -76,4 +76,29 @@ class JSInterpreterTest {
         jsi = new JSInterpreter("function f(){return (1 + 2) * 3;}");
         assertEquals(9, jsi.callFunction("f", null));
     }
+
+    @Test
+    void testAssignments() {
+        jsi = new JSInterpreter("function f(){var x = 20; x = 30 + 1; return x;}");
+        assertEquals(31, jsi.callFunction("f", null));
+
+        jsi = new JSInterpreter("function f(){var x = 20; x += 30 + 1; return x;}");
+        assertEquals(51, jsi.callFunction("f", null));
+
+        jsi = new JSInterpreter("function f(){var x = 20; x -= 30 + 1; return x;}");
+        assertEquals(-11, jsi.callFunction("f", null));
+    }
+
+    @Test
+    void testPrecedence() {
+        jsi = new JSInterpreter(
+                "function x() {" +
+                        "    var a = [10, 20, 30, 40, 50];" +
+                        "    var b = 6;" +
+                        "    a[0]=a[b%a.length];" +
+                        "    return a;" +
+                        "}"
+        );
+        assertEquals(Arrays.asList(20, 20, 30, 40, 50), jsi.callFunction("x", null));
+    }
 }

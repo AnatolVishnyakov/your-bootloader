@@ -118,6 +118,9 @@ public class JSInterpreter {
         }
 
         Object v = this.interpretExpression(expr, localVars, allowRecursion);
+        if (Pattern.compile("^-?\\d+$").matcher(String.valueOf(v)).find()) {
+            v = Integer.parseInt(String.valueOf(v));
+        }
         return new Pair<Object, Boolean>(v, shouldAbort);
     }
 
@@ -142,13 +145,12 @@ public class JSInterpreter {
                         if (remainingExpr.isEmpty()) {
                             return subResult;
                         } else {
-                            expr = String.valueOf(subResult) + remainingExpr;
+                            expr = subResult + remainingExpr;
                         }
                         break;
                     }
                 }
             }
-            System.out.println();
         }
 
         for (String op : ASSIGN_OPERATORS.keySet()) {
@@ -171,7 +173,7 @@ public class JSInterpreter {
                 ((List<Integer>) lvar).set(idx, Integer.parseInt(((String) val)));
                 return val;
             } else {
-                String cur = ((String) localVars.get(m.group("out")));
+                String cur = String.valueOf(localVars.get(m.group("out")));
                 Object val = opfunc.apply(cur, rightVal);
                 localVars.put(m.group("out"), val);
                 return val;
@@ -198,19 +200,25 @@ public class JSInterpreter {
                 return jsonObject;
             } catch (Exception exc2) {
                 // TODO json.loads
-                log.error("JSON loads", exc2);
+                log.error("JSON loads: {}", exc2.getMessage());
             }
         }
 
         Matcher m = Pattern.compile(format("(?<in>%s)\\[(?<idx>.+)\\]$", NAME_RE)).matcher(expr);
         if (m.find()) {
-            char[] val = ((String) localVars.get(m.group("in"))).toCharArray();
-            Integer idx = (Integer) this.interpretExpression(m.group("idx"), localVars, allowRecursion - 1);
-            return val[idx];
+            Object valueFromLocalVars = localVars.get(m.group("in"));
+            Object returnValue = this.interpretExpression(m.group("idx"), localVars, allowRecursion - 1);
+            Integer idx = Integer.valueOf(((String) returnValue));
+            if (valueFromLocalVars instanceof List) {
+                return ((List<Integer>) valueFromLocalVars).get(idx);
+            } else {
+                char[] val = ((String) valueFromLocalVars).toCharArray();
+                return val[idx];
+            }
         }
 
         m = Pattern.compile(format("(?<var>%s)(?:\\.(?<member>[^(]+)|\\[(?<member2>[^]]+)\\])\\s*(?:\\(+(?<args>[^()]*)\\))?$", NAME_RE)).matcher(expr);
-        if (m.find()) {
+        if (m.matches()) {
             String variable = m.group("var");
             String member = m.group("member") != null
                     ? m.group("member").replaceAll("'", "").replaceAll("\"", "")
@@ -228,6 +236,9 @@ public class JSInterpreter {
 
             if (argstr == null) {
                 if (member.equals("length")) {
+                    if (obj instanceof List) {
+                        return ((List<Integer>) obj).size();
+                    }
                     return ((String) obj).length();
                 }
             }
