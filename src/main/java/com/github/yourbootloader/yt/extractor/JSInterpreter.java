@@ -325,8 +325,7 @@ public class JSInterpreter {
         Matcher fieldsm = Pattern.compile(format("(?x)(?<key>%s)\\s*:\\s*function\\s*\\((?<args>[a-z,]+)\\)\\{(?<code>[^}]+)}", FUNC_NAME_RE)).matcher(fields);
         fieldsm.find();
         for (int i = 0; i < fieldsm.groupCount(); i++) {
-            fieldsm.group(1);
-            // TODO
+            throw new MethodNotImplementedException("extractObject() not implemented!");
         }
         return null;
     }
