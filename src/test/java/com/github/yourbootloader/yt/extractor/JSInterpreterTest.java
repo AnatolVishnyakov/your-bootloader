@@ -67,4 +67,13 @@ class JSInterpreterTest {
         jsi = new JSInterpreter("function f(){var x = [1,2,3]; x[0] = 4; x[0] = 5; x[2] = 7; return x;}");
         assertEquals(Arrays.asList(5, 2, 7), jsi.callFunction("f", null));
     }
+
+    @Test
+    void testParens() {
+        jsi = new JSInterpreter("function f(){return (1) + (2) * ((( (( (((((3)))))) )) ));}");
+        assertEquals(7, jsi.callFunction("f", null));
+
+        jsi = new JSInterpreter("function f(){return (1 + 2) * 3;}");
+        assertEquals(9, jsi.callFunction("f", null));
+    }
 }

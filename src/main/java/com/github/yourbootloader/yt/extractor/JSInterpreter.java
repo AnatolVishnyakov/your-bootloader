@@ -5,6 +5,8 @@ import com.github.yourbootloader.yt.extractor.dto.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.security.Escape;
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -126,7 +128,27 @@ public class JSInterpreter {
         expr = expr.trim();
 
         if (expr.startsWith("(")) {
-            throw new MethodNotImplementedException("interpretExpression startWith '(' doesn't implemented!");
+            int parensCount = 0;
+            Matcher m = Pattern.compile("[()]").matcher(expr);
+            while (m.find()) {
+                if (m.group(0).equals("(")) {
+                    parensCount += 1;
+                } else {
+                    parensCount -= 1;
+                    if (parensCount == 0) {
+                        String subExpr = expr.substring(1, m.start());
+                        Object subResult = this.interpretExpression(subExpr, localVars, allowRecursion);
+                        String remainingExpr = expr.substring(m.end()).trim();
+                        if (remainingExpr.isEmpty()) {
+                            return subResult;
+                        } else {
+                            expr = String.valueOf(subResult) + remainingExpr;
+                        }
+                        break;
+                    }
+                }
+            }
+            System.out.println();
         }
 
         for (String op : ASSIGN_OPERATORS.keySet()) {
@@ -168,10 +190,16 @@ public class JSInterpreter {
         }
 
         try {
-            return new JSONArray(expr).toList();
-        } catch (Exception exc) {
-            // TODO json.loads
-            log.error("JSON loads", exc);
+            JSONArray jsonArray = new JSONArray(expr);
+            return jsonArray.toList();
+        } catch (JSONException exc1) {
+            try {
+                JSONObject jsonObject = new JSONObject(expr);
+                return jsonObject;
+            } catch (Exception exc2) {
+                // TODO json.loads
+                log.error("JSON loads", exc2);
+            }
         }
 
         Matcher m = Pattern.compile(format("(?<in>%s)\\[(?<idx>.+)\\]$", NAME_RE)).matcher(expr);
