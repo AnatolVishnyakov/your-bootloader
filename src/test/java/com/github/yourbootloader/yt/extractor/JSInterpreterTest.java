@@ -101,4 +101,14 @@ class JSInterpreterTest {
         );
         assertEquals(Arrays.asList(20, 20, 30, 40, 50), jsi.callFunction("x", null));
     }
+
+    @Test
+    void testCall() {
+        jsi = new JSInterpreter(
+                " function x() { return 2; }" +
+                        " function y(a) { return x() + a; }" +
+                        " function z() { return y(3); }"
+        );
+        assertEquals(5, jsi.callFunction("z", null));
+    }
 }

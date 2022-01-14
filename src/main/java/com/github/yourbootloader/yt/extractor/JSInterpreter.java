@@ -73,7 +73,11 @@ public class JSInterpreter {
             HashMap<String, Object> localVars = new HashMap<>();
             for (String argname : argnames) {
                 if (!argname.isEmpty()) {
-                    localVars.put(argname, args);
+                    if (args instanceof List) {
+                        localVars.put(argname, ((List<?>) args).get(0));
+                    } else {
+                        localVars.put(argname, args);
+                    }
                 }
             }
 
