@@ -314,10 +314,6 @@ public class JSInterpreter {
 
     private Object extractObject(String variable) {
         String FUNC_NAME_RE = "(?:[a-zA-Z$0-9]+|\"[a-zA-Z$0-9]+\"|'[a-zA-Z$0-9]+')";
-//        Pattern.compile("(?x)" +
-//                "(?<!this\\.)%s\\s*=\\s*\\{\\s*" +
-//                "(?<fields>(%s\\s*:\\s*function\\s*\\(.*?\\)\\s*\\{.*?}(?:,\\s*)?)*)" +
-//                "}\\s*;");
         Pattern pattern = Pattern.compile(format("(?x)" +
                 "(?<!this\\.)%s\\s*=\\s*\\{\\s*" +
                 "(?<fields>(%s\\s*:\\s*function\\s*\\(.*?\\)\\s*\\{.*?}(?:,\\s*)?)*)" +
