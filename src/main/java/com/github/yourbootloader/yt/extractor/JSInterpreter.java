@@ -129,7 +129,7 @@ public class JSInterpreter {
     }
 
     private Object interpretExpression(String expr, HashMap<String, Object> localVars, int allowRecursion) {
-        if (expr == null || expr.isEmpty() || expr.trim().isEmpty()) {
+        if (expr == null || expr.isEmpty() || expr.trim().isEmpty() || expr.equals("\"\"")) {
             return null;
         }
         expr = expr.trim();
@@ -314,9 +314,13 @@ public class JSInterpreter {
 
     private Object extractObject(String variable) {
         String FUNC_NAME_RE = "(?:[a-zA-Z$0-9]+|\"[a-zA-Z$0-9]+\"|'[a-zA-Z$0-9]+')";
+//        Pattern.compile("(?x)" +
+//                "(?<!this\\.)%s\\s*=\\s*\\{\\s*" +
+//                "(?<fields>(%s\\s*:\\s*function\\s*\\(.*?\\)\\s*\\{.*?}(?:,\\s*)?)*)" +
+//                "}\\s*;");
         Pattern pattern = Pattern.compile(format("(?x)" +
-                "(?<!this\\.)%s\\s*=\\s*{\\s*" +
-                "(?<fields>(%s\\s*:\\s*function\\s*\\(.*?\\)\\s*{.*?}(?:,\\s*)?)*)" +
+                "(?<!this\\.)%s\\s*=\\s*\\{\\s*" +
+                "(?<fields>(%s\\s*:\\s*function\\s*\\(.*?\\)\\s*\\{.*?}(?:,\\s*)?)*)" +
                 "}\\s*;", Escape.htmlElementContent(variable), FUNC_NAME_RE));
         Matcher objm = pattern.matcher(jscode);
         objm.find();
