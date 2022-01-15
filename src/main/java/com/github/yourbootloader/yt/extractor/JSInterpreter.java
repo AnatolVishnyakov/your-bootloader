@@ -185,7 +185,7 @@ public class JSInterpreter {
                 if (lvar instanceof List<?>) {
                     ((List<Integer>) lvar).set(idx, Integer.parseInt(((String) val)));
                 } else if (lvar instanceof char[]) {
-                    ((char[]) lvar)[idx] = cur.charAt(0);
+                    ((char[]) lvar)[idx] = ((String) val).toCharArray()[0];
                 }
                 return val;
             } else {
