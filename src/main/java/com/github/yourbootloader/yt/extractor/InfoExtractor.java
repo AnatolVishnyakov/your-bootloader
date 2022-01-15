@@ -1,11 +1,11 @@
 package com.github.yourbootloader.yt.extractor;
 
+import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
 import com.github.yourbootloader.yt.extractor.dto.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -43,7 +43,26 @@ public abstract class InfoExtractor {
                 return matcher.group(1);
             }
         }
-        throw new NotImplementedException();
+        throw new MethodNotImplementedException(name);
+    }
+
+    protected String searchRegex(List<Pattern> patterns, String stroka, String name, String group) {
+        Matcher mobj = null;
+        for (Pattern pattern : patterns) {
+            mobj = pattern.matcher(stroka);
+            if (mobj.find()) {
+                break;
+            }
+        }
+
+        if (mobj != null) {
+            if (group == null || group.isEmpty()) {
+                throw new MethodNotImplementedException(group);
+            } else {
+                return mobj.group(group);
+            }
+        }
+        throw new MethodNotImplementedException(name);
     }
 
     protected abstract boolean suitable(String url);

@@ -212,7 +212,7 @@ public class JSInterpreter {
         if (m.find()) {
             Object valueFromLocalVars = localVars.get(m.group("in"));
             Object returnValue = this.interpretExpression(m.group("idx"), localVars, allowRecursion - 1);
-            Integer idx = Integer.valueOf(((String) returnValue));
+            Integer idx = Integer.valueOf((String.valueOf(returnValue)));
             if (valueFromLocalVars instanceof List) {
                 return ((List<Integer>) valueFromLocalVars).get(idx);
             } else {
