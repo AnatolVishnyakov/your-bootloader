@@ -267,9 +267,12 @@ public class JSInterpreter {
                 throw new MethodNotImplementedException("slice not implemented!");
             }
             if (member.equals("splice")) {
+//                List<String> res = new ArrayList<>();
+//                IntStream.range()
                 throw new MethodNotImplementedException("splice not implemented!");
             }
-            throw new MethodNotImplementedException("obj[member](argvals) not implemented!");
+            Function<Object, String> function = (Function<Object, String>) ((Map<String, Object>) obj).get(member);
+            return function.apply(argvals);
         }
 
         for (String op : OPERATORS.keySet()) {
@@ -312,7 +315,7 @@ public class JSInterpreter {
         throw new MethodNotImplementedException("'Unsupported JS expression " + expr);
     }
 
-    private Object extractObject(String variable) {
+    private Map<String, Object> extractObject(String variable) {
         String FUNC_NAME_RE = "(?:[a-zA-Z$0-9]+|\"[a-zA-Z$0-9]+\"|'[a-zA-Z$0-9]+')";
         Pattern pattern = Pattern.compile(format("(?x)" +
                 "(?<!this\\.)%s\\s*=\\s*\\{\\s*" +
@@ -322,12 +325,22 @@ public class JSInterpreter {
         objm.find();
         String fields = objm.group("fields");
 
+        Map<String, Object> obj = new HashMap<>();
+        Pattern.compile("(?x)(?<key>%s)\\s*:\\s*function\\s*\\((?<args>[a-z,]+)\\)\\{(?<code>[^}]+)}");
         Matcher fieldsm = Pattern.compile(format("(?x)(?<key>%s)\\s*:\\s*function\\s*\\((?<args>[a-z,]+)\\)\\{(?<code>[^}]+)}", FUNC_NAME_RE)).matcher(fields);
-        fieldsm.find();
-        for (int i = 0; i < fieldsm.groupCount(); i++) {
-            throw new MethodNotImplementedException("extractObject() not implemented!");
+        while (fieldsm.find()) {
+            String[] argnames = fieldsm.group().split(",");
+            Function<Object, Object> code = this.buildFunction(argnames, fieldsm.group("code"));
+            String key = fieldsm.group("key");
+            obj.put(removeQuotes(key), code);
         }
-        return null;
+
+        return obj;
+    }
+
+    private String removeQuotes(String key) {
+        return key.replaceAll("\"", "")
+                .replaceAll("'", "");
     }
 
     public <T, R> Object callFunction(String funcName, T args) {
