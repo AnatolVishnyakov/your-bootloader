@@ -71,10 +71,11 @@ public class JSInterpreter {
     private <T, R> Function<T, R> buildFunction(String[] argnames, String code) {
         return args -> {
             HashMap<String, Object> localVars = new HashMap<>();
-            for (String argname : argnames) {
+            for (int i = 0; i < argnames.length; i++) {
+                String argname = argnames[i];
                 if (!argname.isEmpty()) {
                     if (args instanceof List) {
-                        localVars.put(argname, ((List<?>) args).get(0));
+                        localVars.put(argname, ((List<?>) args).get(i));
                     } else {
                         localVars.put(argname, args);
                     }
@@ -172,9 +173,20 @@ public class JSInterpreter {
             if (m.group("index") != null) { // разбор массива
                 Object lvar = localVars.get(m.group("out"));
                 Integer idx = (Integer) this.interpretExpression(m.group("index"), localVars, allowRecursion);
-                Integer cur = ((List<Integer>) lvar).get(idx);
-                Object val = opfunc.apply(String.valueOf(cur), String.valueOf(rightVal));
-                ((List<Integer>) lvar).set(idx, Integer.parseInt(((String) val)));
+                String cur = null;
+                if (lvar instanceof List<?>) {
+                    cur = String.valueOf(((List<Integer>) lvar).get(idx));
+                } else if (lvar instanceof char[]) {
+                    cur = String.valueOf(((char[]) lvar)[idx]);
+                } else {
+                    throw new MethodNotImplementedException();
+                }
+                Object val = opfunc.apply(cur, String.valueOf(rightVal));
+                if (lvar instanceof List<?>) {
+                    ((List<Integer>) lvar).set(idx, Integer.parseInt(((String) val)));
+                } else if (lvar instanceof char[]) {
+                    ((char[]) lvar)[idx] = cur.charAt(0);
+                }
                 return val;
             } else {
                 String cur = String.valueOf(localVars.get(m.group("out")));
@@ -215,6 +227,8 @@ public class JSInterpreter {
             Integer idx = Integer.valueOf((String.valueOf(returnValue)));
             if (valueFromLocalVars instanceof List) {
                 return ((List<Integer>) valueFromLocalVars).get(idx);
+            } else if (valueFromLocalVars instanceof char[]) {
+                return String.valueOf(((char[]) valueFromLocalVars)[idx]);
             } else {
                 char[] val = ((String) valueFromLocalVars).toCharArray();
                 return val[idx];
@@ -242,6 +256,9 @@ public class JSInterpreter {
                 if (member.equals("length")) {
                     if (obj instanceof List) {
                         return ((List<Integer>) obj).size();
+                    }
+                    if (obj instanceof char[]) {
+                        return ((char[]) obj).length;
                     }
                     return ((String) obj).length();
                 }
