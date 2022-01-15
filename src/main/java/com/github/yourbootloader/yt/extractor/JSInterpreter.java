@@ -315,21 +315,23 @@ public class JSInterpreter {
         throw new MethodNotImplementedException("'Unsupported JS expression " + expr);
     }
 
-    private Map<String, Object> extractObject(String variable) {
+    private Map<String, Object> extractObject(String objname) {
         String FUNC_NAME_RE = "(?:[a-zA-Z$0-9]+|\"[a-zA-Z$0-9]+\"|'[a-zA-Z$0-9]+')";
         Pattern pattern = Pattern.compile(format("(?x)" +
                 "(?<!this\\.)%s\\s*=\\s*\\{\\s*" +
                 "(?<fields>(%s\\s*:\\s*function\\s*\\(.*?\\)\\s*\\{.*?}(?:,\\s*)?)*)" +
-                "}\\s*;", Escape.htmlElementContent(variable), FUNC_NAME_RE));
+                "}\\s*;", Escape.htmlElementContent(objname), FUNC_NAME_RE));
         Matcher objm = pattern.matcher(jscode);
-        objm.find();
+        if (!objm.find()) {
+            throw new IllegalStateException();
+        }
+
         String fields = objm.group("fields");
 
         Map<String, Object> obj = new HashMap<>();
-        Pattern.compile("(?x)(?<key>%s)\\s*:\\s*function\\s*\\((?<args>[a-z,]+)\\)\\{(?<code>[^}]+)}");
         Matcher fieldsm = Pattern.compile(format("(?x)(?<key>%s)\\s*:\\s*function\\s*\\((?<args>[a-z,]+)\\)\\{(?<code>[^}]+)}", FUNC_NAME_RE)).matcher(fields);
         while (fieldsm.find()) {
-            String[] argnames = fieldsm.group().split(",");
+            String[] argnames = fieldsm.group("args").split(",");
             Function<Object, Object> code = this.buildFunction(argnames, fieldsm.group("code"));
             String key = fieldsm.group("key");
             obj.put(removeQuotes(key), code);
