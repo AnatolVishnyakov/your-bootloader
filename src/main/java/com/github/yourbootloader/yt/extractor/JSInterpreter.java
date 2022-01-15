@@ -14,6 +14,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -173,7 +174,7 @@ public class JSInterpreter {
             if (m.group("index") != null) { // разбор массива
                 Object lvar = localVars.get(m.group("out"));
                 Integer idx = (Integer) this.interpretExpression(m.group("index"), localVars, allowRecursion);
-                String cur = null;
+                String cur;
                 if (lvar instanceof List<?>) {
                     cur = String.valueOf(((List<Integer>) lvar).get(idx));
                 } else if (lvar instanceof char[]) {
@@ -216,7 +217,6 @@ public class JSInterpreter {
                 return jsonObject;
             } catch (Exception exc2) {
                 // TODO json.loads
-                log.error("JSON loads: {}", exc2.getMessage());
             }
         }
 
@@ -269,21 +269,47 @@ public class JSInterpreter {
                 for (String v : argstr.split(",")) {
                     argvals.add(this.interpretExpression(v, localVars, allowRecursion));
                 }
+            } else {
+                argvals.add(0);
+                argvals.add(1);
             }
 
             if (member.equals("split")) {
+                log.info("split");
                 return ((String) obj).toCharArray();
             }
             if (member.equals("join")) {
-                throw new MethodNotImplementedException("join not implemented!");
+                log.info("join");
+                return argstr.replaceAll("\"", "") + new String(((char[]) obj));
             }
             if (member.equals("reverse")) {
+                log.info("reverse");
                 return new StringBuilder(new String(((char[]) obj))).reverse().toString().toCharArray();
             }
             if (member.equals("slice")) {
+                log.info("slice");
                 throw new MethodNotImplementedException("slice not implemented!");
             }
             if (member.equals("splice")) {
+                log.info("splice");
+                int index = ((Integer) argvals.get(0));
+                int howMany = ((Integer) argvals.get(1));
+
+                if (obj instanceof char[]) {
+                    obj = new String(((char[]) obj))
+                            .chars()
+                            .mapToObj(c -> (char) c)
+                            .collect(Collectors.toList());
+                }
+
+                if (obj instanceof List<?>) {
+                    List<Object> res = new ArrayList<>();
+                    for (int i = index; i < Math.min(index + howMany, ((List<?>) obj).size()); i++) {
+                        res.add((((List<?>) obj).get(i)));
+                        ((List<?>) obj).remove(i);
+                    }
+                    return res;
+                }
                 throw new MethodNotImplementedException("splice not implemented!");
             }
             Function<Object, String> function = (Function<Object, String>) ((Map<String, Object>) obj).get(member);
