@@ -278,14 +278,12 @@ public class JSInterpreter {
                 throw new MethodNotImplementedException("join not implemented!");
             }
             if (member.equals("reverse")) {
-                throw new MethodNotImplementedException("reverse not implemented!");
+                return new StringBuilder(new String(((char[]) obj))).reverse().toString().toCharArray();
             }
             if (member.equals("slice")) {
                 throw new MethodNotImplementedException("slice not implemented!");
             }
             if (member.equals("splice")) {
-//                List<String> res = new ArrayList<>();
-//                IntStream.range()
                 throw new MethodNotImplementedException("splice not implemented!");
             }
             Function<Object, String> function = (Function<Object, String>) ((Map<String, Object>) obj).get(member);
