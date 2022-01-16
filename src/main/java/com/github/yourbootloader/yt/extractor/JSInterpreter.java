@@ -76,6 +76,8 @@ public class JSInterpreter {
                 if (!argname.isEmpty()) {
                     if (args instanceof List) {
                         localVars.put(argname, ((List<?>) args).get(i));
+                    } else if (args instanceof String) {
+                        localVars.put(argname, new StringBuilder(((String) args)));
                     } else {
                         localVars.put(argname, args);
                     }
@@ -188,6 +190,8 @@ public class JSInterpreter {
                     cur = String.valueOf(((List<Integer>) lvar).get(idx));
                 } else if (lvar instanceof char[]) {
                     cur = String.valueOf(((char[]) lvar)[idx]);
+                } else if (lvar instanceof StringBuilder) {
+                    cur = String.valueOf(((StringBuilder) lvar).charAt(idx));
                 } else {
                     throw new MethodNotImplementedException();
                 }
@@ -239,8 +243,7 @@ public class JSInterpreter {
             } else if (valueFromLocalVars instanceof char[]) {
                 return String.valueOf(((char[]) valueFromLocalVars)[idx]);
             } else {
-                char[] val = ((String) valueFromLocalVars).toCharArray();
-                return val[idx];
+                return ((StringBuilder) valueFromLocalVars).charAt(idx);
             }
         }
 
@@ -269,7 +272,7 @@ public class JSInterpreter {
                     if (obj instanceof char[]) {
                         return ((char[]) obj).length;
                     }
-                    return ((String) obj).length();
+                    return ((StringBuilder) obj).length();
                 }
             }
 
@@ -285,22 +288,15 @@ public class JSInterpreter {
 
             if (member.equals("split")) {
                 log.info("\n\nsplit");
-                return ((String) obj).toCharArray();
+                return ((StringBuilder) obj);
             }
             if (member.equals("join")) {
                 log.info("\n\njoin");
-                return argstr.replaceAll("\"", "") + new String(((char[]) obj));
+                return argstr.replaceAll("\"", "") + ((StringBuilder) obj).toString();
             }
             if (member.equals("reverse")) {
                 log.info("\n\nreverse");
-                char[] chars = (char[]) obj;
-                int len = chars.length;
-                for (int i = 0; i < (len / 2); i++) {
-                    char l = chars[i];
-                    chars[i] = chars[len - i - 1];
-                    chars[len - i - 1] = l;
-                }
-                return chars;
+                return ((StringBuilder) obj).reverse();
             }
             if (member.equals("slice")) {
                 log.info("\n\nslice");
@@ -311,18 +307,11 @@ public class JSInterpreter {
                 int index = ((Integer) argvals.get(0));
                 int howMany = ((Integer) argvals.get(1));
 
-                if (obj instanceof char[]) {
-                    StringBuilder sb = new StringBuilder(new String((char[]) obj));
+                if (obj instanceof StringBuilder) {
                     List<Object> res = new ArrayList<>();
-                    for (int i = index; i < Math.min(index + howMany, ((char[]) obj).length); i++) {
-                        res.add(sb.charAt(i));
-                        sb.deleteCharAt(i);
-                    }
-                    for (String key : localVars.keySet()) {
-                        if (localVars.get(key) == obj) {
-                            localVars.put(key, sb.toString().toCharArray());
-                            break;
-                        }
+                    for (int i = index; i < Math.min(index + howMany, ((StringBuilder) obj).length()); i++) {
+                        res.add(((StringBuilder) obj).charAt(i));
+                        ((StringBuilder) obj).deleteCharAt(i);
                     }
                     return res;
                 }
