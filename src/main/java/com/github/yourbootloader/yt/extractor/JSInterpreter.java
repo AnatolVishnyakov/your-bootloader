@@ -14,7 +14,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -102,6 +101,15 @@ public class JSInterpreter {
         };
     }
 
+    private String getReturnValue(Object v) {
+        if (v instanceof char[]) {
+            String res = String.copyValueOf(((char[]) v));
+            return res;
+        } else {
+            return String.valueOf(v);
+        }
+    }
+
     private Pair<Object, Boolean> interpretStatement(String stmt, HashMap<String, Object> localVars, int allowRecursion) {
         if (allowRecursion < 0) {
             throw new RuntimeException("Recursion limit reached");
@@ -127,6 +135,7 @@ public class JSInterpreter {
         if (Pattern.compile("^-?\\d+$").matcher(String.valueOf(v)).find()) {
             v = Integer.parseInt(String.valueOf(v));
         }
+        System.out.println(stmt + " " + getReturnValue(v));
         return new Pair<Object, Boolean>(v, shouldAbort);
     }
 
@@ -275,38 +284,45 @@ public class JSInterpreter {
             }
 
             if (member.equals("split")) {
-                log.info("split");
+                log.info("\n\nsplit");
                 return ((String) obj).toCharArray();
             }
             if (member.equals("join")) {
-                log.info("join");
+                log.info("\n\njoin");
                 return argstr.replaceAll("\"", "") + new String(((char[]) obj));
             }
             if (member.equals("reverse")) {
-                log.info("reverse");
-                return new StringBuilder(new String(((char[]) obj))).reverse().toString().toCharArray();
+                log.info("\n\nreverse");
+                char[] chars = (char[]) obj;
+                int len = chars.length;
+                for (int i = 0; i < (len / 2); i++) {
+                    char l = chars[i];
+                    chars[i] = chars[len - i - 1];
+                    chars[len - i - 1] = l;
+                }
+                return chars;
             }
             if (member.equals("slice")) {
-                log.info("slice");
+                log.info("\n\nslice");
                 throw new MethodNotImplementedException("slice not implemented!");
             }
             if (member.equals("splice")) {
-                log.info("splice");
+                log.info("\n\nsplice");
                 int index = ((Integer) argvals.get(0));
                 int howMany = ((Integer) argvals.get(1));
 
                 if (obj instanceof char[]) {
-                    obj = new String(((char[]) obj))
-                            .chars()
-                            .mapToObj(c -> (char) c)
-                            .collect(Collectors.toList());
-                }
-
-                if (obj instanceof List<?>) {
+                    StringBuilder sb = new StringBuilder(new String((char[]) obj));
                     List<Object> res = new ArrayList<>();
-                    for (int i = index; i < Math.min(index + howMany, ((List<?>) obj).size()); i++) {
-                        res.add((((List<?>) obj).get(i)));
-                        ((List<?>) obj).remove(i);
+                    for (int i = index; i < Math.min(index + howMany, ((char[]) obj).length); i++) {
+                        res.add(sb.charAt(i));
+                        sb.deleteCharAt(i);
+                    }
+                    for (String key : localVars.keySet()) {
+                        if (localVars.get(key) == obj) {
+                            localVars.put(key, sb.toString().toCharArray());
+                            break;
+                        }
                     }
                     return res;
                 }
