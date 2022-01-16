@@ -189,7 +189,8 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 .collect(Collectors.joining(""));
 
         String cacheRes = res.apply(testString);
-        return null;
+        // TODO cache
+        return res;
     }
 
     private Optional<File> getCacheFn(String section, String key, String dtype) {
@@ -374,7 +375,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 }
 
                 String signature = decryptSignature(sc.get("s"), videoId, playerUrl);
-                System.out.println();
+                fmtUrl.set(fmtUrl.get() + "&" + sc.get("sp") + "=" + signature);
             }
 
             if (itag != null) {

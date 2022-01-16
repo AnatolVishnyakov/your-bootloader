@@ -184,7 +184,10 @@ public class JSInterpreter {
             Object rightVal = this.interpretExpression(m.group("expr"), localVars, allowRecursion - 1);
             if (m.group("index") != null) { // разбор массива
                 Object lvar = localVars.get(m.group("out"));
-                Integer idx = (Integer) this.interpretExpression(m.group("index"), localVars, allowRecursion);
+                Object index = this.interpretExpression(m.group("index"), localVars, allowRecursion);
+                Integer idx = index instanceof Integer
+                        ? (Integer) index
+                        : Integer.parseInt(((String) index));
                 String cur;
                 if (lvar instanceof List<?>) {
                     cur = String.valueOf(((List<Integer>) lvar).get(idx));
