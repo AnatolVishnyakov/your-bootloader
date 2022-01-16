@@ -296,7 +296,8 @@ public class JSInterpreter {
             }
             if (member.equals("reverse")) {
                 log.info("\n\nreverse");
-                return ((StringBuilder) obj).reverse();
+                StringBuilder reverse = ((StringBuilder) obj).reverse();
+                return reverse;
             }
             if (member.equals("slice")) {
                 log.info("\n\nslice");
