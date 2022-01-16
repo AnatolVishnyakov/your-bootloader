@@ -200,6 +200,9 @@ public class JSInterpreter {
                     ((List<Integer>) lvar).set(idx, Integer.parseInt(((String) val)));
                 } else if (lvar instanceof char[]) {
                     ((char[]) lvar)[idx] = ((String) val).toCharArray()[0];
+                } else {
+                    ((StringBuilder) lvar).deleteCharAt(idx);
+                    ((StringBuilder) lvar).insert(idx, ((String) val));
                 }
                 return val;
             } else {
