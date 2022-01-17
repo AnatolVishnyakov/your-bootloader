@@ -78,6 +78,7 @@ public class StreamDownloader {
     }
 
     public File realDownload(int retries, String url, String fileName, Long fileSize, HttpHeaders headers) throws Exception {
+        log.info("Скачивание url: {}", url);
         this.url = url;
         this.fileName = fileName;
         this.fileSize = fileSize;
