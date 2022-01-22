@@ -22,6 +22,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Component
@@ -36,7 +37,7 @@ public class BotManager {
     public void onStartDownloadProcess(StartDownloadEvent event) {
         log.info("Downloading start...");
         Long chatId = event.getChat().getId();
-        SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается...");
+        SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается..."); // TODO борьба с лимитом на обновление
 
         try {
             Message msg = bot.execute(message);
@@ -61,7 +62,7 @@ public class BotManager {
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
         log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
 
-        EditMessageText message = new EditMessageText("Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
+        EditMessageText message = new EditMessageText("[" + ThreadLocalRandom.current().nextInt(100_000) + "] Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
         message.setChatId(chatId.toString());
         message.setMessageId(messageId);
         message.setParseMode(ParseMode.HTML);

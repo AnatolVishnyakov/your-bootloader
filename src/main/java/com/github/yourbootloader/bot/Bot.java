@@ -1,15 +1,17 @@
 package com.github.yourbootloader.bot;
 
+import com.github.yourbootloader.bot.dto.VideoInfoDto;
 import com.github.yourbootloader.config.BotConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -28,13 +30,14 @@ public class Bot extends TelegramLongPollingBot {
     private final BotQueryService botQueryService;
     private final BotCommandService botCommandService;
 
-    private final ThreadLocal<Map<String, Object>> threadLocal = new ThreadLocal<>();
+    private final ThreadLocal<Map<Long, List<VideoInfoDto>>> threadLocal = new ThreadLocal<>();
 
     @Override
     public void onUpdateReceived(Update update) {
         log.info("onUpdateReceived: {}", update.getMessage());
 
         if (update.hasMessage()) {
+            Long chatId = update.getMessage().getChatId();
             Message message = update.getMessage();
             String url = message.getText();
             log.info("Youtube url: {}", url);
@@ -55,14 +58,11 @@ public class Bot extends TelegramLongPollingBot {
                     }))
                     .collect(Collectors.toList());
 
-            if (threadLocal.get() == null) {
-                threadLocal.set(info);
-            }
-
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(message.getChatId().toString());
             sendMessage.setText("<->");
 
+            List<VideoInfoDto> videosInfo = new ArrayList<>();
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
@@ -83,34 +83,61 @@ public class Bot extends TelegramLongPollingBot {
                     filesizeInString = filesize.toKilobytes() + " Kb";
                 }
                 inlineKeyboardButton.setText(String.format("%s [%s / %s]", format.get("format_note"), format.get("ext"), filesizeInString));
-                inlineKeyboardButton.setCallbackData(((Integer) format.get("format_id")).toString());
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("format_id", format.get("format_id"));
+                jsonObject.put("filesize", ((Integer) format.get("filesize")).longValue());
+                videosInfo.add(
+                        new VideoInfoDto(
+                                ((Integer) format.get("format_id")),
+                                (String) info.get("title"),
+                                ((Integer) format.get("filesize")).longValue(),
+                                url
+                        )
+                );
+
+                inlineKeyboardButton.setCallbackData(jsonObject.toString());
                 rowInline.add(inlineKeyboardButton);
             }
+
+            if (threadLocal.get() == null) {
+                threadLocal.set(new HashMap<Long, List<VideoInfoDto>>() {{
+                    put(chatId, videosInfo);
+                }});
+            } else if (!threadLocal.get().containsKey(chatId)) {
+                threadLocal.get().put(chatId, videosInfo);
+            }
+
             markupInline.setKeyboard(rowsInline);
             sendMessage.setReplyMarkup(markupInline);
 
             try {
                 execute(sendMessage);
             } catch (TelegramApiException e) {
-                e.printStackTrace();
+                log.error("Unexpected error", e);
+                sendNotification(update.getMessage().getChatId(), "Повторите отправку url!");
             }
         } else if (update.hasCallbackQuery()) {
-            System.out.println("Callback query: " + update.getCallbackQuery().toString());
-            CallbackQuery callbackQuery = update.getCallbackQuery();
-            Integer formatId = Integer.parseInt(callbackQuery.getData());
-            Map<String, Object> info = threadLocal.get();
-            if (info == null || info.isEmpty()) {
-                sendNotification(update.getCallbackQuery().getMessage().getChatId(), "Повторите отправку url!");
+            log.info("Callback query: {}", update.getCallbackQuery().toString());
+            Chat chat = update.getCallbackQuery().getMessage().getChat();
+            JSONObject callbackData = new JSONObject(update.getCallbackQuery().getData());
+            List<VideoInfoDto> videosInfo = threadLocal.get().get(chat.getId());
+            int formatId = callbackData.optInt("format_id");
+            long filesize = callbackData.optLong("filesize");
+            List<VideoInfoDto> collect = videosInfo.stream()
+                    .filter(v -> v.getFormatId().equals(formatId))
+                    .collect(Collectors.toList());
+            VideoInfoDto videoInfoDto = collect.get(0);
+            String url = videoInfoDto.getUrl();
+            String title = videoInfoDto.getTitle();
+            if (collect.size() > 1) {
+                log.warn("Formats greater than 1 {} / {}", title, formatId);
+            }
+            if (url.isEmpty()) {
+                sendNotification(chat.getId(), "Повторите отправку url!");
                 return;
             }
-            Map<String, Object> format = ((List<Map<String, Object>>) info.get("formats")).stream()
-                    .filter(f -> f.get("format_id").equals(formatId))
-                    .findFirst()
-                    .orElse(Collections.emptyMap());
-            String url = (String) format.get("url");
-            String filename = (String) info.get("title");
-            Long filesize = ((Integer) format.get("filesize")).longValue();
-            botCommandService.download(update.getCallbackQuery().getMessage().getChat(), url, filename, filesize);
+            botCommandService.download(chat, url, title, filesize);
+            threadLocal.get().remove(chat.getId());
         }
     }
 
