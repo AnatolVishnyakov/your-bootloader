@@ -22,7 +22,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Component
@@ -31,12 +30,14 @@ public class BotManager {
 
     private static final String UNEXPECTED_ERROR = "An unexpected error occurred";
     private static final Map<Chat, Map<String, Object>> cache = new HashMap<>();
+    private final ThreadLocal<Map<Long, Integer>> threadLocal = ThreadLocal.withInitial(HashMap::new);
     private final Bot bot;
 
     @EventListener
     public void onStartDownloadProcess(StartDownloadEvent event) {
         log.info("Downloading start...");
         Long chatId = event.getChat().getId();
+        threadLocal.get().put(chatId, 0);
         SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается..."); // TODO борьба с лимитом на обновление
 
         try {
@@ -60,19 +61,22 @@ public class BotManager {
         long downloadedContent = Long.rotateLeft(dataSize.toKilobytes(), 3);
         long contentSize = Long.rotateLeft(event.getContentSize().toKilobytes(), 3);
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
-        log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
+        if (percent != threadLocal.get().get(chatId)) {
+            threadLocal.get().put(chatId, percent);
+            log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
 
-        EditMessageText message = new EditMessageText("[" + ThreadLocalRandom.current().nextInt(100_000) + "] Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
-        message.setChatId(chatId.toString());
-        message.setMessageId(messageId);
-        message.setParseMode(ParseMode.HTML);
-        message.disableWebPagePreview();
+            EditMessageText message = new EditMessageText("Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
+            message.setChatId(chatId.toString());
+            message.setMessageId(messageId);
+            message.setParseMode(ParseMode.HTML);
+            message.disableWebPagePreview();
 
-        try {
-            bot.execute(message);
-        } catch (TelegramApiException e) {
-            log.error(UNEXPECTED_ERROR, e);
-            sendNotification(chatId, e.getMessage());
+            try {
+                bot.execute(message);
+            } catch (TelegramApiException e) {
+                log.error(UNEXPECTED_ERROR, e);
+                sendNotification(chatId, e.getMessage());
+            }
         }
     }
 
