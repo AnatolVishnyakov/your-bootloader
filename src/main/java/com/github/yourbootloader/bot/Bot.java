@@ -98,6 +98,10 @@ public class Bot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             Integer formatId = Integer.parseInt(callbackQuery.getData());
             Map<String, Object> info = threadLocal.get();
+            if (info == null || info.isEmpty()) {
+                sendNotification(update.getCallbackQuery().getMessage().getChatId(), "Повторите отправку url!");
+                return;
+            }
             Map<String, Object> format = ((List<Map<String, Object>>) info.get("formats")).stream()
                     .filter(f -> f.get("format_id").equals(formatId))
                     .findFirst()

@@ -136,7 +136,7 @@ public class JSInterpreter {
         if (Pattern.compile("^-?\\d+$").matcher(String.valueOf(v)).find()) {
             v = Integer.parseInt(String.valueOf(v));
         }
-        System.out.println(stmt + " " + getReturnValue(v));
+        log.debug("Statement: {} Value: {}", stmt, getReturnValue(v));
         return new Pair<Object, Boolean>(v, shouldAbort);
     }
 
@@ -292,24 +292,24 @@ public class JSInterpreter {
             }
 
             if (member.equals("split")) {
-                log.info("\n\nsplit");
+                log.debug("\n\nsplit");
                 return ((StringBuilder) obj);
             }
             if (member.equals("join")) {
-                log.info("\n\njoin");
+                log.debug("\n\njoin");
                 return argstr.replaceAll("\"", "") + ((StringBuilder) obj).toString();
             }
             if (member.equals("reverse")) {
-                log.info("\n\nreverse");
+                log.debug("\n\nreverse");
                 StringBuilder reverse = ((StringBuilder) obj).reverse();
                 return reverse;
             }
             if (member.equals("slice")) {
-                log.info("\n\nslice");
+                log.debug("\n\nslice");
                 throw new MethodNotImplementedException("slice not implemented!");
             }
             if (member.equals("splice")) {
-                log.info("\n\nsplice");
+                log.debug("\n\nsplice");
                 int index = ((Integer) argvals.get(0));
                 int howMany = ((Integer) argvals.get(1));
 
@@ -374,7 +374,7 @@ public class JSInterpreter {
                 "(?<fields>(%s\\s*:\\s*function\\s*\\(.*?\\)\\s*\\{.*?}(?:,\\s*)?)*)" +
                 "}\\s*;", Pattern.quote(objname), FUNC_NAME_RE);
         Pattern pattern = Pattern.compile(s);
-        log.info("Extract object: {}", s);
+        log.debug("Extract object: {}", s);
         Matcher objm = pattern.matcher(jscode);
         if (!objm.find()) {
             throw new IllegalStateException();
