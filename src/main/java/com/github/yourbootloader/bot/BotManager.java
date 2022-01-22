@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
@@ -29,12 +28,13 @@ import java.util.Map;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class BotManager {
 
-    private final Bot bot;
+    private static final String UNEXPECTED_ERROR = "An unexpected error occurred";
     private static final Map<Chat, Map<String, Object>> cache = new HashMap<>();
+    private final Bot bot;
 
     @EventListener
     public void onStartDownloadProcess(StartDownloadEvent event) {
-        log.info("Скачивание начинается...");
+        log.info("Downloading start...");
         Long chatId = event.getChat().getId();
         SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается...");
 
@@ -45,7 +45,7 @@ public class BotManager {
                 put("chatId", chatId);
             }});
         } catch (TelegramApiException e) {
-            log.error("Возникла непредвиденная ошибка", e);
+            log.error(UNEXPECTED_ERROR, e);
             sendNotification(chatId, e.getMessage());
         }
     }
@@ -59,7 +59,7 @@ public class BotManager {
         long downloadedContent = Long.rotateLeft(dataSize.toKilobytes(), 3);
         long contentSize = Long.rotateLeft(event.getContentSize().toKilobytes(), 3);
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
-        log.info("Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
+        log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
 
         EditMessageText message = new EditMessageText("Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
         message.setChatId(chatId.toString());
@@ -70,14 +70,14 @@ public class BotManager {
         try {
             bot.execute(message);
         } catch (TelegramApiException e) {
-            log.error("Возникла непредвиденная ошибка", e);
+            log.error(UNEXPECTED_ERROR, e);
             sendNotification(chatId, e.getMessage());
         }
     }
 
     @EventListener
     public void onFinishDownloadProcess(FinishDownloadEvent event) {
-        log.info("Содержимое скачано!");
+        log.info("Complete the download process!");
         Map<String, Object> data = cache.get(event.getChat());
         Long chatId = ((Long) data.get("chatId"));
         File downloadFile = event.getDownloadFile();
@@ -89,7 +89,7 @@ public class BotManager {
         try {
             bot.execute(SendAudioRequest);
         } catch (TelegramApiException e) {
-            log.error("Возникла непредвиденная ошибка", e);
+            log.error(UNEXPECTED_ERROR, e);
             sendNotification(chatId, "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());
         }
     }

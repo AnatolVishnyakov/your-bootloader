@@ -107,40 +107,6 @@ public class Bot extends TelegramLongPollingBot {
             Long filesize = ((Integer) format.get("filesize")).longValue();
             botCommandService.download(update.getCallbackQuery().getMessage().getChat(), url, filename, filesize);
         }
-
-//        YoutubePageParser youtubePageParser = context.getBean(YoutubePageParser.class, url);
-//        List<Map<String, Object>> formats = youtubePageParser.parse();
-//
-//        Map<String, Object> format = formats.stream()
-//                .filter(m -> m.get("ext").equals("m4a") && m.get("format_note").equals("tiny"))
-//                .findFirst().orElseThrow(RuntimeException::new);
-//
-//        sendNotification(message.getChatId(), "Идет скачивание аудио: " + format.get("title"));
-//        sendNotification(message.getChatId(), getFilesize(format));
-//        StreamDownloader downloader = context.getBean(StreamDownloader.class);
-//        File downloadFile;
-//        try {
-//            downloadFile = downloader.realDownload(3,
-//                    ((String) format.get("url")),
-//                    ((String) format.get("title")),
-//                    ((Integer) format.get("filesize")).longValue(),
-//                    ((DefaultHttpHeaders) format.get("http_headers"))
-//            );
-//        } catch (Exception e) {
-//            sendNotification(message.getChatId(), "Возникла непредвиденная ошибка: " + e.getMessage());
-//            return;
-//        }
-//
-//        SendAudio SendAudioRequest = new SendAudio();
-//        SendAudioRequest.setChatId(String.valueOf(message.getChatId()));
-//        SendAudioRequest.setAudio(new InputFile(downloadFile));
-//        SendAudioRequest.setCaption(downloadFile.getName());
-//        try {
-//            execute(SendAudioRequest);
-//        } catch (TelegramApiException e) {
-//            log.error("Возникла непредвиденная ошибка", e);
-//            sendNotification(message.getChatId(), "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());
-//        }
     }
 
     private String getFilesize(Map<String, Object> format) {
