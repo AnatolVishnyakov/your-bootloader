@@ -3,7 +3,6 @@ package com.github.yourbootloader.yt.extractor;
 import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
 import com.github.yourbootloader.yt.extractor.dto.Pair;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.security.Escape;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
