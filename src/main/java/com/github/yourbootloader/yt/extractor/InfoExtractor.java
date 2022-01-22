@@ -97,6 +97,7 @@ public abstract class InfoExtractor {
                 res = this.downloadWebpageHandle(url, videoId);
                 success = true;
             } catch (Exception exc) {
+                log.error("[{}] Retry download web page: {}", tryCount, url, exc);
                 tryCount += 1;
                 if (tryCount >= tries) {
                     break;

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
@@ -33,6 +34,7 @@ public class BotManager {
 
     @EventListener
     public void onStartDownloadProcess(StartDownloadEvent event) {
+        log.info("Скачивание начинается...");
         Long chatId = event.getChat().getId();
         SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается...");
 
@@ -57,6 +59,7 @@ public class BotManager {
         long downloadedContent = Long.rotateLeft(dataSize.toKilobytes(), 3);
         long contentSize = Long.rotateLeft(event.getContentSize().toKilobytes(), 3);
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
+        log.info("Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
 
         EditMessageText message = new EditMessageText("Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
         message.setChatId(chatId.toString());
@@ -74,6 +77,7 @@ public class BotManager {
 
     @EventListener
     public void onFinishDownloadProcess(FinishDownloadEvent event) {
+        log.info("Содержимое скачано!");
         Map<String, Object> data = cache.get(event.getChat());
         Long chatId = ((Long) data.get("chatId"));
         File downloadFile = event.getDownloadFile();

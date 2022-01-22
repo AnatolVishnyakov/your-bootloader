@@ -370,10 +370,12 @@ public class JSInterpreter {
 
     private Map<String, Object> extractObject(String objname) {
         String FUNC_NAME_RE = "(?:[a-zA-Z$0-9]+|\"[a-zA-Z$0-9]+\"|'[a-zA-Z$0-9]+')";
-        Pattern pattern = Pattern.compile(format("(?x)" +
+        String s = format("(?x)" +
                 "(?<!this\\.)%s\\s*=\\s*\\{\\s*" +
                 "(?<fields>(%s\\s*:\\s*function\\s*\\(.*?\\)\\s*\\{.*?}(?:,\\s*)?)*)" +
-                "}\\s*;", Escape.htmlElementContent(objname), FUNC_NAME_RE));
+                "}\\s*;", Pattern.quote(objname), FUNC_NAME_RE);
+        Pattern pattern = Pattern.compile(s);
+        log.info("Extract object: {}", s);
         Matcher objm = pattern.matcher(jscode);
         if (!objm.find()) {
             throw new IllegalStateException();
