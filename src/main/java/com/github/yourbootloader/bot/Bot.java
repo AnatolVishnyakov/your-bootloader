@@ -37,6 +37,7 @@ public class Bot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             Message message = update.getMessage();
             String url = message.getText();
+            log.info("Youtube url: {}", url);
 
             if (url.equals("/test")) {
                 url = "https://www.youtube.com/watch?v=_zJrhqUBF5o";
