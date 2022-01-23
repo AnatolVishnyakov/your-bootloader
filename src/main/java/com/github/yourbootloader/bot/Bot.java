@@ -43,7 +43,8 @@ public class Bot extends TelegramLongPollingBot {
             log.info("Youtube url: {}", url);
 
             if (url.equals("/test")) {
-                url = "https://www.youtube.com/watch?v=_zJrhqUBF5o";
+//                url = "https://www.youtube.com/watch?v=_zJrhqUBF5o";
+                url = "https://youtu.be/IPUUbVhvqrE";
             }
 
             Map<String, Object> info = botQueryService.getVideoInfo(url);
@@ -86,12 +87,13 @@ public class Bot extends TelegramLongPollingBot {
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("format_id", format.get("format_id"));
                 jsonObject.put("filesize", ((Integer) format.get("filesize")).longValue());
+                log.debug("Json: {}", jsonObject);
                 videosInfo.add(
                         new VideoInfoDto(
                                 ((Integer) format.get("format_id")),
                                 (String) info.get("title"),
                                 ((Integer) format.get("filesize")).longValue(),
-                                url
+                                ((String) format.get("url"))
                         )
                 );
 
@@ -120,6 +122,7 @@ public class Bot extends TelegramLongPollingBot {
             log.info("Callback query: {}", update.getCallbackQuery().toString());
             Chat chat = update.getCallbackQuery().getMessage().getChat();
             JSONObject callbackData = new JSONObject(update.getCallbackQuery().getData());
+            log.debug("Callback Json: {}", callbackData);
             List<VideoInfoDto> videosInfo = threadLocal.get().get(chat.getId());
             int formatId = callbackData.optInt("format_id");
             long filesize = callbackData.optLong("filesize");

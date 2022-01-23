@@ -56,10 +56,11 @@ public class BotManager {
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
         Map<String, Object> data = cache.get(event.getChat());
         Long chatId = ((Long) data.get("chatId"));
+        threadLocal.get().putIfAbsent(chatId, 0);
         Integer messageId = (Integer) data.get("messageId");
         DataSize dataSize = DataSize.ofBytes(event.getFileSize());
-        long downloadedContent = Long.rotateLeft(dataSize.toKilobytes(), 3);
-        long contentSize = Long.rotateLeft(event.getContentSize().toKilobytes(), 3);
+        long downloadedContent = dataSize.toKilobytes();
+        long contentSize = event.getContentSize().toKilobytes();
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
         if (percent != threadLocal.get().get(chatId)) {
             threadLocal.get().put(chatId, percent);
