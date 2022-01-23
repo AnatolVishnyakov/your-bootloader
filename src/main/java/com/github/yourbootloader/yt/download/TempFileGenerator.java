@@ -50,7 +50,9 @@ public class TempFileGenerator {
         Path folder = Paths.get(ydProperties.getDownloadPath())
                 .resolve(section);
         if (!folder.toFile().exists()) {
-            folder.toFile().mkdirs();
+            if (!folder.toFile().mkdirs()) {
+                throw new RuntimeException("Folders can't create!");
+            }
         }
 
         File newTempFile = folder
@@ -62,7 +64,9 @@ public class TempFileGenerator {
             return newTempFile;
         }
 
-        newTempFile.createNewFile();
+        if (!newTempFile.createNewFile()) {
+            throw new RuntimeException("File can't create!");
+        }
         return newTempFile;
     }
 
