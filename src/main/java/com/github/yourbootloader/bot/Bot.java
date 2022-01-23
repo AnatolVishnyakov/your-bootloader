@@ -77,7 +77,7 @@ public class Bot extends TelegramLongPollingBot {
                 InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
 
                 String filesizeInString;
-                DataSize filesize = DataSize.ofBytes(Optional.ofNullable(((Integer) format.getOrDefault("filesize", 0))).orElse(0));
+                DataSize filesize = DataSize.ofBytes(Optional.ofNullable(((Long) format.getOrDefault("filesize", 0))).orElse(0L));
                 if (filesize.toMegabytes() > 0) {
                     filesizeInString = filesize.toMegabytes() + " Mb";
                 } else {
@@ -86,13 +86,13 @@ public class Bot extends TelegramLongPollingBot {
                 inlineKeyboardButton.setText(String.format("%s [%s / %s]", format.get("format_note"), format.get("ext"), filesizeInString));
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("format_id", format.get("format_id"));
-                jsonObject.put("filesize", ((Integer) format.get("filesize")).longValue());
+                jsonObject.put("filesize", format.get("filesize"));
                 log.debug("Json: {}", jsonObject);
                 videosInfo.add(
                         new VideoInfoDto(
                                 ((Integer) format.get("format_id")),
                                 (String) info.get("title"),
-                                ((Integer) format.get("filesize")).longValue(),
+                                ((Long) format.get("filesize")),
                                 ((String) format.get("url"))
                         )
                 );

@@ -390,7 +390,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             String finalQuality = quality;
             Map<String, Object> dct = new HashMap<String, Object>() {{
                 put("asr", fmt.has("audioSampleRate") ? fmt.getInt("audioSampleRate") : null);
-                put("filesize", fmt.has("contentLength") ? fmt.getInt("contentLength") : null);
+                put("filesize", fmt.has("contentLength") ? fmt.getLong("contentLength") : null);
                 put("format_id", finalItag);
                 put("format_note", fmt.has("qualityLabel") ? fmt.getString("qualityLabel") : finalQuality);
                 put("fps", fmt.has("fps") ? fmt.getInt("fps") : null);
