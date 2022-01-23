@@ -3,7 +3,6 @@ package com.github.yourbootloader.bot;
 import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
 import com.github.yourbootloader.bot.event.StartDownloadEvent;
-import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -38,13 +36,7 @@ public class BotManager {
     @EventListener
     public void onStartDownloadProcess(StartDownloadEvent event) {
         log.info("Downloading start...");
-        Optional<Chat> chat = Optional.ofNullable(event.getChat());
-        if (!chat.isPresent()) {
-            log.warn("Chat doesn't found!");
-            return;
-        }
-
-        Long chatId = chat.get().getId();
+        Long chatId = event.getChat().getId();
         threadLocal.get().put(chatId, 0);
         SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается..."); // TODO борьба с лимитом на обновление
 
@@ -62,13 +54,7 @@ public class BotManager {
 
     @EventListener
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
-        Optional<Chat> chat = Optional.ofNullable(event.getChat());
-        if (!chat.isPresent()) {
-            log.warn("Chat doesn't found!");
-            return;
-        }
-
-        Map<String, Object> data = cache.get(chat.get().getId());
+        Map<String, Object> data = cache.get(event.getChat());
         Long chatId = ((Long) data.get("chatId"));
         threadLocal.get().putIfAbsent(chatId, 0);
         Integer messageId = (Integer) data.get("messageId");
@@ -98,13 +84,7 @@ public class BotManager {
     @EventListener
     public void onFinishDownloadProcess(FinishDownloadEvent event) {
         log.info("Complete the download process!");
-        Optional<Chat> chat = Optional.ofNullable(event.getChat());
-        if (!chat.isPresent()) {
-            log.warn("Chat doesn't found!");
-            return;
-        }
-
-        Map<String, Object> data = cache.get(chat.get().getId());
+        Map<String, Object> data = cache.get(event.getChat());
         Long chatId = ((Long) data.get("chatId"));
         File downloadFile = event.getDownloadFile();
 
