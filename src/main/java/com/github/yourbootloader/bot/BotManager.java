@@ -3,6 +3,7 @@ package com.github.yourbootloader.bot;
 import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
 import com.github.yourbootloader.bot.event.StartDownloadEvent;
+import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ public class BotManager {
 
     @EventListener
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
-        Optional<Chat> chat = Optional.of(event.getChat());
+        Optional<Chat> chat = Optional.ofNullable(event.getChat());
         if (!chat.isPresent()) {
             log.warn("Chat doesn't found!");
             return;
