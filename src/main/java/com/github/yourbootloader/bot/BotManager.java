@@ -22,6 +22,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -36,7 +37,13 @@ public class BotManager {
     @EventListener
     public void onStartDownloadProcess(StartDownloadEvent event) {
         log.info("Downloading start...");
-        Long chatId = event.getChat().getId();
+        Optional<Chat> chat = Optional.ofNullable(event.getChat());
+        if (!chat.isPresent()) {
+            log.warn("Chat doesn't found!");
+            return;
+        }
+
+        Long chatId = chat.get().getId();
         threadLocal.get().put(chatId, 0);
         SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается..."); // TODO борьба с лимитом на обновление
 
@@ -54,7 +61,13 @@ public class BotManager {
 
     @EventListener
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
-        Map<String, Object> data = cache.get(event.getChat());
+        Optional<Chat> chat = Optional.of(event.getChat());
+        if (!chat.isPresent()) {
+            log.warn("Chat doesn't found!");
+            return;
+        }
+
+        Map<String, Object> data = cache.get(chat.get().getId());
         Long chatId = ((Long) data.get("chatId"));
         threadLocal.get().putIfAbsent(chatId, 0);
         Integer messageId = (Integer) data.get("messageId");
@@ -84,7 +97,13 @@ public class BotManager {
     @EventListener
     public void onFinishDownloadProcess(FinishDownloadEvent event) {
         log.info("Complete the download process!");
-        Map<String, Object> data = cache.get(event.getChat());
+        Optional<Chat> chat = Optional.ofNullable(event.getChat());
+        if (!chat.isPresent()) {
+            log.warn("Chat doesn't found!");
+            return;
+        }
+
+        Map<String, Object> data = cache.get(chat.get().getId());
         Long chatId = ((Long) data.get("chatId"));
         File downloadFile = event.getDownloadFile();
 

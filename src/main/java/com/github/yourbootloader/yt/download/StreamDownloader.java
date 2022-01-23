@@ -63,6 +63,7 @@ public class StreamDownloader {
             DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
             downloaderAsyncHandler.setApplicationEventPublisher(publisher);
             downloaderAsyncHandler.setContentSize(dataSize);
+            log.info("File length: {}", file.length());
             client.prepareGet(url).setRangeOffset(file.length())
                     .execute(downloaderAsyncHandler).get();
         }
