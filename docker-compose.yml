@@ -1,4 +1,9 @@
 version: "3.3"
+
+networks:
+  monitoring:
+    driver: bridge
+
 services:
   app:
     image: your-bootloader:latest
@@ -12,20 +17,24 @@ services:
       - "SPRING_PROFILES_ACTIVE=prod"
     ports:
       - '8080:8080'
+    networks:
+      - monitoring
 
   prometheus:
     image: prom/prometheus:v2.4.3
     container_name: 'prometheus'
-#    build: '--no-cache'
+    build: '--no-cache'
     volumes:
       - ./monitoring/prometheus:/etc/prometheus/
     ports:
       - '9090:9090'
+    networks:
+      - monitoring
 
   grafana:
     image: grafana/grafana:8.3.0
     container_name: 'grafana'
-#    build: '--no-cache'
+    #    build: '--no-cache'
     ports:
       - '3000:3000'
     volumes:
@@ -34,3 +43,23 @@ services:
       - ./monitoring/grafana/config.monitoring
     depends_on:
       - prometheus
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
+    networks:
+      - monitoring
