@@ -59,6 +59,8 @@ services:
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--storage.tsdb.retention=200h'
+      - '--web.enable-lifecycle'
     expose:
       - 9100
     networks:
