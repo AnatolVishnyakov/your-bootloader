@@ -19,8 +19,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,7 +31,6 @@ public class Bot extends TelegramLongPollingBot {
     private final BotCommandService botCommandService;
 
     private final ThreadLocal<Map<Long, List<VideoInfoDto>>> threadLocal = new ThreadLocal<>();
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -142,10 +139,8 @@ public class Bot extends TelegramLongPollingBot {
                 sendNotification(chat.getId(), "Повторите отправку url!");
                 return;
             }
-            executorService.execute(() -> {
-                botCommandService.download(chat, url, title, filesize);
-                threadLocal.get().remove(chat.getId());
-            });
+            botCommandService.download(chat, url, title, filesize);
+            threadLocal.get().remove(chat.getId());
         }
     }
 
