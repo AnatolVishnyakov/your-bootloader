@@ -26,6 +26,13 @@ services:
 #    build: '--no-cache'
     volumes:
       - ./monitoring/prometheus:/etc/prometheus/
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention=200h'
+      - '--web.enable-lifecycle'
     ports:
       - '9090:9090'
     networks:
@@ -59,8 +66,6 @@ services:
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-      - '--storage.tsdb.retention=200h'
-      - '--web.enable-lifecycle'
     expose:
       - 9100
     networks:
