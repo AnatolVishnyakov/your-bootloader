@@ -2,7 +2,7 @@ youtube:
   download-path: '/home/document/trash'
   bot-user-name:
   token:
-  max-file-size: 100 #Mb
+  max-file-size: 1000 #Mb
 
 management:
   endpoints:
