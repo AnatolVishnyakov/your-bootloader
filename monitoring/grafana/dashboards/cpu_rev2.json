@@ -102,7 +102,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "node_load1{host=\"$host\"}",
+          "expr": "node_load1{job=\"node\"}",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -112,7 +112,7 @@
           "target": ""
         },
         {
-          "expr": "node_load5{host=\"$host\"}",
+          "expr": "node_load5{job=\"node\"}",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -122,7 +122,7 @@
           "target": ""
         },
         {
-          "expr": "node_load15{host=\"$host\"}",
+          "expr": "node_load15{job=\"node\"}",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -236,7 +236,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "scalar(count(count by (cpu)(node_cpu_seconds_total{host='$host'})))",
+          "expr": "scalar(count(count by (cpu)(node_cpu_seconds_total{instance=\"node-exporter:9100\"})))",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "",
@@ -322,7 +322,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "(1 - avg(irate(node_cpu_seconds_total{host=\"$host\", mode='idle'}[$interval])))*100",
+          "expr": "(1 - avg(irate(node_cpu_seconds_total{job=\"node\", mode='idle'}[$interval])))*100",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -408,7 +408,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "min(node_cpu_frequency_min_hertz{host='$host'})",
+          "expr": "min(node_cpu_frequency_min_hertz{instance=\"node-exporter:9100\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "",
@@ -493,7 +493,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "max(node_cpu_frequency_max_hertz{host='$host'})",
+          "expr": "max(node_cpu_frequency_max_hertz{instance=\"node-exporter:9100\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "",
@@ -579,7 +579,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "100 * (avg(node_cpu_frequency_hertz{host='$host'})-min(node_cpu_frequency_min_hertz{host='$host'})) / (max(node_cpu_frequency_max_hertz{host='$host'})-min(node_cpu_frequency_min_hertz{host='$host'}))",
+          "expr": "100 * (avg(node_cpu_frequency_hertz{instance=\"node-exporter:9100\"})-min(node_cpu_frequency_min_hertz{instance=\"node-exporter:9100\"})) / (max(node_cpu_frequency_max_hertz{instance=\"node-exporter:9100\"})-min(node_cpu_frequency_min_hertz{instance=\"node-exporter:9100\"}))",
           "format": "time_series",
           "instant": false,
           "interval": "$step",
@@ -667,7 +667,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(node_cpu_core_throttles_total{host='$host'})",
+          "expr": "sum(node_cpu_core_throttles_total{instance=\"node-exporter:9100\"})",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -759,7 +759,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(node_cpu_package_throttles_total{host='$host'})",
+          "expr": "sum(node_cpu_package_throttles_total{instance=\"node-exporter:9100\"})",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -831,7 +831,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(irate(node_cpu_core_throttles_total{host=\"$host\"}[$interval]))",
+          "expr": "sum(irate(node_cpu_core_throttles_total{job=\"node\"}[$interval]))",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -841,7 +841,7 @@
           "target": ""
         },
         {
-          "expr": "sum(irate(node_cpu_package_throttles_total{host=\"$host\"}[$interval]))",
+          "expr": "sum(irate(node_cpu_package_throttles_total{job=\"node\"}[$interval]))",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -956,7 +956,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "avg(node_cpu_frequency_hertz{host='$host'})",
+          "expr": "avg(node_cpu_frequency_hertz{instance=\"node-exporter:9100\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "",
@@ -1070,7 +1070,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(node_cpu_seconds_total{host=\"$host\", mode='user', cpu='$cpu'}[$interval])",
+          "expr": "irate(node_cpu_seconds_total{job=\"node\", mode='user', cpu='$cpu'}[$interval])",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1081,7 +1081,7 @@
           "step": 3000
         },
         {
-          "expr": "irate(node_cpu_seconds_total{host=\"$host\", mode='system', cpu='$cpu'}[$interval])",
+          "expr": "irate(node_cpu_seconds_total{job=\"node\", mode='system', cpu='$cpu'}[$interval])",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1092,7 +1092,7 @@
           "step": 3000
         },
         {
-          "expr": "irate(node_cpu_seconds_total{host=\"$host\", mode='nice', cpu='$cpu'}[$interval])",
+          "expr": "irate(node_cpu_seconds_total{job=\"node\", mode='nice', cpu='$cpu'}[$interval])",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1103,7 +1103,7 @@
           "step": 3000
         },
         {
-          "expr": "irate(node_cpu_seconds_total{host=\"$host\", mode='idle', cpu='$cpu'}[$interval])",
+          "expr": "irate(node_cpu_seconds_total{job=\"node\", mode='idle', cpu='$cpu'}[$interval])",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1114,7 +1114,7 @@
           "step": 3000
         },
         {
-          "expr": "irate(node_cpu_seconds_total{host=\"$host\", mode='irq', cpu='$cpu'}[$interval])",
+          "expr": "irate(node_cpu_seconds_total{job=\"node\", mode='irq', cpu='$cpu'}[$interval])",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1125,7 +1125,7 @@
           "step": 3000
         },
         {
-          "expr": "irate(node_cpu_seconds_total{host=\"$host\", mode='softirq', cpu='$cpu'}[$interval])",
+          "expr": "irate(node_cpu_seconds_total{job=\"node\", mode='softirq', cpu='$cpu'}[$interval])",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1136,7 +1136,7 @@
           "step": 3000
         },
         {
-          "expr": "irate(node_cpu_seconds_total{host=\"$host\", mode='iowait', cpu='$cpu'}[$interval])",
+          "expr": "irate(node_cpu_seconds_total{job=\"node\", mode='iowait', cpu='$cpu'}[$interval])",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1147,7 +1147,7 @@
           "step": 3000
         },
         {
-          "expr": "irate(node_cpu_seconds_total{host=\"$host\", mode='steal', cpu='$cpu'}[$interval])",
+          "expr": "irate(node_cpu_seconds_total{job=\"node\", mode='steal', cpu='$cpu'}[$interval])",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1263,7 +1263,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "node_cpu_frequency_max_hertz{host='$host', cpu='$cpu'}",
+          "expr": "node_cpu_frequency_max_hertz{instance=\"node-exporter:9100\", cpu='$cpu'}",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -1271,7 +1271,7 @@
           "refId": "A"
         },
         {
-          "expr": "node_cpu_frequency_hertz{host='$host', cpu='$cpu'}",
+          "expr": "node_cpu_frequency_hertz{instance=\"node-exporter:9100\", cpu='$cpu'}",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
@@ -1279,7 +1279,7 @@
           "refId": "B"
         },
         {
-          "expr": "node_cpu_frequency_min_hertz{host='$host', cpu='$cpu'}",
+          "expr": "node_cpu_frequency_min_hertz{instance=\"node-exporter:9100\", cpu='$cpu'}",
           "format": "time_series",
           "interval": "$step",
           "intervalFactor": 1,
