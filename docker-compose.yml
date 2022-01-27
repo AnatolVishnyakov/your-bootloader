@@ -58,12 +58,10 @@ services:
     image: prom/node-exporter:latest
     container_name: node-exporter
     restart: unless-stopped
-    pid: host
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
-      - '/:/host:ro,rslave'
     command:
       - '--path.procfs=/host/proc'
       - '--path.rootfs=/rootfs'
