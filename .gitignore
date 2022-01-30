@@ -1,2 +1,4 @@
 dev.yml
 *admin.sh
+target/
+.idea/
