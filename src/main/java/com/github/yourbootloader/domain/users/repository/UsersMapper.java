@@ -7,6 +7,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 public class UsersMapper {
     public Users map(User telegramUser) {
         Users user = new Users();
+        user.setId(telegramUser.getId());
         user.setFirstName(telegramUser.getFirstName());
         user.setLastName(telegramUser.getLastName());
         user.setUserName(telegramUser.getUserName());
