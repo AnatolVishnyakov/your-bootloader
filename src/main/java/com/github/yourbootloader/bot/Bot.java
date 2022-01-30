@@ -3,7 +3,7 @@ package com.github.yourbootloader.bot;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
 import com.github.yourbootloader.config.BotConfig;
 import com.github.yourbootloader.domain.users.UsersCommandService;
-import com.github.yourbootloader.domain.users.UsersQueryService;
+import com.github.yourbootloader.domain.users.repository.Users;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,6 @@ public class Bot extends TelegramLongPollingBot {
     private final BotConfig config;
     private final BotQueryService botQueryService;
     private final BotCommandService botCommandService;
-    private final UsersQueryService usersQueryService;
     private final UsersCommandService usersCommandService;
 
     private final ThreadLocal<Map<Long, List<VideoInfoDto>>> threadLocal = new ThreadLocal<>();
@@ -39,6 +38,7 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         log.info("onUpdateReceived: {}", update.getMessage());
+        Users user = usersCommandService.findOrCreate(update.getMessage().getFrom());
 
         if (update.hasMessage()) {
             Long chatId = update.getMessage().getChatId();

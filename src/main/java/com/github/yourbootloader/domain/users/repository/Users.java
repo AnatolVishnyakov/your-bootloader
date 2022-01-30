@@ -2,16 +2,14 @@ package com.github.yourbootloader.domain.users.repository;
 
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
+import javax.persistence.*;
 
 @Data
 @Entity
 public class Users {
     @Id
     @SequenceGenerator(name = "users_id_seq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
     private String firstName;
