@@ -11,7 +11,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 public class YtDownloadCommand implements Command {
     @Override
     public boolean canHandle(Update message) {
-        return message.hasCallbackQuery();
+        return false;
     }
 
     @Override

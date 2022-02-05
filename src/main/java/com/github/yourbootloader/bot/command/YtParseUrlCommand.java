@@ -34,10 +34,10 @@ public class YtParseUrlCommand implements Command {
 
     @Override
     public boolean canHandle(Update message) {
-        return message.hasMessage() &&
+        return (message.hasMessage() &&
                 Pattern.compile(YoutubeIE._VALID_URL)
                         .matcher(message.getMessage().getText())
-                        .matches();
+                        .matches()) || message.hasCallbackQuery(); // TODO вынести логику обработки колбэка
     }
 
     @Override

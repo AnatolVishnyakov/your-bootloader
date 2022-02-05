@@ -324,7 +324,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         String playerUrl = null;
         Function<String, Integer> q = key -> Arrays.asList("tiny", "small", "medium", "large", "hd720", "hd1080", "hd1440", "hd2160", "hd2880", "highres").indexOf(key);
         JSONObject streamingData = playerResponse.getJSONObject("streamingData");
-        JSONArray streamingFormats = streamingData.getJSONArray("formats");
+        JSONArray streamingFormats = Optional.ofNullable(streamingData.optJSONArray("formats")).orElse(new JSONArray());
         JSONArray adaptiveFormats = streamingData.getJSONArray("adaptiveFormats");
 
         for (int i = 0; i < adaptiveFormats.length(); i++) {
