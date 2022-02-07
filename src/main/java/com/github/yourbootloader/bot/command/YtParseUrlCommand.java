@@ -3,13 +3,18 @@ package com.github.yourbootloader.bot.command;
 import com.github.yourbootloader.bot.Bot;
 import com.github.yourbootloader.bot.BotCommandService;
 import com.github.yourbootloader.bot.BotQueryService;
+import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
+import com.github.yourbootloader.domain.users.UsersCommandService;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -28,9 +33,11 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class YtParseUrlCommand implements Command {
+
     private final BotQueryService botQueryService;
     private final BotCommandService botCommandService;
-    private final ThreadLocal<Map<Long, List<VideoInfoDto>>> threadLocal = new ThreadLocal<>();
+    private final UsersCommandService usersCommandService;
+    private final CommandCache commandCache;
 
     @Override
     public boolean canHandle(Update message) {
@@ -88,6 +95,7 @@ public class YtParseUrlCommand implements Command {
                 }
                 inlineKeyboardButton.setText(String.format("%s [%s / %s]", format.get("format_note"), format.get("ext"), filesizeInString));
                 JSONObject jsonObject = new JSONObject();
+//                jsonObject.put("id", UUID.randomUUID());
                 jsonObject.put("format_id", format.get("format_id"));
                 jsonObject.put("filesize", format.get("filesize"));
                 log.debug("Json: {}", jsonObject);
@@ -104,14 +112,7 @@ public class YtParseUrlCommand implements Command {
                 rowInline.add(inlineKeyboardButton);
             }
 
-            if (threadLocal.get() == null) {
-                threadLocal.set(new HashMap<Long, List<VideoInfoDto>>() {{
-                    put(chatId, videosInfo);
-                }});
-            } else if (!threadLocal.get().containsKey(chatId)) {
-                threadLocal.get().put(chatId, videosInfo);
-            }
-
+            commandCache.save(chatId, videosInfo);
             markupInline.setKeyboard(rowsInline);
             sendMessage.setReplyMarkup(markupInline);
 
@@ -126,7 +127,7 @@ public class YtParseUrlCommand implements Command {
             Chat chat = update.getCallbackQuery().getMessage().getChat();
             JSONObject callbackData = new JSONObject(update.getCallbackQuery().getData());
             log.debug("Callback Json: {}", callbackData);
-            List<VideoInfoDto> videosInfo = threadLocal.get().get(chat.getId());
+            List<VideoInfoDto> videosInfo = commandCache.get(chat.getId());
             int formatId = callbackData.optInt("format_id");
             long filesize = callbackData.optLong("filesize");
             List<VideoInfoDto> collect = videosInfo.stream()
@@ -143,7 +144,7 @@ public class YtParseUrlCommand implements Command {
                 return;
             }
             botCommandService.download(chat, url, title, filesize);
-            threadLocal.get().remove(chat.getId());
+            commandCache.delete(chat.getId());
         }
     }
 
@@ -159,5 +160,22 @@ public class YtParseUrlCommand implements Command {
     private void sendNotification(Bot bot, Long chatId, String text) {
         SendMessage message = new SendMessage(chatId.toString(), text);
         bot.execute(message);
+    }
+
+    @Cacheable(cacheNames = {"videoInfo"}, key = "#chatId")
+    public List<VideoInfoDto> getVideoInfo(Long chatId) {
+        log.info("Get value from cache chatId: {}", chatId);
+        return null;
+    }
+
+    @CachePut(cacheNames = {"videoInfo"}, key = "#chatId")
+    public List<VideoInfoDto> putVideoInfo(Long chatId, List<VideoInfoDto> videoInfoDtos) {
+        log.info("Cache update chatId: {}.", chatId);
+        return videoInfoDtos;
+    }
+
+    @CacheEvict(cacheNames = {"videoInfo"}, key = "#chatId")
+    public void deleteVideoInfo(Long chatId) {
+        log.info("Cache clear chatId: {}.", chatId);
     }
 }
