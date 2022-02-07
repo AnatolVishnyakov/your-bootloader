@@ -6,19 +6,16 @@ import com.github.yourbootloader.bot.BotQueryService;
 import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
 import com.github.yourbootloader.domain.users.UsersCommandService;
+import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -41,10 +38,10 @@ public class YtParseUrlCommand implements Command {
 
     @Override
     public boolean canHandle(Update message) {
-        return (message.hasMessage() &&
+        return message.hasMessage() &&
                 Pattern.compile(YoutubeIE._VALID_URL)
                         .matcher(message.getMessage().getText())
-                        .matches()) || message.hasCallbackQuery(); // TODO вынести логику обработки колбэка
+                        .matches();
     }
 
     @Override
@@ -123,28 +120,7 @@ public class YtParseUrlCommand implements Command {
                 sendNotification(bot, update.getMessage().getChatId(), "Повторите отправку url!");
             }
         } else if (update.hasCallbackQuery()) {
-            log.info("Callback query: {}", update.getCallbackQuery().toString());
-            Chat chat = update.getCallbackQuery().getMessage().getChat();
-            JSONObject callbackData = new JSONObject(update.getCallbackQuery().getData());
-            log.debug("Callback Json: {}", callbackData);
-            List<VideoInfoDto> videosInfo = commandCache.get(chat.getId());
-            int formatId = callbackData.optInt("format_id");
-            long filesize = callbackData.optLong("filesize");
-            List<VideoInfoDto> collect = videosInfo.stream()
-                    .filter(v -> v.getFormatId().equals(formatId))
-                    .collect(Collectors.toList());
-            VideoInfoDto videoInfoDto = collect.get(0);
-            String url = videoInfoDto.getUrl();
-            String title = videoInfoDto.getTitle();
-            if (collect.size() > 1) {
-                log.warn("Formats greater than 1 {} / {}", title, formatId);
-            }
-            if (url.isEmpty()) {
-                sendNotification(bot, chat.getId(), "Повторите отправку url!");
-                return;
-            }
-            botCommandService.download(chat, url, title, filesize);
-            commandCache.delete(chat.getId());
+            throw new MethodNotImplementedException();
         }
     }
 
@@ -160,22 +136,5 @@ public class YtParseUrlCommand implements Command {
     private void sendNotification(Bot bot, Long chatId, String text) {
         SendMessage message = new SendMessage(chatId.toString(), text);
         bot.execute(message);
-    }
-
-    @Cacheable(cacheNames = {"videoInfo"}, key = "#chatId")
-    public List<VideoInfoDto> getVideoInfo(Long chatId) {
-        log.info("Get value from cache chatId: {}", chatId);
-        return null;
-    }
-
-    @CachePut(cacheNames = {"videoInfo"}, key = "#chatId")
-    public List<VideoInfoDto> putVideoInfo(Long chatId, List<VideoInfoDto> videoInfoDtos) {
-        log.info("Cache update chatId: {}.", chatId);
-        return videoInfoDtos;
-    }
-
-    @CacheEvict(cacheNames = {"videoInfo"}, key = "#chatId")
-    public void deleteVideoInfo(Long chatId) {
-        log.info("Cache clear chatId: {}.", chatId);
     }
 }
