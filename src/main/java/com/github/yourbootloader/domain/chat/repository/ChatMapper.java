@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 public class ChatMapper {
     public Chat map(org.telegram.telegrambots.meta.api.objects.Chat chat) {
         Chat newChat = new Chat();
+        newChat.setId(chat.getId());
         newChat.setTitle(chat.getTitle());
         newChat.setDescription(chat.getDescription());
         newChat.setType(chat.getType());

@@ -5,7 +5,12 @@ import com.github.yourbootloader.bot.BotCommandService;
 import com.github.yourbootloader.bot.BotQueryService;
 import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
+import com.github.yourbootloader.domain.chat.ChatCommandService;
+import com.github.yourbootloader.domain.chat.repository.Chat;
+import com.github.yourbootloader.domain.message.MessageCommandService;
+import com.github.yourbootloader.domain.message.model.MessageDto;
 import com.github.yourbootloader.domain.users.UsersCommandService;
+import com.github.yourbootloader.domain.users.repository.Users;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -33,6 +38,8 @@ public class YtParseUrlCommand implements Command {
     private final BotQueryService botQueryService;
     private final BotCommandService botCommandService;
     private final UsersCommandService usersCommandService;
+    private final ChatCommandService chatCommandService;
+    private final MessageCommandService messageCommandService;
     private final CommandCache commandCache;
 
     @Override
@@ -47,7 +54,10 @@ public class YtParseUrlCommand implements Command {
     public void handle(Bot bot, Update update) {
         log.info("Youtube download command");
 
-        Long chatId = update.getMessage().getChatId();
+        Users user = usersCommandService.findOrCreate(update.getMessage().getFrom());
+        Chat chat = chatCommandService.findOrCreateChat(update.getMessage().getChat());
+        messageCommandService.save(new MessageDto(update.getMessage(), chat, user));
+
         Message message = update.getMessage();
         String url = message.getText();
         log.info("Youtube url: {}", url);
@@ -65,7 +75,7 @@ public class YtParseUrlCommand implements Command {
                 .collect(Collectors.toList());
 
         SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(message.getChatId().toString());
+        sendMessage.setChatId(chat.getId().toString());
         sendMessage.setText("<->");
 
         List<VideoInfoDto> videosInfo = new ArrayList<>();
@@ -107,7 +117,7 @@ public class YtParseUrlCommand implements Command {
             rowInline.add(inlineKeyboardButton);
         }
 
-        commandCache.save(chatId, videosInfo);
+        commandCache.save(chat.getId(), videosInfo);
         markupInline.setKeyboard(rowsInline);
         sendMessage.setReplyMarkup(markupInline);
 
