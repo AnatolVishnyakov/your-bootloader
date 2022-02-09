@@ -33,6 +33,7 @@ services:
     environment:
       - POSTGRES_USER=${YT_DATABASE_USER}
       - POSTGRES_PASSWORD=${YT_DATABASE_PASSWORD}
+      - POSTGRES_HOST_AUTH_METHOD=trust
     ports:
       - "5432:5432"
 
