@@ -13,8 +13,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    env_file: bin/database.env
     environment:
-      - "SPRING_PROFILES_ACTIVE=prod"
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=${YT_DATABASE_NAME}
+      - SPRING_DATASOURCE_USERNAME=${YT_DATABASE_USER}
+      - SPRING_DATASOURCE_PASSWORD=${YT_DATABASE_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     depends_on:
       - postgres
     ports:
@@ -26,10 +31,8 @@ services:
     image: postgres:14.1
     env_file: bin/database.env
     environment:
-      - SPRING_DATASOURCE_URL="${YT_DATABASE_NAME}"
-      - SPRING_DATASOURCE_USERNAME="${YT_DATABASE_USER}"
-      - SPRING_DATASOURCE_PASSWORD="${YT_DATABASE_PASSWORD}"
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - POSTGRES_USER=${YT_DATABASE_USER}
+      - POSTGRES_PASSWORD=${YT_DATABASE_PASSWORD}
     ports:
       - "5432:5432"
 
