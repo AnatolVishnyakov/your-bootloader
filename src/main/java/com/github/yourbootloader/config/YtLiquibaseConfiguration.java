@@ -25,7 +25,7 @@ public class YtLiquibaseConfiguration {
     @Bean
     SpringLiquibase liquibase(@Value("${yt.jdbc.schema}") String schema, DataSource dataSource) {
         SpringLiquibase liquibase = new SpringLiquibase();
-        liquibase.setChangeLog("classpath:changelog.xml");
+        liquibase.setChangeLog("classpath:liquibase/changelog.xml");
         liquibase.setDataSource(dataSource);
         liquibase.setContexts(String.join(",", environment.getActiveProfiles()));
         if (dataSource instanceof HikariDataSource) {

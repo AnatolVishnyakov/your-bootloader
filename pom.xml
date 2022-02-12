@@ -60,6 +60,11 @@
             <version>4.0.1</version>
         </dependency>
         <dependency>
+            <groupId>net.ttddyy</groupId>
+            <artifactId>datasource-proxy</artifactId>
+            <version>1.7</version>
+        </dependency>
+        <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
@@ -105,5 +110,11 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/liquibase</directory>
+                <targetPath>liquibase</targetPath>
+            </resource>
+        </resources>
     </build>
 </project>
