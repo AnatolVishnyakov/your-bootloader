@@ -1,2 +1,4 @@
-dev.yml
 *admin.sh
+docker-compose-dev.yml
+bin/
+target/

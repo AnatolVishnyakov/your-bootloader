@@ -3,28 +3,6 @@ youtube:
   bot-user-name:
   token:
   max-file-size: 1000 #Mb
-  jdbc:
-    schema: "public"
-    properties:
-    max-total: 180000
-    connection:
-      leak-threshold:
-        ms: 180000
-      wait:
-        timeout:
-          ms: 180000
-      lifetime:
-        minutes: 10
-    query:
-      timeout:
-        ms: 180000
-
-spring:
-  datasource:
-    driverClassName:
-    url:
-    username:
-    password:
 
 management:
   endpoints:

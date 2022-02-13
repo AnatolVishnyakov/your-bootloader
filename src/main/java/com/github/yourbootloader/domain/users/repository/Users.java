@@ -2,15 +2,11 @@ package com.github.yourbootloader.domain.users.repository;
 
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-
 @Data
-@Entity
+//@Entity
 public class Users {
-    @Id
-    @Column(name = "id", nullable = false)
+    //    @Id
+//    @Column(name = "id", nullable = false)
     private Long id;
     private String firstName;
     private Boolean isBot;

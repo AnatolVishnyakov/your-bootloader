@@ -23,6 +23,7 @@ public class BotInitializer {
     public void init() throws TelegramApiException {
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
         try {
+            log.info("Bot info: {}", bot.getBotUsername());
             telegramBotsApi.registerBot(bot);
         } catch (TelegramApiRequestException e) {
             log.error(e.getMessage());

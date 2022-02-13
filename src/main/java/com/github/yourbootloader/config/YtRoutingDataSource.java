@@ -1,9 +1,9 @@
 package com.github.yourbootloader.config;
 
-import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 import org.springframework.lang.Nullable;
 
-public class YtRoutingDataSource extends AbstractRoutingDataSource {
+public class YtRoutingDataSource //extends AbstractRoutingDataSource
+{
 
     private static final ThreadLocal<Route> ROUTE = new ThreadLocal<Route>();
 
@@ -24,7 +24,7 @@ public class YtRoutingDataSource extends AbstractRoutingDataSource {
     }
 
     @Nullable
-    @Override
+//    @Override
     protected Object determineCurrentLookupKey() {
         return ROUTE.get();
     }

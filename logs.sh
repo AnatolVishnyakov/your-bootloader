@@ -1,2 +1,2 @@
 #!/bin/sh
-docker-compose logs -f
+docker-compose logs -f your

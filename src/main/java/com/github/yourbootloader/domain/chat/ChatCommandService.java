@@ -6,19 +6,18 @@ import com.github.yourbootloader.domain.chat.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-@Transactional
+//@Transactional
 @RequiredArgsConstructor
 public class ChatCommandService {
 
-    private final ChatRepository chatRepository;
-    private final ChatMapper chatMapper;
+//    private final ChatRepository chatRepository;
+//    private final ChatMapper chatMapper;
 
-    public Chat findOrCreateChat(org.telegram.telegrambots.meta.api.objects.Chat chat) {
-        return chatRepository.findById(chat.getId())
-                .orElseGet(() -> chatRepository.save(chatMapper.map(chat)));
-    }
+//    public Chat findOrCreateChat(org.telegram.telegrambots.meta.api.objects.Chat chat) {
+//        return chatRepository.findById(chat.getId())
+//                .orElseGet(() -> chatRepository.save(chatMapper.map(chat)));
+//    }
 }

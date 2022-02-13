@@ -6,11 +6,8 @@ import com.github.yourbootloader.bot.BotQueryService;
 import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
 import com.github.yourbootloader.domain.chat.ChatCommandService;
-import com.github.yourbootloader.domain.chat.repository.Chat;
 import com.github.yourbootloader.domain.message.MessageCommandService;
-import com.github.yourbootloader.domain.message.model.MessageDto;
 import com.github.yourbootloader.domain.users.UsersCommandService;
-import com.github.yourbootloader.domain.users.repository.Users;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -20,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -54,10 +52,7 @@ public class YtParseUrlCommand implements Command {
     public void handle(Bot bot, Update update) {
         log.info("Youtube download command");
 
-        Users user = usersCommandService.findOrCreate(update.getMessage().getFrom());
-        Chat chat = chatCommandService.findOrCreateChat(update.getMessage().getChat());
-        messageCommandService.save(new MessageDto(update.getMessage(), chat, user));
-
+        Chat chat = update.getMessage().getChat();
         Message message = update.getMessage();
         String url = message.getText();
         log.info("Youtube url: {}", url);
