@@ -5,9 +5,6 @@ import com.github.yourbootloader.bot.BotCommandService;
 import com.github.yourbootloader.bot.BotQueryService;
 import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
-import com.github.yourbootloader.domain.chat.ChatCommandService;
-import com.github.yourbootloader.domain.message.MessageCommandService;
-import com.github.yourbootloader.domain.users.UsersCommandService;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -35,9 +32,6 @@ public class YtParseUrlCommand implements Command {
 
     private final BotQueryService botQueryService;
     private final BotCommandService botCommandService;
-    private final UsersCommandService usersCommandService;
-    private final ChatCommandService chatCommandService;
-    private final MessageCommandService messageCommandService;
     private final CommandCache commandCache;
 
     @Override
