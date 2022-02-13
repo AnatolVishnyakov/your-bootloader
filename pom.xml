@@ -86,11 +86,5 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
-        <resources>
-            <resource>
-                <directory>src/liquibase</directory>
-                <targetPath>liquibase</targetPath>
-            </resource>
-        </resources>
     </build>
 </project>

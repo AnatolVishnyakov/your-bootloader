@@ -1,7 +1,7 @@
 youtube:
   download-path: '/home/document/trash'
-  bot-user-name:
-  token:
+  bot-user-name: 'test-bot-user-name'
+  token: 'test-bot-token'
   max-file-size: 1000 #Mb
 
 management:
