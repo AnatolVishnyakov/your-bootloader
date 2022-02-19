@@ -2,7 +2,6 @@ package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
-import com.github.yourbootloader.bot.event.StartDownloadEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +13,6 @@ import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendAudio;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -22,6 +20,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -29,35 +28,28 @@ import java.util.Map;
 public class BotManager {
 
     private static final String UNEXPECTED_ERROR = "An unexpected error occurred";
-    private static final Map<Chat, Map<String, Object>> cache = new HashMap<>();
+    private static final Map<UUID, Integer> messageCache = new HashMap<>();
     private final ThreadLocal<Map<Long, Integer>> threadLocal = ThreadLocal.withInitial(HashMap::new);
     private final Bot bot;
 
     @EventListener
-    public void onStartDownloadProcess(StartDownloadEvent event) {
-        log.info("Downloading start...");
-        Long chatId = event.getChat().getId();
-        threadLocal.get().put(chatId, 0);
-        SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается..."); // TODO борьба с лимитом на обновление
-
-        try {
-            Message msg = bot.execute(message);
-            cache.put(event.getChat(), new HashMap<String, Object>() {{
-                put("messageId", msg.getMessageId());
-                put("chatId", chatId);
-            }});
-        } catch (TelegramApiException e) {
-            log.error(UNEXPECTED_ERROR, e);
-            sendNotification(chatId, e.getMessage());
-        }
-    }
-
-    @EventListener
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
-        Map<String, Object> data = cache.get(event.getChat());
-        Long chatId = ((Long) data.get("chatId"));
+        Long chatId = event.getChat().getId();
         threadLocal.get().putIfAbsent(chatId, 0);
-        Integer messageId = (Integer) data.get("messageId");
+
+        int messageId = messageCache.computeIfAbsent(event.getDownloadId(), uuid -> {
+            SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается..."); // TODO борьба с лимитом на обновление
+
+            try {
+                Message msg = bot.execute(message);
+                return msg.getMessageId();
+            } catch (TelegramApiException e) {
+                log.error(UNEXPECTED_ERROR, e);
+                sendNotification(chatId, e.getMessage());
+                throw new RuntimeException(e);
+            }
+        });
+
         DataSize dataSize = DataSize.ofBytes(event.getFileSize());
         long downloadedContent = dataSize.toKilobytes();
         long contentSize = event.getContentSize().toKilobytes();
@@ -84,8 +76,7 @@ public class BotManager {
     @EventListener
     public void onFinishDownloadProcess(FinishDownloadEvent event) {
         log.info("Complete the download process!");
-        Map<String, Object> data = cache.get(event.getChat());
-        Long chatId = ((Long) data.get("chatId"));
+        Long chatId = event.getChat().getId();
         File downloadFile = event.getDownloadFile();
 
         SendAudio SendAudioRequest = new SendAudio();

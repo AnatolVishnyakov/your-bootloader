@@ -4,6 +4,8 @@ import lombok.Value;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
+import java.util.UUID;
+
 @Value
 public class ProgressIndicatorEvent {
 
@@ -15,4 +17,5 @@ public class ProgressIndicatorEvent {
 
     int blockSize;
 
+    UUID downloadId;
 }

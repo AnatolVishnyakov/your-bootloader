@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 /**
  * Асинхронный обработчик, позволяет продолжить
@@ -26,12 +27,14 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     private final File originalFile;
     private final Chat chat;
+    private final UUID downloadId;
     private ApplicationEventPublisher publisher;
     private DataSize contentSize;
 
     public DownloaderAsyncHandler(Chat chat, File originalFile) throws IOException {
         this.chat = chat;
         this.originalFile = originalFile;
+        this.downloadId = UUID.randomUUID();
 
         RandomAccessFile randomAccessFile = new RandomAccessFile(originalFile, "rw");
         this.setResumableListener(new ResumableRandomAccessFileListener(randomAccessFile) {
@@ -50,7 +53,7 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     @Override
     public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
         State state = super.onBodyPartReceived(bodyPart);
-        publisher.publishEvent(new ProgressIndicatorEvent(chat, contentSize, originalFile.length(), bodyPart.getBodyPartBytes().length));
+        publisher.publishEvent(new ProgressIndicatorEvent(chat, contentSize, originalFile.length(), bodyPart.getBodyPartBytes().length, downloadId));
         return state;
     }
 
