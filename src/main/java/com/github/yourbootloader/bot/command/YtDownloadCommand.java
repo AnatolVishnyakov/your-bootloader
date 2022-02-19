@@ -47,6 +47,8 @@ public class YtDownloadCommand implements Command {
         String title = videoInfoDto.getTitle();
         if (collect.size() > 1) {
             log.warn("Formats greater than 1 {} / {}", title, formatId);
+            sendNotification(bot, chat.getId(), "Найдено несколько форматов " + collect);
+            return;
         }
         if (url.isEmpty()) {
             sendNotification(bot, chat.getId(), "Повторите отправку url!");
