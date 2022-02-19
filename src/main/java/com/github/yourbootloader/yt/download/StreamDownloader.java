@@ -1,6 +1,5 @@
 package com.github.yourbootloader.yt.download;
 
-import com.github.yourbootloader.bot.event.StartDownloadEvent;
 import com.github.yourbootloader.config.YDProperties;
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +39,7 @@ public class StreamDownloader {
     private void establishConnection() {
     }
 
-    private File download() throws Exception {
+    private void download() throws Exception {
         DataSize dataSize = DataSize.ofBytes(fileSize);
         log.info("Размер скачиваемого содержимого: {} Mb ({} Kb)", dataSize.toMegabytes(), dataSize.toKilobytes());
         File file = tempFileGenerator.create(fileName + "." + dataSize.toBytes());
@@ -58,16 +57,13 @@ public class StreamDownloader {
                 .addRequestFilter(new ThrottleRequestFilter(10))
                 .build();
 
-        publisher.publishEvent(new StartDownloadEvent(chat));
-        try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
-            downloaderAsyncHandler.setApplicationEventPublisher(publisher);
-            downloaderAsyncHandler.setContentSize(dataSize);
-            log.info("File length: {}", file.length());
-            client.prepareGet(url).setRangeOffset(file.length())
-                    .execute(downloaderAsyncHandler).get();
-        }
-        return file;
+        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
+        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
+        downloaderAsyncHandler.setContentSize(dataSize);
+        log.info("File length: {}", file.length());
+
+        AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig);
+        client.prepareGet(url).setRangeOffset(file.length()).execute(downloaderAsyncHandler);
     }
 
     private void validate(File file) {
@@ -78,7 +74,7 @@ public class StreamDownloader {
         }
     }
 
-    public File realDownload(int retries, String url, String fileName, Long fileSize, HttpHeaders headers) throws Exception {
+    public void realDownload(int retries, String url, String fileName, Long fileSize, HttpHeaders headers) throws Exception {
         log.info("Скачивание url: {}", url);
         this.url = url;
         this.fileName = fileName;
@@ -98,26 +94,9 @@ public class StreamDownloader {
             headers.add("Youtubedl-no-compression", "True");
         }
 
-        int count = 0;
-
-        while (count <= retries) {
-            try {
-                establishConnection();
-                File downloadFile = download();
-                log.info("Download finished...");
-                return downloadFile;
-            } catch (Exception exc) {
-                count++;
-                if (count <= retries) {
-                    log.error("Exit downloading by error. Attempt {} of {}.", count, retries);
-                    exc.printStackTrace();
-                    continue;
-                }
-                log.error("[download] Got server HTTP error: {}. Retrying (attempt {} of {})...", exc.getMessage(), count, retries);
-                throw new Exception(exc);
-            }
-        }
-        return null;
+        establishConnection();
+        download();
+        log.info("Download finished...");
     }
 
     public void setChat(Chat chat) {
