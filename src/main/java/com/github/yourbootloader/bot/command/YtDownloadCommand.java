@@ -11,7 +11,9 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.List;
@@ -34,7 +36,8 @@ public class YtDownloadCommand implements Command {
     @Override
     public void handle(Bot bot, Update update) {
         log.info("Download: {}", update.getCallbackQuery().getData());
-        Chat chat = update.getCallbackQuery().getMessage().getChat();
+        Message message = update.getCallbackQuery().getMessage();
+        Chat chat = message.getChat();
         JSONObject callbackData = new JSONObject(update.getCallbackQuery().getData());
         log.debug("Callback Json: {}", callbackData);
         List<VideoInfoDto> videosInfo = commandCache.get(chat.getId());
@@ -58,11 +61,18 @@ public class YtDownloadCommand implements Command {
 //        ytProducer.produce(new YtMessage(chat, url, title, filesize));
         botCommandService.download(chat, url, title, filesize);
         commandCache.delete(chat.getId());
+        deleteMessage(bot, chat.getId().toString(), message.getMessageId());
     }
 
     @SneakyThrows
     private void sendNotification(Bot bot, Long chatId, String text) {
         SendMessage message = new SendMessage(chatId.toString(), text);
+        bot.execute(message);
+    }
+
+    @SneakyThrows
+    private void deleteMessage(Bot bot, String chatId, Integer messageId) {
+        DeleteMessage message = new DeleteMessage(chatId, messageId);
         bot.execute(message);
     }
 }
