@@ -24,6 +24,7 @@ public class YtDownloadCommand implements Command {
 
     private final BotCommandService botCommandService;
     private final CommandCache commandCache;
+//    private final YtProducer ytProducer;
 
     @Override
     public boolean canHandle(Update message) {
@@ -54,6 +55,7 @@ public class YtDownloadCommand implements Command {
             sendNotification(bot, chat.getId(), "Повторите отправку url!");
             return;
         }
+//        ytProducer.produce(new YtMessage(chat, url, title, filesize));
         botCommandService.download(chat, url, title, filesize);
         commandCache.delete(chat.getId());
     }
