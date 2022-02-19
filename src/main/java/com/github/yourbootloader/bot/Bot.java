@@ -32,10 +32,12 @@ public class Bot extends TelegramLongPollingBot {
                 .handle(this, update);
     }
 
+    @Override
     public String getBotUsername() {
         return config.getBotUserName();
     }
 
+    @Override
     public String getBotToken() {
         return config.getToken();
     }
