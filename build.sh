@@ -1,5 +1,7 @@
 #!/bin/sh
 
-git pull
+# shellcheck disable=SC2046
+git pull origin $(git rev-parse --abbrev-ref HEAD)
+
 docker-compose down
 mvn clean package -Dmaven.test.skip=true
