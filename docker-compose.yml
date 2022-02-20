@@ -16,31 +16,14 @@ services:
     env_file: bin/database.env
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-#      - SPRING_DATASOURCE_URL=${YT_DATABASE_NAME}
-#      - SPRING_DATASOURCE_USERNAME=${YT_DATABASE_USER}
-#      - SPRING_DATASOURCE_PASSWORD=${YT_DATABASE_PASSWORD}
-#      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-#    depends_on:
-#      - postgres
     ports:
       - '8080:8080'
     networks:
       - monitoring
 
-#  postgres:
-#    image: postgres:14.1
-#    env_file: bin/database.env
-#    environment:
-#      - POSTGRES_USER=${YT_DATABASE_USER}
-#      - POSTGRES_PASSWORD=${YT_DATABASE_PASSWORD}
-#      - POSTGRES_HOST_AUTH_METHOD=trust
-#    ports:
-#      - "5432:5432"
-
   prometheus:
     image: prom/prometheus:v2.4.3
     container_name: 'prometheus'
-#    build: '--no-cache'
     volumes:
       - ./devenv/prometheus:/etc/prometheus
     command:
@@ -69,7 +52,6 @@ services:
   grafana:
     image: grafana/grafana:8.3.0
     container_name: 'grafana'
-    #    build: '--no-cache'
     ports:
       - '3000:3000'
     volumes:
