@@ -14,3 +14,12 @@ datasources:
     isDefault: true
     version: 1
     editable: true
+
+providers:
+  - name: 'Node monitoring'
+    orgId: 1
+    folder: 'NODE'
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/node-exporter.json
