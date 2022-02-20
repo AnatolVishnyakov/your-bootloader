@@ -55,6 +55,15 @@ services:
     networks:
       - monitoring
 
+  influxdb:
+    image: influxdb:latest
+    ports:
+      - '8086:8086'
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    env_file:
+      - devenv/usr/share/influxdb/influxdb.env
+
   grafana:
     image: grafana/grafana:8.3.0
     container_name: 'grafana'
@@ -62,11 +71,16 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./devenv/grafana.ini:/etc/grafana/grafana.ini
+      - ./devenv/plugins:/var/lib/grafana/plugins
+      - ./devenv/provisioning:/etc/grafana/provisioning
+      - ./devenv/var/lib/grafana:/var/usr/share/grafana
+      - ./devenv/var/log/grafana:/var/log/grafana
     env_file:
-      - ./monitoring/grafana/config.monitoring
+      - devenv/usr/share/grafana/grafana.env
     depends_on:
       - prometheus
+      - influxdb
     networks:
       - monitoring
 
