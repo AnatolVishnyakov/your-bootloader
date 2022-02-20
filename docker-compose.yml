@@ -25,8 +25,8 @@ services:
     image: prom/prometheus:v2.4.3
     container_name: 'prometheus'
     volumes:
+      - ./devenv/prometheus/data:/prometheus
       - ./devenv/prometheus:/etc/prometheus
-      - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
