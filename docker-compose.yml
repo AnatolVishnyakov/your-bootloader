@@ -61,6 +61,9 @@ services:
       - '8086:8086'
     volumes:
       - influxdb-storage:/var/lib/influxdb
+      - ./devenv/influxdb.conf://etc/influxdb/influxdb.conf:ro
+      - ./devenv/var/lib/influxdb:/var/lib/influxdb
+      - ./devenv/.influx_history:/.influx_history:rw
     env_file:
       - devenv/usr/share/influxdb/influxdb.env
 
