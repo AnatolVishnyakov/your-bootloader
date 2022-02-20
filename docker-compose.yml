@@ -3,6 +3,8 @@ version: "3.3"
 networks:
   monitoring:
     driver: bridge
+volumes:
+  prometheus-data:
 
 services:
   app:
@@ -25,7 +27,7 @@ services:
     image: prom/prometheus:v2.4.3
     container_name: 'prometheus'
     volumes:
-      - ./devenv/prometheus/data:/prometheus
+      - prometheus-data:/prometheus
       - ./devenv/prometheus:/etc/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
