@@ -25,10 +25,9 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         log.info("onUpdateReceived: {}", update.getMessage());
-
         StreamEx.of(commands)
                 .filter(command -> command.canHandle(update))
-                .collect(StreamCollectors.atMostOneRow(CommandNotFoundException::new))
+                .collect(StreamCollectors.atMostOneRow(() -> new CommandNotFoundException(update.getMessage().getText())))
                 .handle(this, update);
     }
 
