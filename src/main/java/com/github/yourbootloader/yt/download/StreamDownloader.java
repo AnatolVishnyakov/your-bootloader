@@ -52,9 +52,9 @@ public class StreamDownloader {
                 .setConnectTimeout(DEFAULT_TIMEOUT)
                 .setMaxRequestRetry(3)
                 .setThreadPoolName(StreamDownloader.class.getSimpleName())
-                .setHttpClientCodecMaxChunkSize(16_384)
+                .setHttpClientCodecMaxChunkSize(8_192 * 2)
                 .addIOExceptionFilter(new ResumableIOExceptionFilter())
-                .addRequestFilter(new ThrottleRequestFilter(10))
+                .addRequestFilter(new ThrottleRequestFilter(1_000))
                 .build();
 
         DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
@@ -63,7 +63,9 @@ public class StreamDownloader {
         log.info("File length: {}", file.length());
 
         AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig);
-        client.prepareGet(url).setRangeOffset(file.length()).execute(downloaderAsyncHandler);
+        client.prepareGet(url)
+                .setRangeOffset(file.length())
+                .execute(downloaderAsyncHandler).get();
     }
 
     private void validate(File file) {
