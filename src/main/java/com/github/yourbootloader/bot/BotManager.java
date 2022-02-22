@@ -57,10 +57,13 @@ public class BotManager {
         long contentSize = event.getContentSize().toKilobytes();
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
         if (downloadedContent != threadLocal.get().get(chatId)) {
+            long byteTransferred = downloadedContent - threadLocal.get().get(chatId);
             threadLocal.get().put(chatId, downloadedContent);
             log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
 
-            EditMessageText message = new EditMessageText("Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
+            EditMessageText message = new EditMessageText("Скачано " + downloadedContent + " Kb из " + contentSize +
+                    " Kb [" + percent + "%]" +
+                    " [speed: " + DataSize.ofBytes(byteTransferred).toKilobytes() + " Kb]");
             message.setChatId(chatId.toString());
             message.setMessageId(messageId);
             message.setParseMode(ParseMode.HTML);
