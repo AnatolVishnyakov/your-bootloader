@@ -63,7 +63,7 @@ public class BotManager {
 
             EditMessageText message = new EditMessageText("Скачано " + downloadedContent + " Kb из " + contentSize +
                     " Kb [" + percent + "%]" +
-                    " [speed: " + byteTransferred + " Kb]");
+                    " [speed: " + DataSize.ofBytes(byteTransferred).toKilobytes() + " Kb]");
             message.setChatId(chatId.toString());
             message.setMessageId(messageId);
             message.setParseMode(ParseMode.HTML);
