@@ -8,6 +8,7 @@ import org.asynchttpclient.Response;
 import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
 import org.asynchttpclient.handler.resumable.ResumableRandomAccessFileListener;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
@@ -23,6 +24,7 @@ import java.util.UUID;
  * загрузка была прервана.
  */
 @Slf4j
+@Retryable
 class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     private final File originalFile;
