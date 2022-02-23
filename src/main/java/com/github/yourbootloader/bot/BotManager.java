@@ -31,13 +31,13 @@ public class BotManager {
 
     private static final String UNEXPECTED_ERROR = "An unexpected error occurred";
     private static final Map<UUID, Integer> messageCache = new HashMap<>();
-    private final ThreadLocal<Map<Long, Long>> threadLocal = ThreadLocal.withInitial(HashMap::new);
+    private final ThreadLocal<Map<Long, Integer>> threadLocal = ThreadLocal.withInitial(HashMap::new);
     private final Bot bot;
 
     @EventListener
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
         Long chatId = event.getChat().getId();
-        threadLocal.get().putIfAbsent(chatId, 0L);
+        threadLocal.get().putIfAbsent(chatId, 0);
 
         int messageId = messageCache.computeIfAbsent(event.getDownloadId(), uuid -> {
             SendMessage message = new SendMessage(String.valueOf(chatId), "Скачивание начинается..."); // TODO борьба с лимитом на обновление
@@ -56,8 +56,8 @@ public class BotManager {
         long downloadedContent = dataSize.toKilobytes();
         long contentSize = event.getContentSize().toKilobytes();
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
-        if (downloadedContent != threadLocal.get().get(chatId)) {
-            threadLocal.get().put(chatId, downloadedContent);
+        if (percent != threadLocal.get().get(chatId)) {
+            threadLocal.get().put(chatId, percent);
             log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
 
             EditMessageText message = new EditMessageText("Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
