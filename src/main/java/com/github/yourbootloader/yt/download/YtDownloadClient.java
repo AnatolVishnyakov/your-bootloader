@@ -20,7 +20,7 @@ import java.io.File;
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class YtDownloadClient {
-    private static final int DEFAULT_TIMEOUT = 600_000;
+    private static final int DEFAULT_TIMEOUT = 10_000_000;
 
     private final YDProperties ydProperties;
     private final TempFileGenerator tempFileGenerator;
