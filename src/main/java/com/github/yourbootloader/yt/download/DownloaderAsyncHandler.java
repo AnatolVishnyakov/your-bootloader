@@ -1,5 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
+import com.github.yourbootloader.bot.event.FailureDownloadEvent;
 import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +64,12 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     public Response onCompleted() throws Exception {
         publisher.publishEvent(new FinishDownloadEvent(chat, originalFile));
         return super.onCompleted();
+    }
+
+    @Override
+    public void onThrowable(Throwable t) {
+        super.onThrowable(t);
+        publisher.publishEvent(new FailureDownloadEvent(chat, t));
     }
 
     public void setContentSize(DataSize contentSize) {

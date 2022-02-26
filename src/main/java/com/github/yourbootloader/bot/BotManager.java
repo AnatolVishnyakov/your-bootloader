@@ -1,5 +1,6 @@
 package com.github.yourbootloader.bot;
 
+import com.github.yourbootloader.bot.event.FailureDownloadEvent;
 import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -91,6 +93,12 @@ public class BotManager {
             log.error(UNEXPECTED_ERROR, e);
             sendNotification(chatId, "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());
         }
+    }
+
+    @EventListener
+    public void onDownloadFailure(FailureDownloadEvent event) {
+        sendNotification(event.getChat().getId(), event.getError().getMessage());
+        sendNotification(event.getChat().getId(), Arrays.toString(event.getError().getStackTrace()));
     }
 
     @SneakyThrows
