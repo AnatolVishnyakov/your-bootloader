@@ -19,7 +19,7 @@ import java.io.File;
 @Slf4j
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
-public class StreamDownloader {
+public class YtDownloadClient {
     private static final int DEFAULT_TIMEOUT = 600_000;
 
     private final YDProperties ydProperties;
@@ -47,7 +47,7 @@ public class StreamDownloader {
                 .setReadTimeout(DEFAULT_TIMEOUT)
                 .setConnectTimeout(DEFAULT_TIMEOUT)
                 .setMaxRequestRetry(3)
-                .setThreadPoolName(StreamDownloader.class.getSimpleName())
+                .setThreadPoolName(YtDownloadClient.class.getSimpleName())
                 .setHttpClientCodecMaxChunkSize(8_192 * 2)
                 .addIOExceptionFilter(new ResumableIOExceptionFilter())
                 .addRequestFilter(new ThrottleRequestFilter(1_000))

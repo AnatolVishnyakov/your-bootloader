@@ -1,6 +1,6 @@
 package com.github.yourbootloader.bot;
 
-import com.github.yourbootloader.yt.download.StreamDownloader;
+import com.github.yourbootloader.yt.download.YtDownloadClient;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +13,11 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class BotCommandService {
 
-    private final StreamDownloader streamDownloader;
+    private final YtDownloadClient ytDownloadClient;
 
     @SneakyThrows
     public void download(Chat chat, String url, String filename, Long filesize) {
-        streamDownloader.setChat(chat);
-        streamDownloader.realDownload(3, url, filename, filesize);
+        ytDownloadClient.setChat(chat);
+        ytDownloadClient.realDownload(3, url, filename, filesize);
     }
 }
