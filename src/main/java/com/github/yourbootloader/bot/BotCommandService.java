@@ -1,7 +1,6 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.yt.download.StreamDownloader;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +18,6 @@ public class BotCommandService {
     @SneakyThrows
     public void download(Chat chat, String url, String filename, Long filesize) {
         streamDownloader.setChat(chat);
-        streamDownloader.realDownload(3, url, filename, filesize, new DefaultHttpHeaders());
+        streamDownloader.realDownload(3, url, filename, filesize);
     }
 }

@@ -1,7 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
-import io.netty.handler.codec.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
@@ -16,7 +15,6 @@ import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.io.File;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -32,8 +30,6 @@ public class StreamDownloader {
     private String url;
     private String fileName;
     private Long fileSize;
-    private HttpHeaders headers;
-    private DownloadContext context;
     private Chat chat;
 
     private void establishConnection() {
@@ -62,10 +58,11 @@ public class StreamDownloader {
         downloaderAsyncHandler.setContentSize(dataSize);
         log.info("File length: {}", file.length());
 
-        AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig);
-        client.prepareGet(url)
-                .setRangeOffset(file.length())
-                .execute(downloaderAsyncHandler).get();
+        try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
+            client.prepareGet(url)
+                    .setRangeOffset(file.length())
+                    .execute(downloaderAsyncHandler).get();
+        }
     }
 
     private void validate(File file) {
@@ -76,25 +73,13 @@ public class StreamDownloader {
         }
     }
 
-    public void realDownload(int retries, String url, String fileName, Long fileSize, HttpHeaders headers) throws Exception {
+    public void realDownload(int retries, String url, String fileName, Long fileSize) throws Exception {
         log.info("Скачивание url: {}", url);
         this.url = url;
         this.fileName = fileName;
         this.fileSize = fileSize;
-        this.headers = headers;
 
-        context = DownloadContext.builder()
-                .dataLen(0L)
-                .resumeLen(0L) // TODO надо вычислять
-                .blockSize(1024L) // TODO надо вычислять
-                .chunkSize(1024L) // TODO надо вычислять
-                .fileName(fileName)
-                .tmpFileName(UUID.randomUUID() + ".mp3")
-                .build();
-
-        if (headers != null) {
-            headers.add("Youtubedl-no-compression", "True");
-        }
+//            headers.add("Youtubedl-no-compression", "True");
 
         establishConnection();
         download();
