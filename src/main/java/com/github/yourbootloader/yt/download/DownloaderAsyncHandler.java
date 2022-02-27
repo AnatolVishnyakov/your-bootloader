@@ -3,6 +3,8 @@ package com.github.yourbootloader.yt.download;
 import com.github.yourbootloader.bot.event.FailureDownloadEvent;
 import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.HttpResponseBodyPart;
 import org.asynchttpclient.Response;
@@ -33,6 +35,7 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     private final UUID downloadId;
     private ApplicationEventPublisher publisher;
     private DataSize contentSize;
+    private MeterRegistry meterRegistry;
 
     public DownloaderAsyncHandler(Chat chat, File originalFile) throws IOException {
         this.chat = chat;
@@ -55,6 +58,7 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     @Override
     public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
+        meterRegistry.timer("DownloadSpeed", Tags.of("speed", "download"));
         State state = super.onBodyPartReceived(bodyPart);
         publisher.publishEvent(new ProgressIndicatorEvent(chat, contentSize, originalFile.length(), bodyPart.getBodyPartBytes().length, downloadId));
         return state;
@@ -74,5 +78,9 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     public void setContentSize(DataSize contentSize) {
         this.contentSize = contentSize;
+    }
+
+    public void setMeterRegistry(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
     }
 }

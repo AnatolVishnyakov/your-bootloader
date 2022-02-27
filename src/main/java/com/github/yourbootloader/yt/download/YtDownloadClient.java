@@ -1,14 +1,12 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
-import org.asynchttpclient.filter.FilterContext;
-import org.asynchttpclient.filter.FilterException;
-import org.asynchttpclient.filter.ResponseFilter;
 import org.asynchttpclient.filter.ThrottleRequestFilter;
 import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +26,7 @@ public class YtDownloadClient {
     private final YDProperties ydProperties;
     private final TempFileGenerator tempFileGenerator;
     private final ApplicationEventPublisher publisher;
+    private final MeterRegistry meterRegistry;
 
     // TODO вынести
     private String url;
@@ -55,18 +54,12 @@ public class YtDownloadClient {
                 .setChunkedFileChunkSize(8_192 * 3)
                 .addIOExceptionFilter(new ResumableIOExceptionFilter())
                 .addRequestFilter(new ThrottleRequestFilter(1_000))
-                .addResponseFilter(new ResponseFilter() {
-                    @Override
-                    public <T> FilterContext<T> filter(FilterContext<T> ctx) throws FilterException {
-                        log.info("Response filter...");
-                        return ctx;
-                    }
-                })
                 .build();
 
         DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
         downloaderAsyncHandler.setApplicationEventPublisher(publisher);
         downloaderAsyncHandler.setContentSize(dataSize);
+        downloaderAsyncHandler.setMeterRegistry(meterRegistry);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
