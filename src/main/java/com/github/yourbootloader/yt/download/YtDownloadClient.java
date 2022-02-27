@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
+import org.asynchttpclient.filter.FilterContext;
+import org.asynchttpclient.filter.FilterException;
+import org.asynchttpclient.filter.ResponseFilter;
 import org.asynchttpclient.filter.ThrottleRequestFilter;
 import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,9 +51,17 @@ public class YtDownloadClient {
                 .setConnectTimeout(DEFAULT_TIMEOUT)
                 .setMaxRequestRetry(3)
                 .setThreadPoolName(YtDownloadClient.class.getSimpleName())
-                .setHttpClientCodecMaxChunkSize(8_192 * 2)
+                .setHttpClientCodecMaxChunkSize(8_192 * 5)
+                .setChunkedFileChunkSize(8_192 * 3)
                 .addIOExceptionFilter(new ResumableIOExceptionFilter())
                 .addRequestFilter(new ThrottleRequestFilter(1_000))
+                .addResponseFilter(new ResponseFilter() {
+                    @Override
+                    public <T> FilterContext<T> filter(FilterContext<T> ctx) throws FilterException {
+                        log.info("Response filter...");
+                        return ctx;
+                    }
+                })
                 .build();
 
         DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
@@ -61,6 +72,14 @@ public class YtDownloadClient {
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
             client.prepareGet(url)
                     .setRangeOffset(file.length())
+                    .setHeader("Youtubedl-no-compression", "True")
+                    .setHeader("Cache-Control", "private, max-age=21298")
+                    .setHeader("Accept-Ranges", "bytes")
+                    .setHeader("Connection", "keep-alive")
+                    .setHeader("Vary", "Origin")
+                    .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
+                    .setHeader("X-Content-Type-Options", "nosniff")
+                    .setHeader("Server", "gvs 1.0")
                     .execute(downloaderAsyncHandler).get();
         }
     }
@@ -78,8 +97,6 @@ public class YtDownloadClient {
         this.url = url;
         this.fileName = fileName;
         this.fileSize = fileSize;
-
-//            headers.add("Youtubedl-no-compression", "True");
 
         establishConnection();
         download();
