@@ -23,8 +23,8 @@ public class BotManagerDev {
     public void onProgressIndicatorEventDebug(ProgressIndicatorEvent event) {
         long receivedKBytes = DataSize.ofBytes(event.getFileSize()).toKilobytes();
         long byteReceived = Math.abs(prevByteReceived.get() - receivedKBytes);
-        log.info("Filesize: {} Mb ({} Kb)",
-                DataSize.ofBytes(event.getFileSize()).toMegabytes(), byteReceived);
+        log.info("Filesize: {} Kb (speed - {} Kb)",
+                DataSize.ofBytes(event.getFileSize()).toKilobytes(), byteReceived);
         prevByteReceived.set(receivedKBytes);
     }
 }
