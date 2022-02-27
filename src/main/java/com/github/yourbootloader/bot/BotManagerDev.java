@@ -9,16 +9,22 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 @Slf4j
 @Profile("!prod")
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class BotManagerDev {
-//    @EventListener
+
+    private final AtomicLong prevByteReceived = new AtomicLong();
+
+    @EventListener
     public void onProgressIndicatorEventDebug(ProgressIndicatorEvent event) {
+        long receivedKBytes = DataSize.ofBytes(event.getFileSize()).toKilobytes();
+        long byteReceived = Math.abs(prevByteReceived.get() - receivedKBytes);
         log.info("Filesize: {} Mb ({} Kb)",
-                DataSize.ofBytes(event.getFileSize()).toMegabytes(),
-                DataSize.ofBytes(event.getFileSize()).toKilobytes()
-        );
+                DataSize.ofBytes(event.getFileSize()).toMegabytes(), byteReceived);
+        prevByteReceived.set(receivedKBytes);
     }
 }
