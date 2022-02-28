@@ -25,7 +25,7 @@ public class TasksConfiguration {
     private final YtDownloadClient ytDownloadClient;
 
     @SneakyThrows
-    @Scheduled(fixedDelay = 1_000)
+//    @Scheduled(fixedDelay = 1_000)
     public void downloadTask() {
         String url = "https://www.youtube.com/watch?v=OnQhVL1o2CU";
 
