@@ -1,7 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
@@ -26,7 +25,6 @@ public class YtDownloadClient {
     private final YDProperties ydProperties;
     private final TempFileGenerator tempFileGenerator;
     private final ApplicationEventPublisher publisher;
-    private final MeterRegistry meterRegistry;
 
     // TODO вынести
     private String url;
@@ -59,7 +57,6 @@ public class YtDownloadClient {
         DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
         downloaderAsyncHandler.setApplicationEventPublisher(publisher);
         downloaderAsyncHandler.setContentSize(dataSize);
-        downloaderAsyncHandler.setMeterRegistry(meterRegistry);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
