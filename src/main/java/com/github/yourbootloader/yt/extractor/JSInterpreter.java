@@ -293,7 +293,7 @@ public class JSInterpreter {
 
             if (member.equals("split")) {
                 log.debug("\n\nsplit");
-                return ((StringBuilder) obj);
+                return obj;
             }
             if (member.equals("join")) {
                 log.debug("\n\njoin");
@@ -306,7 +306,8 @@ public class JSInterpreter {
             }
             if (member.equals("slice")) {
                 log.debug("\n\nslice");
-                throw new MethodNotImplementedException("slice not implemented!");
+                String slice = ((StringBuilder) obj).substring(((Integer) argvals.get(0)));
+                return new StringBuilder(slice);
             }
             if (member.equals("splice")) {
                 log.debug("\n\nsplice");
@@ -349,11 +350,13 @@ public class JSInterpreter {
         m = Pattern.compile(format("^(?<func>%s)\\((?<args>[a-zA-Z0-9_$,]*)\\)$", NAME_RE)).matcher(expr);
         if (m.find()) {
             String fname = m.group("func");
-            List<Integer> argvals = new ArrayList<>();
+            List<Object> argvals = new ArrayList<>();
             if (m.group("args").length() > 0) {
                 for (String v : m.group("args").split(",")) {
                     if (v.chars().allMatch(Character::isDigit)) {
                         argvals.add(Integer.parseInt(v));
+                    } else if (localVars.get(v) instanceof StringBuilder) {
+                        argvals.add(localVars.get(v));
                     } else {
                         argvals.add(Integer.parseInt(((String) localVars.get(v))));
                     }

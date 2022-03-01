@@ -7,7 +7,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -34,7 +33,6 @@ public class YoutubeSignatureTest {
     private static final String PRINTABLE = DIGITS + ASCII_LETTERS + PUNCTUATION + WHITESPACE;
 
     private final YoutubeIE youtubeIE;
-    private final ResourceLoader resourceLoader;
     private final RestTemplate restTemplate;
 
     public static Stream<Arguments> signatures() {
@@ -59,11 +57,11 @@ public class YoutubeSignatureTest {
                         84,
                         "O1I3456789abcde0ghijklmnopqrstuvwxyzABCDEFGHfJKLMN2PQRSTUVW@YZ!\"#$%&'()*+,-./:;<="
                 ),
-//                Arguments.of(
-//                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflXGBaUN.js",
-//                        "2ACFC7A61CA478CD21425E5A57EBD73DDC78E22A.2094302436B2D377D14A3BBA23022D023B8BC25AA",
-//                        "A52CB8B320D22032ABB3A41D773D2B6342034902.A22E87CDD37DBE75A5E52412DC874AC16A7CFCA2"
-//                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflXGBaUN.js",
+                        "2ACFC7A61CA478CD21425E5A57EBD73DDC78E22A.2094302436B2D377D14A3BBA23022D023B8BC25AA",
+                        "A52CB8B320D22032ABB3A41D773D2B6342034902.A22E87CDD37DBE75A5E52412DC874AC16A7CFCA2"
+                ),
                 Arguments.of(
                         "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflBb0OQx.js",
                         84,
@@ -73,17 +71,17 @@ public class YoutubeSignatureTest {
                         "https://s.ytimg.com/yts/jsbin/html5player-en_US-vfl9FYC6l.js",
                         83,
                         "123456789abcdefghijklmnopqr0tuvwxyzABCDETGHIJKLMNOPQRS>UVWXYZ!\"#$%&'()*+,-./:;<=F"
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflCGk6yw/html5player.js",
+                        "4646B5181C6C3020DF1D9C7FCFEA.AD80ABF70C39BD369CCCAE780AFBB98FA6B6CB42766249D9488C288",
+                        "82C8849D94266724DC6B6AF89BBFA087EACCD963.B93C07FBA084ACAEFCF7C9D1FD0203C6C1815B6B"
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflKjOTVq/html5player.js",
+                        "312AA52209E3623129A412D56A40F11CB0AF14AE.3EE09501CB14E3BCDC3B2AE808BF3F1D14E7FBF12",
+                        "112AA5220913623229A412D56A40F11CB0AF14AE.3EE0950FCB14EEBCDC3B2AE808BF331D14E7FBF3"
                 )
-//                Arguments.of(
-//                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflCGk6yw/html5player.js",
-//                        "4646B5181C6C3020DF1D9C7FCFEA.AD80ABF70C39BD369CCCAE780AFBB98FA6B6CB42766249D9488C288",
-//                        "82C8849D94266724DC6B6AF89BBFA087EACCD963.B93C07FBA084ACAEFCF7C9D1FD0203C6C1815B6B"
-//                ),
-//                Arguments.of(
-//                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflKjOTVq/html5player.js",
-//                        "312AA52209E3623129A412D56A40F11CB0AF14AE.3EE09501CB14E3BCDC3B2AE808BF3F1D14E7FBF12",
-//                        "112AA5220913623229A412D56A40F11CB0AF14AE.3EE0950FCB14EEBCDC3B2AE808BF331D14E7FBF3"
-//                )
         );
     }
 
