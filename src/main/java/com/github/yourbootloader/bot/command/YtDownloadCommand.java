@@ -59,8 +59,8 @@ public class YtDownloadCommand implements Command {
             return;
         }
 //        ytProducer.produce(new YtMessage(chat, url, title, filesize));
-        botCommandService.download(chat, url, title, filesize);
         commandCache.delete(chat.getId());
+        botCommandService.download(chat, url, title, filesize);
         deleteMessage(bot, chat.getId().toString(), message.getMessageId());
     }
 
