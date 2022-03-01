@@ -16,6 +16,8 @@ import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
+// TODO Требуется отрефакторить на использование
+//  более внятной структуры данных + дженериков
 @Slf4j
 public class JSInterpreter {
 
