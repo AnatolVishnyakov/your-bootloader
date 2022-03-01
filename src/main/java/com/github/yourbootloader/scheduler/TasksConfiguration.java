@@ -23,6 +23,7 @@ public class TasksConfiguration {
 
     private final YoutubeIE youtubeIE;
     private final YtDownloadClient ytDownloadClient;
+    private final DownloadFolderCleaner downloadFolderCleaner;
 
     @SneakyThrows
 //    @Scheduled(fixedDelay = 1_000)
@@ -43,5 +44,12 @@ public class TasksConfiguration {
 
         Map<String, Object> map = formats.get(0);
         ytDownloadClient.realDownload(0, ((String) map.get("url")), UUID.randomUUID().toString(), ((Long) map.get("filesize")));
+    }
+
+    @SneakyThrows
+    @Scheduled(fixedDelay = (60 * 60 * 24 * 1_000) * 3)
+    void clearDownloadFolder() {
+        log.info("Clear download folder!");
+        downloadFolderCleaner.clean();
     }
 }
