@@ -6,4 +6,4 @@ WORKDIR /app
 ARG JAR=*.jar
 
 COPY  /target/$JAR /app/app.jar
-ENTRYPOINT ["java","-jar","-agentlib:jdwp=transport=dt_socket,address=9999,server=y,suspend=n", "/app/app.jar"]
+ENTRYPOINT ["java","-jar","-agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n","/app/app.jar"]
