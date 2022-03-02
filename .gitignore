@@ -1,6 +1,5 @@
 *admin.sh
 application-prod.yml
-docker-compose-dev.yml
 bin/
 target/
 .idea
