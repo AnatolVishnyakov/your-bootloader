@@ -1,5 +1,5 @@
 youtube:
-  download-path: '/D/Trash'
+  download-path: 'D:\\Trash'
   bot-user-name: 'SpongeBobyBot'
   token: '5231087648:AAFcCT09Bg7Sb1fpUD4KprEVIiYxEfnI7Yo'
   max-file-size: 1000
