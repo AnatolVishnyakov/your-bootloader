@@ -2,7 +2,7 @@ version: "3.3"
 
 networks:
   monitoring:
-    driver: bridge
+    driver: host
 volumes:
   prometheus-data:
 
