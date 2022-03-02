@@ -47,6 +47,7 @@ public class YtDownloadClient {
                 .setReadTimeout(DEFAULT_TIMEOUT)
                 .setConnectTimeout(DEFAULT_TIMEOUT)
                 .setMaxRequestRetry(3)
+                .setKeepAlive(true)
                 .setThreadPoolName(YtDownloadClient.class.getSimpleName())
                 .setHttpClientCodecMaxChunkSize(8_192 * 5)
                 .setChunkedFileChunkSize(8_192 * 3)
