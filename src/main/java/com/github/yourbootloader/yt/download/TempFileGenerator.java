@@ -43,33 +43,6 @@ public class TempFileGenerator {
         return newTempFile;
     }
 
-    @SneakyThrows
-    public File create(String section, String fileName) {
-        log.info("getOrCreate temp file {} to directory {}", fileName, ydProperties.getDownloadPath());
-
-        Path folder = Paths.get(ydProperties.getDownloadPath())
-                .resolve(section);
-        if (!folder.toFile().exists()) {
-            if (!folder.toFile().mkdirs()) {
-                throw new RuntimeException("Folders can't create!");
-            }
-        }
-
-        File newTempFile = folder
-                .resolve(fileName)
-                .toFile();
-
-        if (newTempFile.exists()) {
-            log.warn("File {} already exists!", fileName);
-            return newTempFile;
-        }
-
-        if (!newTempFile.createNewFile()) {
-            throw new RuntimeException("File can't create!");
-        }
-        return newTempFile;
-    }
-
     public File get(String section, String fileName) {
         File file = Paths.get(ydProperties.getDownloadPath())
                 .resolve(section)
