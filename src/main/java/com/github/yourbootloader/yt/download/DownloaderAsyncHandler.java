@@ -3,7 +3,6 @@ package com.github.yourbootloader.yt.download;
 import com.github.yourbootloader.bot.event.FailureDownloadEvent;
 import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
-import com.github.yourbootloader.yt.utils.MonitoringTimed;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.HttpResponseBodyPart;
 import org.asynchttpclient.Response;
@@ -54,7 +53,6 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
         this.publisher = publisher;
     }
 
-    @MonitoringTimed
     @Override
     public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
         State state = super.onBodyPartReceived(bodyPart);
