@@ -2,15 +2,17 @@ package com.github.yourbootloader.yt.extractor;
 
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import com.github.yourbootloader.config.YDProperties;
-import com.github.yourbootloader.yt.download.YtDownloadClient;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @YoutubeDownloaderTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -18,22 +20,26 @@ class YoutubeIETest {
 
     private final YoutubeIE youtubeIE;
     private final YDProperties ydProperties;
-    private final YtDownloadClient ytDownloadClient;
+
+    // https://www.youtube.com/watch?v=OCJi5hVdiZU
+    // https://www.youtube.com/watch?v=OGc9W-_C9u0
+
+    @BeforeEach
+    void beforeMethod() {
+        ydProperties.setDownloadPath("D:\\Trash");
+    }
 
     @Test
     @SneakyThrows
     void realExtract() {
-        ydProperties.setDownloadPath("D:\\Trash");
         String url = "https://www.youtube.com/watch?v=OCJi5hVdiZU";
-        Map<String, Object> info = youtubeIE.realExtract(url);
+        Path folderData = Paths.get("src/test/resources/testdata/");
+        Path webPageFile = folderData.resolve("test_yt_page.html");
+        String webPage = new String(Files.readAllBytes(webPageFile));
+        YtVideoInfo ytVideoInfo = youtubeIE.realExtract(url, webPage);
 
-        Map<String, Object> format = ((List<Map<String, Object>>) info.get("formats")).stream()
-                .findFirst()
-                .orElse(Collections.emptyMap());
-        String realUrl = (String) format.get("url");
-        String filename = (String) info.get("title");
-        Long filesize = ((Integer) format.get("filesize")).longValue();
-
-        ytDownloadClient.realDownload(3, realUrl, filename, filesize);
+        assertEquals("OCJi5hVdiZU", ytVideoInfo.getId());
+        assertEquals("Architects - \"Animals\" (Orchestral Version) - Live at Abbey Road", ytVideoInfo.getTitle());
+        assertEquals("\"Animals\" (Orchestral Version) by Architects, recorded live at Abbey Road Studios for Amazon Originals. Listen Here: https://architects.ffm.to/amazonoriginal/amazon\n\n\"WARNING: This video has been identified to potentially trigger seizures for people with photosensitive epilepsy. Viewer discretion is advised.\"\n\nArranged and orchestrated by Rosie Danvers\n\nOriginal Version of \"Animals\" by @Architects\u200b from the album 'For Those That Wish To Exist,' available now\nListen to the full album: http://bit.ly/3dVrqVB\u200b\nOrder at https://architects.ffm.to/fttwte\n\nLyrics\n\nI do my best but everything seems ominous\nNot feeling blessed, quite the opposite\nThis shouldn’t feel so monotonous\nIt never rains but it pours\n \nWe’re just a bunch of fucking animals\nBut we’re afraid of the outcome\nDon’t cry to me because the fiction that we’re living in\nSays I should pull the pin\n \nShould I just pull the pin?\n \nI dug my heels\nI thought that I could stop the rot\nThe ground gave way\nNow I’ve lost the plot\nFucked it again\nThat was all I’ve got\nIt never rains but it pours\n \nLife is just a dream within a….\n \nBuried under dirt\nA diamond in the mud\nInfinity is waiting there\n‘Cause nobody can burn a glass cathedral\n \n….dream within a dream within a….\n\nOfficial Site: http://www.architectsofficial.com/\u200b\nFacebook: http://www.facebook.com/architectsuk\u200b\nTwitter: http://www.twitter.com/architectsuk\u200b\nInstagram: http://instagram.com/architects\u200b\n\nEpitaph Records is an artist-first indie label founded in Los Angeles by Bad Religion guitarist, Brett Gurewitz.  Early releases from a variety of punk heavyweights helped launch the 90s punk explosion.  Along the way, Epitaph has grown and evolved creatively while sticking to its mission of helping real artists make great recordings on their own terms.\n\n\n\n#Architects #Epitaph #AmazonOriginal", ytVideoInfo.getDescription());
     }
 }
