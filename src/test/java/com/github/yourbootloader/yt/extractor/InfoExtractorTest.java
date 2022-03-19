@@ -2,8 +2,6 @@ package com.github.yourbootloader.yt.extractor;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InfoExtractorTest {
@@ -15,7 +13,7 @@ class InfoExtractorTest {
         }
 
         @Override
-        public Map<String, Object> realExtract(String url) {
+        public YtVideoInfo realExtract(String url) {
             return null;
         }
     };

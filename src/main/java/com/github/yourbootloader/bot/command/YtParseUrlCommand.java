@@ -6,6 +6,7 @@ import com.github.yourbootloader.bot.BotQueryService;
 import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
+import com.github.yourbootloader.yt.extractor.YtVideoInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -51,8 +52,8 @@ public class YtParseUrlCommand implements Command {
         String url = message.getText();
         log.info("Youtube url: {}", url);
 
-        Map<String, Object> info = botQueryService.getVideoInfo(url);
-        List<Map<String, Object>> formats = ((List<Map<String, Object>>) info.get("formats"))
+        YtVideoInfo info = botQueryService.getVideoInfo(url);
+        List<Map<String, Object>> formats = info.getFormats()
                 .stream()
                 .sorted(Comparator.comparing(m -> {
                     String formatNote = (String) m.get("format_note");
@@ -96,7 +97,7 @@ public class YtParseUrlCommand implements Command {
             videosInfo.add(
                     new VideoInfoDto(
                             ((Integer) format.get("format_id")),
-                            (String) info.get("title"),
+                            info.getTitle(),
                             ((Long) format.get("filesize")),
                             ((String) format.get("url"))
                     )

@@ -8,9 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -142,7 +140,7 @@ public abstract class InfoExtractor {
         String content = new String(webpageBytes);
         if (contentType != null) {
             Pattern pattern = Pattern.compile("[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+\\s*;\\s*charset=(.+)");
-            Matcher matcher = pattern.matcher(contentType.toString());
+            Matcher matcher = pattern.matcher(contentType);
             if (matcher.find()) {
                 return matcher.group(1);
             }
@@ -164,8 +162,8 @@ public abstract class InfoExtractor {
         return downloader.urlopen(url);
     }
 
-    public Map<String, Object> extract(String url) {
-        Map<String, Object> info = Collections.emptyMap();
+    public YtVideoInfo extract(String url) {
+        YtVideoInfo info = null;
         for (int i = 0; i < 2; i++) {
             info = realExtract(url);
         }
@@ -173,5 +171,5 @@ public abstract class InfoExtractor {
     }
 
 
-    public abstract Map<String, Object> realExtract(String url);
+    public abstract YtVideoInfo realExtract(String url);
 }

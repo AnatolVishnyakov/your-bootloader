@@ -24,7 +24,7 @@ import static java.lang.String.format;
 @Service
 public class YoutubeIE extends YoutubeBaseInfoExtractor {
 
-    private static String IE_DESC = "YouTube.com";
+    private static final String IE_DESC = "YouTube.com";
     public static List<String> _INVIDIOUS_SITES = Arrays.asList(
             // invidious-redirect websites
             "(?:www\\.)?redirect\\.invidious\\.io",
@@ -124,9 +124,9 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             Pattern.compile("/(?<id>[a-zA-Z0-9_-]{8,})/player(?:_ias\\.vflset(?:/[a-zA-Z]{2,3}_[a-zA-Z]{2,3})?|-plasma-ias-(?:phone|tablet)-[a-z]{2}_[A-Z]{2}\\.vflset)/base\\.js$"),
             Pattern.compile("\b(?<id>vfl[a-zA-Z0-9_-]+)\b.*?\\.js$")
     );
-    private static List<String> _SUBTITLE_FORMATS = Arrays.asList("srv1", "srv2", "srv3", "ttml", "vtt");
-    private static boolean _GEO_BYPASS = false;
-    private static String IE_NAME = "youtube";
+    private static final List<String> _SUBTITLE_FORMATS = Arrays.asList("srv1", "srv2", "srv3", "ttml", "vtt");
+    private static final boolean _GEO_BYPASS = false;
+    private static final String IE_NAME = "youtube";
     private final Map<Object, Object> codeCache;
     private final Map<Pair<String, String>, Function<String, String>> playerCache;
     private final TempFileGenerator tempFileGenerator;
@@ -282,15 +282,22 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         );
     }
 
-    // TODO требует обязательной реализации
     @Override
-    public Map<String, Object> realExtract(String _url) {
-        Map<Object, Object> smuggledData = Utils.unsmuggleUrl(_url).getTwo();
+    public YtVideoInfo realExtract(String _url) {
         String url = Utils.unsmuggleUrl(_url).getOne();
         String videoId = this.matchId(url);
         String baseUrl = this.httpScheme() + ":" + "//www.youtube.com/";
         String webPageUrl = baseUrl + "watch?v=" + videoId;
         String webpage = this.downloadWebpage(webPageUrl + "&bpctr=9999999999&has_verified=1", videoId, 3);
+        return realExtract(_url, webpage);
+    }
+
+    public YtVideoInfo realExtract(String _url, String webpage) {
+        Map<Object, Object> smuggledData = Utils.unsmuggleUrl(_url).getTwo();
+        String url = Utils.unsmuggleUrl(_url).getOne();
+        String videoId = this.matchId(url);
+        String baseUrl = this.httpScheme() + ":" + "//www.youtube.com/";
+        String webPageUrl = baseUrl + "watch?v=" + videoId;
 
         JSONObject playerResponse = null;
         if (webpage != null && !webpage.isEmpty()) {
@@ -487,30 +494,53 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         boolean isLive = videoDetails.optBoolean("isLive");
         String ownerProfileUrl = microformat.optString("ownerProfileUrl");
 
-        Map<String, Object> info = new HashMap<String, Object>() {{
-            put("id", videoId);
-            put("title", videoTitle);
-            put("formats", formats);
-            put("thumbnails", thumbnails);
-            put("description", videoDescription);
-            put("upload_date", microformat.optString("uploadDate"));
-            put("uploader", videoDetails.optString("author"));
-            put("uploader_id", null);
-            put("uploader_url", ownerProfileUrl);
-            put("channel_id", channelId);
-            put("channel_url", channelId != null && !channelId.isEmpty() ? "https://www.youtube.com/channel/" + channelId : null);
-            put("duration", duration);
-            put("view_count", Optional.ofNullable(videoDetails.optInt("viewCount"))
-                    .orElseGet(() -> microformat.optInt("viewCount")));
-            put("average_rating", videoDetails.optFloat("averageRating"));
-            put("age_limit", null);
-            put("webpage_url", webPageUrl);
-            put("categories", Collections.singletonList(category));
-            put("tags", null);
-            put("is_live", isLive);
-        }};
+//        Map<String, Object> info = new HashMap<String, Object>() {{
+//            put("id", videoId);
+//            put("title", videoTitle);
+//            put("formats", formats);
+//            put("thumbnails", thumbnails);
+//            put("description", videoDescription);
+//            put("upload_date", microformat.optString("uploadDate"));
+//            put("uploader", videoDetails.optString("author"));
+//            put("uploader_id", null);
+//            put("uploader_url", ownerProfileUrl);
+//            put("channel_id", channelId);
+//            put("channel_url", channelId != null && !channelId.isEmpty() ? "https://www.youtube.com/channel/" + channelId : null);
+//            put("duration", duration);
+//            put("view_count", Optional.ofNullable(videoDetails.optInt("viewCount"))
+//                    .orElseGet(() -> microformat.optInt("viewCount")));
+//            put("average_rating", videoDetails.optFloat("averageRating"));
+//            put("age_limit", null);
+//            put("webpage_url", webPageUrl);
+//            put("categories", Collections.singletonList(category));
+//            put("tags", null);
+//            put("is_live", isLive);
+//        }};
+//
+//        return info;
 
-        return info;
+        return YtVideoInfo.builder()
+                .id(videoId)
+                .title(videoTitle)
+                .formats(formats)
+                .thumbnails(thumbnails)
+                .description(videoDescription)
+                .uploadDate(microformat.optString("uploadDate"))
+                .uploader(videoDetails.optString("author"))
+                .uploaderId(null)
+                .uploaderUrl(ownerProfileUrl)
+                .channelId(channelId)
+                .channelUrl(channelId != null && !channelId.isEmpty() ? "https://www.youtube.com/channel/" + channelId : null)
+                .duration(duration)
+                .viewCount(Optional.ofNullable(videoDetails.optInt("viewCount"))
+                        .orElseGet(() -> microformat.optInt("viewCount")))
+                .averageRating(videoDetails.optFloat("averageRating"))
+                .ageLimit(null)
+                .webpageUrl(webPageUrl)
+                .categories(Collections.singletonList(category))
+                .tags(null)
+                .isLive(isLive)
+                .build();
     }
 
     private String searchMeta(String word) {
