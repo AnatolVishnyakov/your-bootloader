@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt.extractor;
+package com.github.yourbootloader.yt.extractor.interpreter;
 
 import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
 import com.github.yourbootloader.yt.extractor.dto.Pair;

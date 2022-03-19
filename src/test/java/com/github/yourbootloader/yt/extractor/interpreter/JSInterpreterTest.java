@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt.extractor;
+package com.github.yourbootloader.yt.extractor.interpreter;
 
 import org.junit.jupiter.api.Test;
 
