@@ -3,6 +3,7 @@ package com.github.yourbootloader.yt.extractor;
 import com.github.yourbootloader.yt.download.TempFileGenerator;
 import com.github.yourbootloader.yt.exception.MethodNotImplementedException;
 import com.github.yourbootloader.yt.extractor.dto.Pair;
+import com.github.yourbootloader.yt.extractor.interpreter.JSInterpreter;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
