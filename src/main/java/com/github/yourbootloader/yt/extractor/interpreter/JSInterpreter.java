@@ -36,10 +36,10 @@ public class JSInterpreter {
     }};
     private static final Map<String, BiFunction<String, Object, Object>> ASSIGN_OPERATORS = new HashMap<>();
     private static final String NAME_RE = "[a-zA-Z_$][a-zA-Z_$0-9]*";
-    private static final Map<String, String> MATCHING_PARENS = new HashMap<String, String>() {{
-        put("(", ")");
-        put("{", "}");
-        put("[", "]");
+    private static final Map<Character, Character> MATCHING_PARENS = new HashMap<Character, Character>() {{
+        put('(', ')');
+        put('{', '}');
+        put('[', ']');
     }};
 
     static {
@@ -72,12 +72,21 @@ public class JSInterpreter {
             delim = ",";
         }
 
-        Map<String, Integer> counters = MATCHING_PARENS.values().stream().collect(Collectors.toMap(s -> s, v -> 0));
+        Map<Character, Integer> counters = MATCHING_PARENS.values().stream().collect(Collectors.toMap(s -> s, v -> 0));
         int start = 0;
         int splits = 0;
         int pos = 0;
         int delimLen = delim.length() - 1;
 
+        for (int i = 0; i < expr.length(); i++) {
+            char symbol = expr.charAt(i);
+            if (MATCHING_PARENS.containsKey(symbol)) {
+                counters.computeIfPresent(symbol, (c, v) -> v + 1);
+            } else if (counters.containsKey(symbol)) {
+                counters.computeIfPresent(symbol, (c, v) -> v - 1);
+            }
+//            if (symbol != delim.charAt(pos) || )
+        }
         throw new UnsupportedOperationException();
     }
 
