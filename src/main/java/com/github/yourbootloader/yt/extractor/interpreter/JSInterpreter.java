@@ -13,6 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -34,19 +35,50 @@ public class JSInterpreter {
         put("\\*", (a, b) -> new BigInteger(a).multiply(new BigInteger((String) b)).toString());
     }};
     private static final Map<String, BiFunction<String, Object, Object>> ASSIGN_OPERATORS = new HashMap<>();
-    private final Map<String, Object> objects = new HashMap<>();
-    private final Map<String, Function<Object, Object>> functions = new HashMap<>();
+    private static final String NAME_RE = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+    private static final Map<String, String> MATCHING_PARENS = new HashMap<String, String>() {{
+        put("(", ")");
+        put("{", "}");
+        put("[", "]");
+    }};
 
     static {
         OPERATORS.keySet().forEach(key -> ASSIGN_OPERATORS.put(key + "=", OPERATORS.get(key)));
         ASSIGN_OPERATORS.put("=", (a, b) -> b);
     }
 
-    private static final String NAME_RE = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+    private final Map<String, Object> objects = new HashMap<>();
+    private final Map<String, Function<Object, Object>> functions = new HashMap<>();
+    private final Map<String, String> localNameSpace = new HashMap<>();
     private final String jscode;
+    private int namedObjectCounter = 0;
 
     public JSInterpreter(String jscode) {
         this.jscode = jscode;
+    }
+
+    public <T, R> String namedObject(Map<String, Function<T, R>> namespace, Function<T, R> obj) {
+        namedObjectCounter += 1;
+        String name = String.format("__youtube_dl_jsinterp_obj%s", namedObjectCounter);
+        namespace.put(name, obj);
+        return name;
+    }
+
+    private static List<String> separate(String expr, String delim, Integer maxSplit) {
+        if (expr == null) {
+            return Collections.emptyList();
+        }
+        if (delim == null) {
+            delim = ",";
+        }
+
+        Map<String, Integer> counters = MATCHING_PARENS.values().stream().collect(Collectors.toMap(s -> s, v -> 0));
+        int start = 0;
+        int splits = 0;
+        int pos = 0;
+        int delimLen = delim.length() - 1;
+
+        throw new UnsupportedOperationException();
     }
 
     public <T, R> Function<T, R> extractFunction(String funcName) {
