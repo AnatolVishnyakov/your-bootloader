@@ -1,5 +1,6 @@
 package com.github.yourbootloader.yt.extractor.interpreter;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -90,6 +91,12 @@ class JSInterpreterTest {
     }
 
     @Test
+    @Disabled
+    void testComments() {
+        // TODO Not implemented
+    }
+
+    @Test
     void testPrecedence() {
         jsi = new JSInterpreter(
                 "function x() {" +
@@ -110,5 +117,57 @@ class JSInterpreterTest {
                         " function z() { return y(3); }"
         );
         assertEquals(5, jsi.callFunction("z", null));
+    }
+
+    @Test
+    void testForLoop() {
+        jsi = new JSInterpreter("function x() { a=0; for (i=0; i-10; i = i + 1) {a++} a }");
+        assertEquals(10, jsi.callFunction("x", null));
+    }
+
+    @Test
+    void testSwitchDefault() {
+        jsi = new JSInterpreter("" +
+                "        function x(f) { switch(f){" +
+                "            case 2: f+=2;" +
+                "            default: f-=1;" +
+                "            case 5:" +
+                "            case 6: f+=6;" +
+                "            case 0: break;" +
+                "            case 1: f+=1;" +
+                "        } return f }");
+        assertEquals(2, jsi.callFunction("x", 1));
+        assertEquals(11, jsi.callFunction("x", 5));
+        assertEquals(14, jsi.callFunction("x", 9));
+    }
+
+    @Test
+    void testTry() {
+        jsi = new JSInterpreter("function x() { try{return 10} catch(e){return 5} }");
+        assertEquals(10, jsi.callFunction("x", null));
+    }
+
+    @Test
+    void testForLoopContinue() {
+        jsi = new JSInterpreter("function x() { a=0; for (i=0; i-10; i++) { continue; a++ } a }");
+        assertEquals(0, jsi.callFunction("x", null));
+    }
+
+    @Test
+    void testForLoopBreak() {
+        jsi = new JSInterpreter("function x() { a=0; for (i=0; i-10; i++) { break; a++ } a }");
+        assertEquals(0, jsi.callFunction("x", null));
+    }
+
+    @Test
+    void testLiteralList() {
+        jsi = new JSInterpreter("function x() { [1, 2, \"asdf\", [5, 6, 7]][3] }");
+        assertEquals(Arrays.asList(5, 6, 7), jsi.callFunction("x", null));
+    }
+
+    @Test
+    void testComma() {
+        jsi = new JSInterpreter("function x() { a=5; a -= 1, a+=3; return a }");
+        assertEquals(7, jsi.callFunction("x", null));
     }
 }
