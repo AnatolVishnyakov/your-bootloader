@@ -49,7 +49,6 @@ public class JSInterpreter {
 
     private final Map<String, Object> objects = new HashMap<>();
     private final Map<String, Function<Object, Object>> functions = new HashMap<>();
-    private final Map<String, String> localNameSpace = new HashMap<>();
     private final String jscode;
     private int namedObjectCounter = 0;
 
@@ -64,9 +63,9 @@ public class JSInterpreter {
         return name;
     }
 
-    private static List<String> separate(String expr, String delim, Integer maxSplit) {
-        if (expr == null) {
-            return Collections.emptyList();
+    public static String separate(String expr, String delim, Integer maxSplit) {
+        if (expr == null || expr.isEmpty()) {
+            return "";
         }
         if (delim == null) {
             delim = ",";
@@ -78,16 +77,28 @@ public class JSInterpreter {
         int pos = 0;
         int delimLen = delim.length() - 1;
 
-        for (int i = 0; i < expr.length(); i++) {
-            char symbol = expr.charAt(i);
+        for (int idx = 0; idx < expr.length(); idx++) {
+            char symbol = expr.charAt(idx);
             if (MATCHING_PARENS.containsKey(symbol)) {
-                counters.computeIfPresent(symbol, (c, v) -> v + 1);
+                counters.computeIfPresent(MATCHING_PARENS.get(symbol), (c, v) -> v + 1);
             } else if (counters.containsKey(symbol)) {
-                counters.computeIfPresent(symbol, (c, v) -> v - 1);
+                counters.computeIfPresent(MATCHING_PARENS.get(symbol), (c, v) -> v - 1);
             }
-//            if (symbol != delim.charAt(pos) || )
+            if (symbol != delim.charAt(pos) || !counters.isEmpty()) {
+                pos = 0;
+                continue;
+            } else if (pos != delimLen) {
+                pos += 1;
+                continue;
+            }
+            start = idx + 1;
+            pos = 0;
+
+            if (maxSplit != 0 && splits >= maxSplit) {
+                break;
+            }
         }
-        throw new UnsupportedOperationException();
+        return expr.substring(start);
     }
 
     public <T, R> Function<T, R> extractFunction(String funcName) {
