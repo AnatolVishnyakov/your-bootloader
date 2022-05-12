@@ -35,6 +35,85 @@ public class YoutubeSignatureTest {
     private final YoutubeIE youtubeIE;
     private final RestTemplate restTemplate;
 
+    private static Stream<Arguments> sigTests() {
+        return Stream.of(
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-vflHOr_nV.js",
+                        86,
+                        ">=<;:/.-[+*)('&%$#\" !ZYX0VUTSRQPONMLKJIHGFEDCBA\\yxwvutsrqponmlkjihgfedcba987654321"
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-vfldJ8xgI.js",
+                        85,
+                        "3456789a0cdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS[UVWXYZ!\"#$%&'()*+,-./:;<=>?@"
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-vfle-mVwz.js",
+                        90,
+                        "]\\[@?>=<;:/.-,+*)('&%$#\"hZYXWVUTSRQPONMLKJIHGFEDCBAzyxwvutsrqponmlkjiagfedcb39876"
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vfl0Cbn9e.js",
+                        84,
+                        "O1I3456789abcde0ghijklmnopqrstuvwxyzABCDEFGHfJKLMN2PQRSTUVW@YZ!\"#$%&'()*+,-./:;<="
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflXGBaUN.js",
+                        "2ACFC7A61CA478CD21425E5A57EBD73DDC78E22A.2094302436B2D377D14A3BBA23022D023B8BC25AA",
+                        "A52CB8B320D22032ABB3A41D773D2B6342034902.A22E87CDD37DBE75A5E52412DC874AC16A7CFCA2"
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflBb0OQx.js",
+                        84,
+                        "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ0STUVWXYZ!\"#$%&'()*+,@./:;<=>"
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vfl9FYC6l.js",
+                        83,
+                        "123456789abcdefghijklmnopqr0tuvwxyzABCDETGHIJKLMNOPQRS>UVWXYZ!\"#$%&'()*+,-./:;<=F"
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflCGk6yw/html5player.js",
+                        "4646B5181C6C3020DF1D9C7FCFEA.AD80ABF70C39BD369CCCAE780AFBB98FA6B6CB42766249D9488C288",
+                        "82C8849D94266724DC6B6AF89BBFA087EACCD963.B93C07FBA084ACAEFCF7C9D1FD0203C6C1815B6B"
+                ),
+                Arguments.of(
+                        "https://s.ytimg.com/yts/jsbin/html5player-en_US-vflKjOTVq/html5player.js",
+                        "312AA52209E3623129A412D56A40F11CB0AF14AE.3EE09501CB14E3BCDC3B2AE808BF3F1D14E7FBF12",
+                        "112AA5220913623229A412D56A40F11CB0AF14AE.3EE0950FCB14EEBCDC3B2AE808BF331D14E7FBF3"
+                )
+        );
+    }
+
+    private static Stream<Arguments> nsigTests() {
+        return Stream.of(
+                Arguments.of(
+                        "https://www.youtube.com/s/player/9216d1f7/player_ias.vflset/en_US/base.js",
+                        "SLp9F5bwjAdhE9F-", "gWnb9IK2DJ8Q1w"
+                ),
+                Arguments.of(
+                        "https://www.youtube.com/s/player/f8cb7a3b/player_ias.vflset/en_US/base.js",
+                        "oBo2h5euWy6osrUt", "ivXHpm7qJjJN"
+                ),
+                Arguments.of(
+                        "https://www.youtube.com/s/player/2dfe380c/player_ias.vflset/en_US/base.js",
+                        "oBo2h5euWy6osrUt", "3DIBbn3qdQ"
+                ),
+                Arguments.of(
+                        "https://www.youtube.com/s/player/f1ca6900/player_ias.vflset/en_US/base.js",
+                        "cu3wyu6LQn2hse", "jvxetvmlI9AN9Q"
+                ),
+                Arguments.of(
+                        "https://www.youtube.com/s/player/8040e515/player_ias.vflset/en_US/base.js",
+                        "wvOFaY-yjgDuIEg5", "HkfBFDHmgw4rsw"
+                ),
+                Arguments.of(
+                        "https://www.youtube.com/s/player/e06dea74/player_ias.vflset/en_US/base.js",
+                        "AiuodmaDDYw8d3y4bf", "ankd8eza2T6Qmw"
+                )
+        );
+    }
+
     public static Stream<Arguments> signatures() {
         return Stream.of(
                 Arguments.of(
