@@ -1,7 +1,6 @@
 package com.github.yourbootloader.bot.command;
 
 import com.github.yourbootloader.bot.Bot;
-import com.github.yourbootloader.bot.BotCommandService;
 import com.github.yourbootloader.bot.BotQueryService;
 import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
@@ -10,6 +9,7 @@ import com.github.yourbootloader.yt.extractor.YtVideoInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import one.util.streamex.StreamEx;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 public class YtParseUrlCommand implements Command {
 
     private final BotQueryService botQueryService;
-    private final BotCommandService botCommandService;
     private final CommandCache commandCache;
 
     @Override
@@ -51,10 +50,15 @@ public class YtParseUrlCommand implements Command {
         Message message = update.getMessage();
         String url = message.getText();
         log.info("Youtube url: {}", url);
-
+//                 .filter(format -> format.get("ext") != null && format.get("ext").equals("webm"))
+//                .min(Comparator.comparing(format -> ((Long) format.get("filesize"))))
+//                .orElseThrow(() -> {
+//                    sendNotification(bot, chat.getId(), "Не удалось получить аудио формат");
+//                    return new RuntimeException("Not found audio format!");
+//                });
         YtVideoInfo info = botQueryService.getVideoInfo(url);
-        List<Map<String, Object>> formats = info.getFormats()
-                .stream()
+        List<Map<String, Object>> formats = StreamEx.of(info.getFormats())
+                .filter(format -> format.get("ext") != null && format.get("format_note").equals("tiny"))
                 .sorted(Comparator.comparing(m -> {
                     String formatNote = (String) m.get("format_note");
                     if (formatNote.matches("\\d+p")) {
@@ -88,9 +92,8 @@ public class YtParseUrlCommand implements Command {
             } else {
                 filesizeInString = filesize.toKilobytes() + " Kb";
             }
-            inlineKeyboardButton.setText(String.format("%s [%s / %s]", format.get("format_note"), format.get("ext"), filesizeInString));
+            inlineKeyboardButton.setText(String.format("audio [%s / %s / %s]", format.get("format_note"), format.get("ext"), filesizeInString));
             JSONObject jsonObject = new JSONObject();
-//                jsonObject.put("id", UUID.randomUUID());
             jsonObject.put("format_id", format.get("format_id"));
             jsonObject.put("filesize", format.get("filesize"));
             log.debug("Json: {}", jsonObject);
@@ -117,14 +120,6 @@ public class YtParseUrlCommand implements Command {
             log.error("Unexpected error", e);
             sendNotification(bot, update.getMessage().getChatId(), "Повторите отправку url!");
         }
-    }
-
-    private String getFilesize(Map<String, Object> format) {
-        DataSize filesize = DataSize.ofBytes(((Integer) format.get("filesize")).longValue());
-        if (filesize.toMegabytes() != 0) {
-            return filesize.toMegabytes() + " Mb";
-        }
-        return filesize.toKilobytes() + " Kb";
     }
 
     @SneakyThrows
