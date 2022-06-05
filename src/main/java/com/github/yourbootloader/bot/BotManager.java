@@ -3,6 +3,7 @@ package com.github.yourbootloader.bot;
 import com.github.yourbootloader.bot.event.FailureDownloadEvent;
 import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
+import com.github.yourbootloader.bot.event.RemoveMessageEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendAudio;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -93,6 +95,7 @@ public class BotManager {
             log.error(UNEXPECTED_ERROR, e);
             sendNotification(chatId, "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());
         }
+        onRemoveMessage(new RemoveMessageEvent(chatId.toString(), messageCache.get(event.getDownloadId())));
     }
 
     @EventListener

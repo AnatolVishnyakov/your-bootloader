@@ -62,7 +62,7 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     @Override
     public Response onCompleted() throws Exception {
-        publisher.publishEvent(new FinishDownloadEvent(chat, originalFile));
+        publisher.publishEvent(new FinishDownloadEvent(chat, downloadId, originalFile));
         return super.onCompleted();
     }
 

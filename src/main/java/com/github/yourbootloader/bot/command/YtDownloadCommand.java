@@ -4,14 +4,15 @@ import com.github.yourbootloader.bot.Bot;
 import com.github.yourbootloader.bot.BotCommandService;
 import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
+import com.github.yourbootloader.bot.event.RemoveMessageEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -26,6 +27,7 @@ public class YtDownloadCommand implements Command {
 
     private final BotCommandService botCommandService;
     private final CommandCache commandCache;
+    private final ApplicationEventPublisher publisher;
 //    private final YtProducer ytProducer;
 
     @Override
@@ -60,19 +62,13 @@ public class YtDownloadCommand implements Command {
         }
 //        ytProducer.produce(new YtMessage(chat, url, title, filesize));
         commandCache.delete(chat.getId());
-        deleteMessage(bot, chat.getId().toString(), message.getMessageId());
+        publisher.publishEvent(new RemoveMessageEvent(chat.getId().toString(), message.getMessageId()));
         botCommandService.download(chat, url, title, filesize);
     }
 
     @SneakyThrows
     private void sendNotification(Bot bot, Long chatId, String text) {
         SendMessage message = new SendMessage(chatId.toString(), text);
-        bot.execute(message);
-    }
-
-    @SneakyThrows
-    private void deleteMessage(Bot bot, String chatId, Integer messageId) {
-        DeleteMessage message = new DeleteMessage(chatId, messageId);
         bot.execute(message);
     }
 }
