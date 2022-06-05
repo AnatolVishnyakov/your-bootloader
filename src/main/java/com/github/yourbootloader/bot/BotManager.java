@@ -109,4 +109,11 @@ public class BotManager {
         SendMessage message = new SendMessage(chatId.toString(), text);
         bot.execute(message);
     }
+
+    @EventListener
+    @SneakyThrows
+    public void onRemoveMessage(RemoveMessageEvent event) {
+        DeleteMessage message = new DeleteMessage(event.getChatId(), event.getMessageId());
+        bot.execute(message);
+    }
 }
