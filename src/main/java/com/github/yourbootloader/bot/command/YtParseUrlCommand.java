@@ -105,6 +105,7 @@ public class YtParseUrlCommand implements Command {
                             ((String) format.get("url"))
                     )
             );
+            log.info("format id: {}, video url: {}", format.get("format_id"), format.get("url"));
 
             inlineKeyboardButton.setCallbackData(jsonObject.toString());
             rowInline.add(inlineKeyboardButton);
