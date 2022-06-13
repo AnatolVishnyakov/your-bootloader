@@ -3,6 +3,7 @@ package com.github.yourbootloader.yt.download;
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import com.github.yourbootloader.config.YDProperties;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.util.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,7 @@ import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
 import org.asynchttpclient.handler.TransferCompletionHandler;
 import org.asynchttpclient.handler.TransferListener;
+import org.asynchttpclient.netty.channel.ChannelManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,21 +34,16 @@ class YtDownloadClientTest {
     private final YDProperties ydProperties;
     private final static DefaultAsyncHttpClientConfig CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setRequestTimeout(4_000_000) // 1.1 час
-//            .setCompressionEnforced(true)
-//            .setEnablewebSocketCompression(false)
-//            .setKeepAlive(true)
-            .setHttpClientCodecMaxChunkSize(8_192 * 5)
-            .setChunkedFileChunkSize(1_024)
-//            .setTcpNoDelay(false)
-
-//                .setReadTimeout(10_000)
-//                .setConnectTimeout(10_000)
-//                .setMaxRequestRetry(3)
-//                .setKeepAlive(true)
-//                .setThreadPoolName(YtDownloadClient.class.getSimpleName())
-//                .addIOExceptionFilter(new ResumableIOExceptionFilter())
-//                .addRequestFilter(new ThrottleRequestFilter(1_000))
-//                .setIoThreadsCount(10)
+            .setChunkedFileChunkSize(8_192 * 3)
+            .setSoRcvBuf(8_192 * 3)
+            .setEnablewebSocketCompression(false)
+            .setWebSocketMaxBufferSize(8_192 * 3)
+            .setWebSocketMaxFrameSize(8_192 * 3)
+            .setAggregateWebSocketFrameFragments(false)
+            .setHttpClientCodecMaxChunkSize(8_192 * 3)
+            .setHttpClientCodecMaxHeaderSize(8_192 * 3)
+            .setHttpClientCodecMaxInitialLineLength(8_192 * 3)
+            .setHttpClientCodecInitialBufferSize(8_192 * 3)
             .build();
 
     @TempDir
@@ -77,12 +74,9 @@ class YtDownloadClientTest {
         AtomicLong counter = new AtomicLong();
         LocalDateTime start = LocalDateTime.now();
 //        String ytUrl = "https://speed.hetzner.de/100MB.bin";
-        String ytUrl = "https://rr2---sn-jvhnu5g-c35k.googlevideo.com/videoplayback?expire=1655066365&ei=nfqlYsG9EdOCv_IP-eSJiAY&ip=2a00%3A1370%3A819e%3A86b9%3Aed5b%3A8e4d%3A6065%3A1eec&id=o-AKi6EKfmTA5o3LkDl0JXew_aku7bKj9SG_ailA3MSbfo&itag=18&source=youtube&requiressl=yes&mh=9_&mm=31%2C29&mn=sn-jvhnu5g-c35k%2Csn-jvhnu5g-n8vy&ms=au%2Crdu&mv=m&mvi=2&pl=49&initcwndbps=1721250&spc=4ocVC8-DYzoYOCAowxYIoLF7scXNLM8&vprv=1&mime=video%2Fmp4&ns=isISGZTmlLtrhR4sI96colcG&gir=yes&clen=225096905&ratebypass=yes&dur=3673.749&lmt=1649348055936696&mt=1655044382&fvip=8&fexp=24001373%2C24007246&c=WEB&txp=4530434&n=knZYK09-GKOztvWQGD&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cspc%2Cvprv%2Cmime%2Cns%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&sig=AOq0QJ8wRgIhAN5Wni0H2kQkt7ZzBmGq3W5Pz9_WpYSujWucm5xqevwIAiEA41UjRjdcoQpOwUBoQtmVr6nVsIRWMlPDiWdDKiMzHNg%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRgIhALOeZro63eknMlwH3stUuHEul9_v2rkH6s4rPRUAUwgDAiEA_hdBAs7uasylGLM-Ado81XaG-n6QTFBRjOs7DE70jvg%3D";
+        String ytUrl = "https://rr2---sn-jvhnu5g-c35k.googlevideo.com/videoplayback?expire=1655159444&ei=NGanYsnXEcbz7QTVvr7ACw&ip=2a00%3A1370%3A819e%3A86b9%3A14d0%3Aa51e%3A6e5c%3A6945&id=o-ANmRxecrsDS6V_TcfgPg4qyYWyZVtcnIPRmIwGwhZTMh&itag=251&source=youtube&requiressl=yes&mh=9_&mm=31%2C29&mn=sn-jvhnu5g-c35k%2Csn-jvhnu5g-n8vy&ms=au%2Crdu&mv=m&mvi=2&pl=49&initcwndbps=1332500&spc=4ocVC0otHI04f4aPku9WF02wkm5omnA&vprv=1&mime=audio%2Fwebm&ns=EHOMstKGnUZX1KY_HDYxWPcG&gir=yes&clen=64336234&dur=3673.721&lmt=1649344031395306&mt=1655137509&fvip=8&keepalive=yes&fexp=24001373%2C24007246&c=WEB&txp=4532434&n=6LhWSIWt9BhLTc94tN&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cspc%2Cvprv%2Cmime%2Cns%2Cgir%2Cclen%2Cdur%2Clmt&sig=AOq0QJ8wRAIgPdgXEXWOhQjS2MoBE-v5RaXUPYEPRCqVM4qTXIYPwqsCICH7ocFuSgKv8wEtOl1U6hYo6SICIEqp_lLttjtY86OW&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRAIgFJQudbT02A7YDwRJo_Q56yHhr91jo2jqEWBLTYyvZnkCIDpMhc3EnolaNRrUmyBjGB5xEjhIJDUCW93WvQM9nhYN";
         try (AsyncHttpClient client = Dsl.asyncHttpClient(CLIENT_CONFIG)) {
-            TransferCompletionHandler tl = new TransferCompletionHandler();
-//            DefaultHttpHeaders headers = new DefaultHttpHeaders();
-//            headers.add("Youtubedl-no-compression", "True");
-//            tl.headers(headers);
+            TransferCompletionHandler tl = new TransferCompletionHandler(true);
             AtomicReference<Long> time = new AtomicReference<>(System.currentTimeMillis());
             tl.addTransferListener(new TransferListener() {
                 @Override
@@ -178,6 +172,23 @@ class YtDownloadClientTest {
 //                    .setHeader("Server", "gvs 1.0")
                     .execute(tl)
                     .get();
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    void foo2() {
+        String ytUrl = "https://rr2---sn-jvhnu5g-c35k.googlevideo.com/videoplayback?expire=1655136925&ei=PQ6nYr7RHJe17QSw76Yw&ip=2a00%3A1370%3A819e%3A86b9%3Ac5d6%3A1db3%3Af9fc%3A8686&id=o-AFnAEg6JIIhIFSCFrU3hvmAzPaBn21gaYcLT5KNtRRTm&itag=251&source=youtube&requiressl=yes&mh=9_&mm=31%2C29&mn=sn-jvhnu5g-c35k%2Csn-jvhnu5g-n8vy&ms=au%2Crdu&mv=m&mvi=2&pl=49&initcwndbps=1610000&spc=4ocVC8_2oYOOsauK80ZeAIY-65pb8tU&vprv=1&mime=audio%2Fwebm&ns=WwSbSxlGiCHBa2ntzb-jFhIG&gir=yes&clen=64336234&dur=3673.721&lmt=1649344031395306&mt=1655114944&fvip=8&keepalive=yes&fexp=24001373%2C24007246&c=WEB&txp=4532434&n=TkvNDsN9J8BhU_mhWo&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cspc%2Cvprv%2Cmime%2Cns%2Cgir%2Cclen%2Cdur%2Clmt&sig=AOq0QJ8wRgIhAJoMnIXfyj1RXKwebfly-vbNTJKShgFtkEM7pgRdmvFMAiEA9WKxJ-NBN-7cLPaUpGowqVCD-rrX-e8CEwnHP75NxXo%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRQIgYqj1cDbzD3d-tJLP0pYeDYto9yvjFiItkCnNJZEcUqECIQDz0iCW7OhCNrzfmlGMOcJ8_0mj4ues_DbZRuYnGeldVw%3D%3D";
+        try (AsyncHttpClient client = Dsl.asyncHttpClient(CLIENT_CONFIG)) {
+            Timer nettyTimer = client.getConfig().getNettyTimer();
+            ChannelManager channelManager = new ChannelManager(client.getConfig(), nettyTimer);
+//            client.prepareGet(ytUrl).execute(
+//                    new WebSocketHandler(
+//                            client.getConfig(),
+//                            channelManager,
+//                            new NettyRequestSender(client.getConfig(), channelManager, nettyTimer, new AsyncHttpClientState(new AtomicBoolean()))
+//                    )
+//            ).get();
         }
     }
 }
