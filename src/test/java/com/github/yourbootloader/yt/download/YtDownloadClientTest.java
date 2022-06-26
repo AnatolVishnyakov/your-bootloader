@@ -2,6 +2,7 @@ package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import com.github.yourbootloader.config.YDProperties;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.Timer;
 import lombok.RequiredArgsConstructor;
@@ -32,18 +33,19 @@ class YtDownloadClientTest {
 
     private final YtDownloadClient ytDownloadClient;
     private final YDProperties ydProperties;
-    private final static DefaultAsyncHttpClientConfig CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
+    private static final int CHUNK_SIZE = 8_192 * 3;
+    private static final DefaultAsyncHttpClientConfig CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setRequestTimeout(4_000_000) // 1.1 час
-            .setChunkedFileChunkSize(8_192 * 3)
-            .setSoRcvBuf(8_192 * 3)
+            .setChunkedFileChunkSize(CHUNK_SIZE)
+            .setSoRcvBuf(CHUNK_SIZE)
+            .setWebSocketMaxBufferSize(CHUNK_SIZE)
+            .setWebSocketMaxFrameSize(CHUNK_SIZE)
+            .setHttpClientCodecMaxChunkSize(CHUNK_SIZE)
+            .setHttpClientCodecMaxHeaderSize(CHUNK_SIZE)
+            .setHttpClientCodecMaxInitialLineLength(CHUNK_SIZE)
+            .setHttpClientCodecInitialBufferSize(CHUNK_SIZE)
+            .setTcpNoDelay(true)
             .setEnablewebSocketCompression(false)
-            .setWebSocketMaxBufferSize(8_192 * 3)
-            .setWebSocketMaxFrameSize(8_192 * 3)
-            .setAggregateWebSocketFrameFragments(false)
-            .setHttpClientCodecMaxChunkSize(8_192 * 3)
-            .setHttpClientCodecMaxHeaderSize(8_192 * 3)
-            .setHttpClientCodecMaxInitialLineLength(8_192 * 3)
-            .setHttpClientCodecInitialBufferSize(8_192 * 3)
             .build();
 
     @TempDir
@@ -74,19 +76,44 @@ class YtDownloadClientTest {
         AtomicLong counter = new AtomicLong();
         LocalDateTime start = LocalDateTime.now();
 //        String ytUrl = "https://speed.hetzner.de/100MB.bin";
-        String ytUrl = "https://rr2---sn-jvhnu5g-c35k.googlevideo.com/videoplayback?expire=1655159444&ei=NGanYsnXEcbz7QTVvr7ACw&ip=2a00%3A1370%3A819e%3A86b9%3A14d0%3Aa51e%3A6e5c%3A6945&id=o-ANmRxecrsDS6V_TcfgPg4qyYWyZVtcnIPRmIwGwhZTMh&itag=251&source=youtube&requiressl=yes&mh=9_&mm=31%2C29&mn=sn-jvhnu5g-c35k%2Csn-jvhnu5g-n8vy&ms=au%2Crdu&mv=m&mvi=2&pl=49&initcwndbps=1332500&spc=4ocVC0otHI04f4aPku9WF02wkm5omnA&vprv=1&mime=audio%2Fwebm&ns=EHOMstKGnUZX1KY_HDYxWPcG&gir=yes&clen=64336234&dur=3673.721&lmt=1649344031395306&mt=1655137509&fvip=8&keepalive=yes&fexp=24001373%2C24007246&c=WEB&txp=4532434&n=6LhWSIWt9BhLTc94tN&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cspc%2Cvprv%2Cmime%2Cns%2Cgir%2Cclen%2Cdur%2Clmt&sig=AOq0QJ8wRAIgPdgXEXWOhQjS2MoBE-v5RaXUPYEPRCqVM4qTXIYPwqsCICH7ocFuSgKv8wEtOl1U6hYo6SICIEqp_lLttjtY86OW&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRAIgFJQudbT02A7YDwRJo_Q56yHhr91jo2jqEWBLTYyvZnkCIDpMhc3EnolaNRrUmyBjGB5xEjhIJDUCW93WvQM9nhYN";
+        String ytUrl = "https://rr6---sn-jvhnu5g-c35d.googlevideo.com/videoplayback?expire=1656279607&ei=1324YtClE5mg7QSxsLSwAg&ip=2a00%3A1370%3A819e%3A47d%3A900b%3Ae1dc%3A671c%3Ab75a&id=o-AKkbkzsGPCqID-fwaXcQ1o8HjD7nzPY7LW5Xf99weGy-&itag=251&source=youtube&requiressl=yes&mh=-P&mm=31%2C29&mn=sn-jvhnu5g-c35d%2Csn-jvhnu5g-n8vr&ms=au%2Crdu&mv=m&mvi=6&pl=54&initcwndbps=1478750&spc=4ocVC_YqRYkAzGSS7HpdkMq8TfIM3JE&vprv=1&mime=audio%2Fwebm&ns=2DDmthaJ7F37vUrw18AOUEoG&gir=yes&clen=57838027&dur=4278.521&lmt=1538274826435090&mt=1656257572&fvip=8&keepalive=yes&fexp=24001373%2C24007246&c=WEB&txp=1301222&n=MD3JkUEfYxWFANa2RFS&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cspc%2Cvprv%2Cmime%2Cns%2Cgir%2Cclen%2Cdur%2Clmt&sig=AOq0QJ8wRgIhAKTIR-iRKusVOscc3pi5s1ACUN9dfD3vJMc7btJs9vMlAiEAuEzDiwIZpw20tSzV7Vdv4ZLTAwDeKloh2_G-FZbzSCM%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRQIgB7eybbfadEiLtXtoKR1oiCxpN4SEWa2B8zlq6Ll_sx4CIQD9dxu8hDpPuR7zFyM6TBLQlSqL_sxjlmzUM1JgdJqxMw%3D%3D";
         try (AsyncHttpClient client = Dsl.asyncHttpClient(CLIENT_CONFIG)) {
             TransferCompletionHandler tl = new TransferCompletionHandler(true);
+            DefaultHttpHeaders headers = new DefaultHttpHeaders();
+            headers.set("Range", "bytes=0-10245737");
+            headers.set("Last-Modified", "Sun, 30 Sep 2018 00:52:20 GMT");
+            headers.set("Content-Type", "audio/mp4");
+            headers.set("Date", "Sun, 26 Jun 2022 15:50:08 GMT");
+            headers.set("Expires", "Sun, 26 Jun 2022 15:50:08 GMT");
+            headers.set("Cache-Control", "private, max-age=21297");
+            headers.set("Accept-Ranges", "bytes");
+            headers.set("Connection", "keep-alive");
+            headers.set("Vary", "Origin");
+            headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+            headers.set("X-Content-Type-Options", "nosniff");
+
+            tl.headers(headers);
             AtomicReference<Long> time = new AtomicReference<>(System.currentTimeMillis());
             tl.addTransferListener(new TransferListener() {
                 @Override
                 public void onRequestHeadersSent(HttpHeaders headers) {
-                    log.info("onRequestHeadersSent");
+                    log.info("onRequestHeadersSent {}", headers);
+                    headers.set("Range", "bytes=0-10245737");
+                    headers.set("Last-Modified", "Sun, 30 Sep 2018 00:52:20 GMT");
+                    headers.set("Content-Type", "audio/mp4");
+                    headers.set("Date", "Sun, 26 Jun 2022 15:50:08 GMT");
+                    headers.set("Expires", "Sun, 26 Jun 2022 15:50:08 GMT");
+                    headers.set("Cache-Control", "private, max-age=21297");
+                    headers.set("Accept-Ranges", "bytes");
+                    headers.set("Connection", "keep-alive");
+                    headers.set("Vary", "Origin");
+                    headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+                    headers.set("X-Content-Type-Options", "nosniff");
                 }
 
                 @Override
                 public void onResponseHeadersReceived(HttpHeaders headers) {
-                    log.info("onResponseHeadersReceived");
+                    log.info("onResponseHeadersReceived {}", headers);
                 }
 
                 @Override
