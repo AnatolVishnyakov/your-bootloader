@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
@@ -39,6 +38,7 @@ public class BotManager {
     private final Bot bot;
 
     @EventListener
+    @SneakyThrows
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
         Long chatId = event.getChat().getId();
         threadLocal.get().putIfAbsent(chatId, 0);
@@ -60,11 +60,14 @@ public class BotManager {
         long downloadedContent = dataSize.toKilobytes();
         long contentSize = event.getContentSize().toKilobytes();
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
-        if (percent != threadLocal.get().get(chatId)) {
+//        if (percent != threadLocal.get().get(chatId)) {
+        Thread.sleep(1_000);
             threadLocal.get().put(chatId, percent);
             log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
 
-            EditMessageText message = new EditMessageText("Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]");
+            String text = "Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]\n" +
+                    "Chunk size: " + event.getBlockSize() + " bytes";
+            EditMessageText message = new EditMessageText(text);
             message.setChatId(chatId.toString());
             message.setMessageId(messageId);
             message.setParseMode(ParseMode.HTML);
@@ -76,7 +79,7 @@ public class BotManager {
                 log.error(UNEXPECTED_ERROR, e);
                 sendNotification(chatId, e.getMessage());
             }
-        }
+//        }
     }
 
     @EventListener
