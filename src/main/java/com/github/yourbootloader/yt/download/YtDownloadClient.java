@@ -1,6 +1,7 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
@@ -47,13 +48,16 @@ public class YtDownloadClient {
                 .setReadTimeout(DEFAULT_TIMEOUT)
                 .setConnectTimeout(DEFAULT_TIMEOUT)
                 .setMaxRequestRetry(3)
-                .setKeepAlive(true)
                 .setThreadPoolName(YtDownloadClient.class.getSimpleName())
                 .setHttpClientCodecMaxChunkSize(8_192 * 5)
-                .setChunkedFileChunkSize(8_192 * 3)
+                .setChunkedFileChunkSize(8_192 * 4)
                 .addIOExceptionFilter(new ResumableIOExceptionFilter())
                 .addRequestFilter(new ThrottleRequestFilter(1_000))
                 .setIoThreadsCount(10)
+                .setTcpNoDelay(true)
+                .setKeepAlive(true)
+                .setSoKeepAlive(true)
+                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.25 Safari/537.36")
                 .build();
 
         DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
@@ -62,16 +66,16 @@ public class YtDownloadClient {
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
+            DefaultHttpHeaders headers = new DefaultHttpHeaders();
+            headers.add("YtDownloader-no-compression", "True");
+            headers.add("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+            headers.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            headers.add("Accept-Encoding", "gzip, deflate");
+            headers.add("Accept-Language", "en-us,en;q=0.5");
+
             client.prepareGet(url)
                     .setRangeOffset(file.length())
-                    .setHeader("Youtubedl-no-compression", "True")
-                    .setHeader("Cache-Control", "private, max-age=21298")
-                    .setHeader("Accept-Ranges", "bytes")
-                    .setHeader("Connection", "keep-alive")
-                    .setHeader("Vary", "Origin")
-                    .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
-                    .setHeader("X-Content-Type-Options", "nosniff")
-                    .setHeader("Server", "gvs 1.0")
+                    .setHeaders(headers)
                     .execute(downloaderAsyncHandler).get();
         }
     }
