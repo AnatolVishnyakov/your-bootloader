@@ -87,4 +87,18 @@ class YtDownloadClientTest {
                     .get();
         }
     }
+
+    @Test
+    @SneakyThrows
+    void downloadSpeedDebugNoYtUrl() {
+        String ytUrl = "https://speed.hetzner.de/100MB.bin";
+        try (AsyncHttpClient client = Dsl.asyncHttpClient(CLIENT_CONFIG)) {
+            TransferCompletionHandler tl = new TransferCompletionHandler();
+
+            tl.addTransferListener(new CustomTransferListener());
+            client.prepareGet(ytUrl)
+                    .execute(tl)
+                    .get();
+        }
+    }
 }
