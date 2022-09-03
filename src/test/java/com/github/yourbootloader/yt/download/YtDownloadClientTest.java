@@ -3,6 +3,8 @@ package com.github.yourbootloader.yt.download;
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import com.github.yourbootloader.config.YDProperties;
 import com.github.yourbootloader.yt.extractor.legacy.YoutubePageParser;
+import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.channel.ChannelOption;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +34,14 @@ class YtDownloadClientTest {
 
     //        String ytUrl = "https://speed.hetzner.de/100MB.bin";
     private final YDProperties ydProperties;
-    private static final int CHUNK_SIZE = 8_192 * 2;
+    private static final int CHUNK_SIZE = 8_192 * 6;
     private static final DefaultAsyncHttpClientConfig CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setRequestTimeout(4_000_000) // 1.1 час
+            .setReadTimeout(4_000_000)
+            .setConnectTimeout(4_000_000)
+            .setRequestTimeout(4_000_000)
+            .setPooledConnectionIdleTimeout(4_000_000)
+            .setHandshakeTimeout(4_000_000)
             .setChunkedFileChunkSize(CHUNK_SIZE)
             .setSoRcvBuf(CHUNK_SIZE)
             .setWebSocketMaxBufferSize(CHUNK_SIZE)
@@ -43,11 +50,19 @@ class YtDownloadClientTest {
             .setHttpClientCodecMaxHeaderSize(CHUNK_SIZE)
             .setHttpClientCodecMaxInitialLineLength(CHUNK_SIZE)
             .setHttpClientCodecInitialBufferSize(CHUNK_SIZE)
-            .setTcpNoDelay(false)
-            .setEnablewebSocketCompression(false)
-            .setKeepAlive(true)
-            .build();
+            .setAllocator(UnpooledByteBufAllocator.DEFAULT)
 
+//            .addChannelOption(ChannelOption.AUTO_READ, true)
+//            .addChannelOption(ChannelOption.MAX_MESSAGES_PER_READ, CHUNK_SIZE)
+            .addChannelOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 100)
+            .addChannelOption(ChannelOption.SO_TIMEOUT, 100)
+
+//            .setSoLinger(CHUNK_SIZE)
+//            .setSoSndBuf(CHUNK_SIZE)
+//            .setSoRcvBuf(CHUNK_SIZE)
+
+            .build();
+    
     @TempDir
     Path tempDir;
     private File resource;
@@ -57,7 +72,7 @@ class YtDownloadClientTest {
     public void init() {
         ydProperties.setDownloadPath(tempDir.toString());
 
-        String url = "https://youtu.be/zcjKJ7FHDLM";
+        String url = "https://www.youtube.com/watch?v=cdCwimgOOg8";//"https://youtu.be/zcjKJ7FHDLM";
         String fileAbsolutePath = "D:\\IdeaProjects\\your-bootloader\\src\\test\\resources\\trash\\yt-url.txt";
         resource = new File(fileAbsolutePath);
 
