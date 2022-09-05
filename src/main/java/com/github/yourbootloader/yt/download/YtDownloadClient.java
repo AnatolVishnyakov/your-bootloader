@@ -1,6 +1,8 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
+import io.netty.channel.AdaptiveRecvByteBufAllocator;
+import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +59,7 @@ public class YtDownloadClient {
                 .setTcpNoDelay(true)
                 .setKeepAlive(true)
                 .setSoKeepAlive(true)
+                .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(8_192, 16_384, 131_072))
                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.25 Safari/537.36")
                 .build();
 
