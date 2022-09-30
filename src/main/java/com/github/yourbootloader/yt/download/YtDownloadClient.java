@@ -1,14 +1,14 @@
 package com.github.yourbootloader.yt.download;
 
-import com.github.yourbootloader.bot.event.FailureDownloadEvent;
-import com.github.yourbootloader.bot.event.FinishDownloadEvent;
-import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
 import com.github.yourbootloader.config.YDProperties;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import org.asynchttpclient.Dsl;
 import org.asynchttpclient.filter.ThrottleRequestFilter;
 import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,12 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -68,70 +63,70 @@ public class YtDownloadClient {
                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.25 Safari/537.36")
                 .build();
 
-//        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
-//        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
-//        downloaderAsyncHandler.setContentSize(dataSize);
-//        log.info("File length: {}", file.length());
+        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
+        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
+        downloaderAsyncHandler.setContentSize(dataSize);
+        log.info("File length: {}", file.length());
 
-//        try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-//            DefaultHttpHeaders headers = new DefaultHttpHeaders();
-//            headers.add("YtDownloader-no-compression", "True");
-//            headers.add("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-//            headers.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-//            headers.add("Accept-Encoding", "gzip, deflate");
-//            headers.add("Accept-Language", "en-us,en;q=0.5");
+        try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
+            DefaultHttpHeaders headers = new DefaultHttpHeaders();
+            headers.add("YtDownloader-no-compression", "True");
+            headers.add("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+            headers.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            headers.add("Accept-Encoding", "gzip, deflate");
+            headers.add("Accept-Language", "en-us,en;q=0.5");
 
-//            for (long start = 0, end = 0; end < dataSize.toBytes(); ) {
-//                if (end + DataSize.ofKilobytes(500).toBytes() > dataSize.toBytes()) {
-//                    end = dataSize.toBytes();
-//                } else {
-//                    end += DataSize.ofKilobytes(500).toBytes();
-//                }
-//                String range = "bytes=" + start + "-" + end;
-//                log.info("Range: {}", range);
-//                client.prepareGet(url)
-//                        .setHeader("Range", range)
-//                        .setHeaders(headers)
-//                        .execute(downloaderAsyncHandler)
-//                        .get();
-//                start = end;
-//            }
-
-//            client.prepareGet(url)
-//                    .setRangeOffset(file.length())
-//                    .setHeaders(headers)
-//                    .execute(downloaderAsyncHandler).get();
-//        }
-        UUID downloadId = UUID.randomUUID();
-        try (BufferedInputStream in = new BufferedInputStream(new URL(url).openStream());
-             FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-            int counter = 0;
-
-            byte[] dataBuffer = new byte[1024];
-            int bytesRead = in.read(dataBuffer, 0, 1024);
-            long finish = 10_000;
-
-            while (bytesRead != -1) {
-                counter += dataBuffer.length;
-                log.info("Downloaded {} of {} | chunk: {}", DataSize.ofBytes(counter).toKilobytes(), dataSize.toKilobytes(), dataBuffer.length);
-                publisher.publishEvent(new ProgressIndicatorEvent(chat, dataSize, file.length(), dataBuffer.length, downloadId));
-                fileOutputStream.write(dataBuffer, 0, bytesRead);
-
-                long current = System.currentTimeMillis();
-                if (current - finish > 200) {
-                    dataBuffer = new byte[dataBuffer.length / 2];
+            for (long start = 0, end = 0; end < dataSize.toBytes(); ) {
+                if (end + DataSize.ofKilobytes(500).toBytes() > dataSize.toBytes()) {
+                    end = dataSize.toBytes();
                 } else {
-                    dataBuffer = new byte[dataBuffer.length * 2];
+                    end += DataSize.ofKilobytes(500).toBytes();
                 }
-                finish = current;
-                bytesRead = in.read(dataBuffer, 0, dataBuffer.length);
+                String range = "bytes=" + start + "-" + end;
+                log.info("Range: {}", range);
+                client.prepareGet(url)
+                        .setHeader("Range", range)
+                        .setHeaders(headers)
+                        .execute(downloaderAsyncHandler)
+                        .get();
+                start = end;
             }
-            publisher.publishEvent(new FinishDownloadEvent(chat, downloadId, file));
-        } catch (IOException e) {
-            // handle exception
-            log.error("Error for download content: {}", url, e);
-            publisher.publishEvent(new FailureDownloadEvent(chat, e));
+
+            client.prepareGet(url)
+                    .setRangeOffset(file.length())
+                    .setHeaders(headers)
+                    .execute(downloaderAsyncHandler).get();
         }
+//        UUID downloadId = UUID.randomUUID();
+//        try (BufferedInputStream in = new BufferedInputStream(new URL(url).openStream());
+//             FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+//            int counter = 0;
+//
+//            byte[] dataBuffer = new byte[1024];
+//            int bytesRead = in.read(dataBuffer, 0, 1024);
+//            long finish = 10_000;
+//
+//            while (bytesRead != -1) {
+//                counter += dataBuffer.length;
+//                log.info("Downloaded {} of {} | chunk: {}", DataSize.ofBytes(counter).toKilobytes(), dataSize.toKilobytes(), dataBuffer.length);
+//                publisher.publishEvent(new ProgressIndicatorEvent(chat, dataSize, file.length(), dataBuffer.length, downloadId));
+//                fileOutputStream.write(dataBuffer, 0, bytesRead);
+//
+//                long current = System.currentTimeMillis();
+//                if (current - finish > 200) {
+//                    dataBuffer = new byte[dataBuffer.length / 2];
+//                } else {
+//                    dataBuffer = new byte[dataBuffer.length * 2];
+//                }
+//                finish = current;
+//                bytesRead = in.read(dataBuffer, 0, dataBuffer.length);
+//            }
+//            publisher.publishEvent(new FinishDownloadEvent(chat, downloadId, file));
+//        } catch (IOException e) {
+//            // handle exception
+//            log.error("Error for download content: {}", url, e);
+//            publisher.publishEvent(new FailureDownloadEvent(chat, e));
+//        }
     }
 
     private void validate(File file) {
