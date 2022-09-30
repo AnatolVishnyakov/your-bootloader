@@ -59,7 +59,7 @@ public class YtDownloadClient {
                 .setTcpNoDelay(true)
                 .setKeepAlive(true)
                 .setSoKeepAlive(true)
-                .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(8_192, 16_384, 131_072))
+                .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(8_192, 8_192 * 4, 131_072))
                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.25 Safari/537.36")
                 .build();
 
@@ -76,10 +76,26 @@ public class YtDownloadClient {
             headers.add("Accept-Encoding", "gzip, deflate");
             headers.add("Accept-Language", "en-us,en;q=0.5");
 
-            client.prepareGet(url)
-                    .setRangeOffset(file.length())
-                    .setHeaders(headers)
-                    .execute(downloaderAsyncHandler).get();
+            for (long start = 0, end = 0; end < dataSize.toBytes(); ) {
+                if (end + DataSize.ofKilobytes(500).toBytes() > dataSize.toBytes()) {
+                    end = dataSize.toBytes();
+                } else {
+                    end += DataSize.ofKilobytes(500).toBytes();
+                }
+                String range = "bytes=" + start + "-" + end;
+                log.info("Range: {}", range);
+                client.prepareGet(url)
+                        .setHeader("Range", range)
+                        .setHeaders(headers)
+                        .execute(downloaderAsyncHandler)
+                        .get();
+                start = end;
+            }
+
+//            client.prepareGet(url)
+//                    .setRangeOffset(file.length())
+//                    .setHeaders(headers)
+//                    .execute(downloaderAsyncHandler).get();
         }
     }
 
