@@ -114,7 +114,7 @@ public class YtDownloadClient {
             while (bytesRead != -1) {
                 counter += dataBuffer.length;
                 log.info("Downloaded {} of {} | chunk: {}", DataSize.ofBytes(counter).toKilobytes(), dataSize.toKilobytes(), dataBuffer.length);
-                publisher.publishEvent(new ProgressIndicatorEvent(chat, dataSize, file.length(), counter, downloadId));
+                publisher.publishEvent(new ProgressIndicatorEvent(chat, dataSize, file.length(), dataBuffer.length, downloadId));
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
 
                 long current = System.currentTimeMillis();
