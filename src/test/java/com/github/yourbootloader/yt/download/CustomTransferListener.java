@@ -1,5 +1,7 @@
 package com.github.yourbootloader.yt.download;
 
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.handler.TransferListener;
@@ -7,6 +9,8 @@ import org.springframework.util.unit.DataSize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -17,6 +21,9 @@ class CustomTransferListener implements TransferListener {
     AtomicLong counter = new AtomicLong();
     AtomicReference<Long> time = new AtomicReference<>(System.currentTimeMillis());
     LocalDateTime start = LocalDateTime.now();
+
+    public CustomTransferListener() {
+    }
 
     @Override
     public void onRequestHeadersSent(HttpHeaders headers) {
@@ -30,15 +37,32 @@ class CustomTransferListener implements TransferListener {
 
     @Override
     public void onBytesReceived(byte[] bytes) {
-        log.info("{} ETA {} | received {} MBytes | timeout: {}",
+        log.info("{} ETA {} | received {} KBytes {} MBytes | timeout: {}",
                 formatBytes(bytes),
                 formatSeconds(calcSpeed(time.get(), System.currentTimeMillis(), bytes)),
+                DataSize.ofBytes(counter.get()).toKilobytes(),
                 DataSize.ofBytes(counter.get()).toMegabytes(),
                 System.currentTimeMillis() - timeout.get()
         );
         counter.addAndGet(bytes.length);
         time.set(System.currentTimeMillis());
         timeout.set(System.currentTimeMillis());
+
+//        int[] weights = {1024, 2048, 4096, 8192, 8192 * 2, 8192 * 4};
+//        int weight = weights[ThreadLocalRandom.current().nextInt(weights.length)];
+//        allocator.calculateNewCapacity(
+//                weight,
+//                weight * 2
+//        );
+//        reset++;
+//        if (reset == 5) {
+//            try {
+//                Thread.sleep(500);
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
+//            reset = 0;
+//        }
     }
 
     private String formatBytes(byte[] bytes) {

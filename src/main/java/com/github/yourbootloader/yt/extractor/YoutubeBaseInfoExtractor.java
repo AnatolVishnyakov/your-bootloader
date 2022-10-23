@@ -3,7 +3,6 @@ package com.github.yourbootloader.yt.extractor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -47,13 +46,13 @@ public abstract class YoutubeBaseInfoExtractor extends InfoExtractor {
     // TODO реализовать авторизацию
     public boolean login() {
         log.error("Not implemented!");
-        throw new NotImplementedException();
+        throw new RuntimeException();
     }
 
     // TODO реализовать работу с куками
     public void initializeConsent() {
         log.error("Not implemented!");
-        throw new NotImplementedException();
+        throw new RuntimeException();
     }
 
     // TODO implement
@@ -66,7 +65,7 @@ public abstract class YoutubeBaseInfoExtractor extends InfoExtractor {
 
     public void callApi() {
         log.error("Not implemented!");
-        throw new NotImplementedException();
+        throw new RuntimeException();
     }
 
     public JSONObject extractYtInitialData(String videoId, String webPage) {
@@ -93,6 +92,6 @@ public abstract class YoutubeBaseInfoExtractor extends InfoExtractor {
 
     public void extractVideo() {
         log.error("Not implemented!");
-        throw new NotImplementedException();
+        throw new RuntimeException();
     }
 }

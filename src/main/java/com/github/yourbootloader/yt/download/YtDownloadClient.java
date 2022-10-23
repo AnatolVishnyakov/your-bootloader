@@ -76,57 +76,11 @@ public class YtDownloadClient {
             headers.add("Accept-Encoding", "gzip, deflate");
             headers.add("Accept-Language", "en-us,en;q=0.5");
 
-//            for (long start = 0, end = 0; end < dataSize.toBytes(); ) {
-//                if (end + DataSize.ofKilobytes(500).toBytes() > dataSize.toBytes()) {
-//                    end = dataSize.toBytes();
-//                } else {
-//                    end += DataSize.ofKilobytes(500).toBytes();
-//                }
-//                String range = "bytes=" + start + "-" + end;
-//                log.info("Range: {}", range);
-//                client.prepareGet(url)
-//                        .setHeader("Range", range)
-//                        .setHeaders(headers)
-//                        .execute(downloaderAsyncHandler)
-//                        .get();
-//                start = end;
-//            }
-
             client.prepareGet(url)
                     .setRangeOffset(file.length())
                     .setHeaders(headers)
                     .execute(downloaderAsyncHandler).get();
         }
-//        UUID downloadId = UUID.randomUUID();
-//        try (BufferedInputStream in = new BufferedInputStream(new URL(url).openStream());
-//             FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-//            int counter = 0;
-//
-//            byte[] dataBuffer = new byte[1024];
-//            int bytesRead = in.read(dataBuffer, 0, 1024);
-//            long finish = 10_000;
-//
-//            while (bytesRead != -1) {
-//                counter += dataBuffer.length;
-//                log.info("Downloaded {} of {} | chunk: {}", DataSize.ofBytes(counter).toKilobytes(), dataSize.toKilobytes(), dataBuffer.length);
-//                publisher.publishEvent(new ProgressIndicatorEvent(chat, dataSize, file.length(), dataBuffer.length, downloadId));
-//                fileOutputStream.write(dataBuffer, 0, bytesRead);
-//
-//                long current = System.currentTimeMillis();
-//                if (current - finish > 200) {
-//                    dataBuffer = new byte[dataBuffer.length / 2];
-//                } else {
-//                    dataBuffer = new byte[dataBuffer.length * 2];
-//                }
-//                finish = current;
-//                bytesRead = in.read(dataBuffer, 0, dataBuffer.length);
-//            }
-//            publisher.publishEvent(new FinishDownloadEvent(chat, downloadId, file));
-//        } catch (IOException e) {
-//            // handle exception
-//            log.error("Error for download content: {}", url, e);
-//            publisher.publishEvent(new FailureDownloadEvent(chat, e));
-//        }
     }
 
     private void validate(File file) {

@@ -3,8 +3,9 @@ package com.github.yourbootloader.yt.download;
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import com.github.yourbootloader.config.YDProperties;
 import com.github.yourbootloader.yt.extractor.legacy.YoutubePageParser;
-import io.netty.buffer.UnpooledByteBufAllocator;
-import io.netty.channel.ChannelOption;
+import io.netty.channel.PreferHeapByteBufAllocator;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -17,10 +18,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.unit.DataSize;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -50,19 +51,25 @@ class YtDownloadClientTest {
             .setHttpClientCodecMaxHeaderSize(CHUNK_SIZE)
             .setHttpClientCodecMaxInitialLineLength(CHUNK_SIZE)
             .setHttpClientCodecInitialBufferSize(CHUNK_SIZE)
-            .setAllocator(UnpooledByteBufAllocator.DEFAULT)
+
+//            .addChannelOption(ChannelOption.MAX_MESSAGES_PER_READ)
+//            .setAllocator(PooledByteBufAllocator.DEFAULT)
+//            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT)
+//            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new DefaultMaxBytesRecvByteBufAllocator(8_192, 8_192))
+//            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(8_192))
+            .setAllocator(PreferHeapByteBufAllocator.DEFAULT)
 
 //            .addChannelOption(ChannelOption.AUTO_READ, true)
 //            .addChannelOption(ChannelOption.MAX_MESSAGES_PER_READ, CHUNK_SIZE)
-            .addChannelOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 100)
-            .addChannelOption(ChannelOption.SO_TIMEOUT, 100)
+//            .addChannelOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 100)
+//            .addChannelOption(ChannelOption.SO_TIMEOUT, 4_000_000)
 
 //            .setSoLinger(CHUNK_SIZE)
 //            .setSoSndBuf(CHUNK_SIZE)
 //            .setSoRcvBuf(CHUNK_SIZE)
 
             .build();
-    
+
     @TempDir
     Path tempDir;
     private File resource;
@@ -72,8 +79,8 @@ class YtDownloadClientTest {
     public void init() {
         ydProperties.setDownloadPath(tempDir.toString());
 
-        String url = "https://www.youtube.com/watch?v=cdCwimgOOg8";//"https://youtu.be/zcjKJ7FHDLM";
-        String fileAbsolutePath = "D:\\IdeaProjects\\your-bootloader\\src\\test\\resources\\trash\\yt-url.txt";
+        String url = "https://youtu.be/zcjKJ7FHDLM";
+        String fileAbsolutePath = "/Users/vishnyakov-ap/IdeaProjects/your-bootloader/src/test/resources/yt-url.txt";
         resource = new File(fileAbsolutePath);
 
         if (!resource.exists() && resource.createNewFile()) {
@@ -96,8 +103,16 @@ class YtDownloadClientTest {
         try (AsyncHttpClient client = Dsl.asyncHttpClient(CLIENT_CONFIG)) {
             TransferCompletionHandler tl = new TransferCompletionHandler();
 
+            HttpHeaders headers = new DefaultHttpHeaders();
+            headers.add("User-Agent", Utils.getUserAgent());
+            headers.add("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+            headers.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            headers.add("Accept-Encoding", "gzip, deflate");
+            headers.add("Accept-Language", "en-us,en;q=0.5");
+
             tl.addTransferListener(new CustomTransferListener());
             client.prepareGet(ytUrl)
+                    .setHeaders(headers)
                     .execute(tl)
                     .get();
         }
@@ -111,9 +126,46 @@ class YtDownloadClientTest {
             TransferCompletionHandler tl = new TransferCompletionHandler();
 
             tl.addTransferListener(new CustomTransferListener());
+//            client.prepareGet(ytUrl).execute(tl);
+//            client.prepareGet(ytUrl).execute(tl);
             client.prepareGet(ytUrl)
+//                    .setHeader("Range", "bytes=0-" + DataSize.ofMegabytes(1).toBytes())
                     .execute(tl)
                     .get();
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    void downloadBlockedIO() {
+        String ytUrl = Files.readAllLines(resource.toPath()).get(0);
+        String fileName = "/Users/vishnyakov-ap/IdeaProjects/your-bootloader/src/test/resources/buffer.mp3";
+        try (BufferedInputStream in = new BufferedInputStream(new URL(ytUrl).openStream());
+             FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
+            byte[] dataBuffer = new byte[1024];
+            int bytesRead;
+            int counter = 0;
+
+            long prev = System.currentTimeMillis();
+            while ((bytesRead = in.read(dataBuffer, 0, dataBuffer.length)) != -1) {
+                long current = System.currentTimeMillis();
+
+                counter += bytesRead;
+                log.info("Bytes read {} of {} [chunkSize = {}, time = {}ms]",
+                        DataSize.ofBytes(counter).toKilobytes(),
+                        DataSize.ofBytes(6245604).toKilobytes(),
+                        bytesRead, current - prev
+                );
+                fileOutputStream.write(dataBuffer, 0, bytesRead);
+                if (current - prev > 100) {
+                    dataBuffer = new byte[dataBuffer.length / 2];
+                } else {
+                    dataBuffer = new byte[dataBuffer.length * 2];
+                }
+                prev = current;
+            }
+        } catch (IOException e) {
+            // handle exception
         }
     }
 }
