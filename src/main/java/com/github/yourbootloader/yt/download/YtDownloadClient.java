@@ -70,7 +70,7 @@ public class YtDownloadClient {
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            int start = 0;
+            int start = (int) file.length();
             int end = 0;
 
             int chunkSizeDefault = 10_485_760;
