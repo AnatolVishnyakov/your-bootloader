@@ -2,10 +2,10 @@ package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import com.github.yourbootloader.config.YDProperties;
+import com.github.yourbootloader.yt.Utils;
 import com.github.yourbootloader.yt.extractor.legacy.YoutubePageParser;
-import io.netty.channel.PreferHeapByteBufAllocator;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.channel.AdaptiveRecvByteBufAllocator;
+import io.netty.channel.ChannelOption;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,15 +18,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.util.unit.DataSize;
 
 import java.io.*;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @YoutubeDownloaderTest
@@ -35,7 +38,7 @@ class YtDownloadClientTest {
 
     //        String ytUrl = "https://speed.hetzner.de/100MB.bin";
     private final YDProperties ydProperties;
-    private static final int CHUNK_SIZE = 8_192 * 6;
+    private static final int CHUNK_SIZE = 10_485_760;
     private static final DefaultAsyncHttpClientConfig CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setRequestTimeout(4_000_000) // 1.1 час
             .setReadTimeout(4_000_000)
@@ -54,10 +57,10 @@ class YtDownloadClientTest {
 
 //            .addChannelOption(ChannelOption.MAX_MESSAGES_PER_READ)
 //            .setAllocator(PooledByteBufAllocator.DEFAULT)
-//            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT)
+            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT)
 //            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new DefaultMaxBytesRecvByteBufAllocator(8_192, 8_192))
 //            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(8_192))
-            .setAllocator(PreferHeapByteBufAllocator.DEFAULT)
+//            .setAllocator(PreferHeapByteBufAllocator.DEFAULT)
 
 //            .addChannelOption(ChannelOption.AUTO_READ, true)
 //            .addChannelOption(ChannelOption.MAX_MESSAGES_PER_READ, CHUNK_SIZE)
@@ -100,19 +103,15 @@ class YtDownloadClientTest {
     @SneakyThrows
     void downloadSpeedDebug() {
         String ytUrl = Files.readAllLines(resource.toPath()).get(0);
+        int chunkSizeDefault = 10_485_760;
+        int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
+
         try (AsyncHttpClient client = Dsl.asyncHttpClient(CLIENT_CONFIG)) {
             TransferCompletionHandler tl = new TransferCompletionHandler();
-
-            HttpHeaders headers = new DefaultHttpHeaders();
-            headers.add("User-Agent", Utils.getUserAgent());
-            headers.add("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-            headers.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-            headers.add("Accept-Encoding", "gzip, deflate");
-            headers.add("Accept-Language", "en-us,en;q=0.5");
-
             tl.addTransferListener(new CustomTransferListener());
             client.prepareGet(ytUrl)
-                    .setHeaders(headers)
+                    .setHeaders(Utils.newHttpHeaders())
+                    .setHeader("Range", "bytes=0-" + chunkSize)
                     .execute(tl)
                     .get();
         }
@@ -138,9 +137,21 @@ class YtDownloadClientTest {
     @Test
     @SneakyThrows
     void downloadBlockedIO() {
+        int chunkSizeDefault = 10_485_760;
+        int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
+        HttpHeaders headers = Utils.newHttpHeaders();
+
         String ytUrl = Files.readAllLines(resource.toPath()).get(0);
         String fileName = "/Users/vishnyakov-ap/IdeaProjects/your-bootloader/src/test/resources/buffer.mp3";
-        try (BufferedInputStream in = new BufferedInputStream(new URL(ytUrl).openStream());
+        URL url = new URL(ytUrl);
+
+        URLConnection urlConnection = url.openConnection();
+        headers.keySet().forEach(key -> {
+            urlConnection.addRequestProperty(key, headers.getFirst(key));
+        });
+        urlConnection.setRequestProperty("Range", "bytes=0-" + chunkSize);
+
+        try (BufferedInputStream in = new BufferedInputStream(url.openStream());
              FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
             byte[] dataBuffer = new byte[1024];
             int bytesRead;
@@ -158,14 +169,27 @@ class YtDownloadClientTest {
                 );
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
                 if (current - prev > 100) {
-                    dataBuffer = new byte[dataBuffer.length / 2];
+                    dataBuffer = new byte[dataBuffer.length - 1024];
                 } else {
-                    dataBuffer = new byte[dataBuffer.length * 2];
+                    dataBuffer = new byte[dataBuffer.length + 1024];
                 }
                 prev = current;
             }
         } catch (IOException e) {
             // handle exception
         }
+    }
+
+    @Test
+    void foo() throws IOException, InterruptedException {
+        String s;
+        Process p = Runtime.getRuntime().exec("youtube-dl https://www.youtube.com/watch?v=02V-doGJBqo -x");
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(p.getInputStream()));
+        while ((s = br.readLine()) != null)
+            System.out.println("line: " + s);
+        p.waitFor();
+        System.out.println("exit: " + p.exitValue());
+        p.destroy();
     }
 }

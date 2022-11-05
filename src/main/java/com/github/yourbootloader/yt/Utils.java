@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt.download;
+package com.github.yourbootloader.yt;
 
 import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpHeaders;

@@ -1,6 +1,7 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
+import com.github.yourbootloader.yt.Utils;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -60,7 +61,6 @@ public class YtDownloadClient {
                 .setKeepAlive(true)
                 .setSoKeepAlive(true)
                 .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(8_192, 8_192 * 4, 131_072))
-                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.25 Safari/537.36")
                 .build();
 
         DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
@@ -69,16 +69,9 @@ public class YtDownloadClient {
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            DefaultHttpHeaders headers = new DefaultHttpHeaders();
-            headers.add("YtDownloader-no-compression", "True");
-            headers.add("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-            headers.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-            headers.add("Accept-Encoding", "gzip, deflate");
-            headers.add("Accept-Language", "en-us,en;q=0.5");
-
             client.prepareGet(url)
                     .setRangeOffset(file.length())
-                    .setHeaders(headers)
+                    .setHeaders(Utils.newHttpHeaders())
                     .execute(downloaderAsyncHandler).get();
         }
     }
