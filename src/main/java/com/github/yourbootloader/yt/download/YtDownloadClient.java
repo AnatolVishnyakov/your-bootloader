@@ -4,7 +4,7 @@ import com.github.yourbootloader.config.YDProperties;
 import com.github.yourbootloader.yt.Utils;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
@@ -19,6 +19,7 @@ import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.io.File;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Component
@@ -69,10 +70,21 @@ public class YtDownloadClient {
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            client.prepareGet(url)
-                    .setRangeOffset(file.length())
-                    .setHeaders(Utils.newHttpHeaders())
-                    .execute(downloaderAsyncHandler).get();
+            int start = 0;
+            int end = 0;
+
+            int chunkSizeDefault = 10_485_760;
+            while (start < fileSize) {
+                int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
+                end += Math.min(chunkSize, fileSize);
+
+                client.prepareGet(url)
+                        .setRangeOffset(file.length())
+                        .setHeaders(Utils.newHttpHeaders())
+                        .setHeader(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end)
+                        .execute(downloaderAsyncHandler).get();
+                start += chunkSize + 1;
+            }
         }
     }
 
