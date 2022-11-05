@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -38,6 +39,7 @@ public class BotManager {
     private final ThreadLocal<Map<Long, Integer>> threadLocal = ThreadLocal.withInitial(HashMap::new);
     private final Bot bot;
 
+    @Async
     @EventListener
     @SneakyThrows
     public void onProgressIndicatorEvent(ProgressIndicatorEvent event) {
@@ -61,26 +63,25 @@ public class BotManager {
         long downloadedContent = dataSize.toKilobytes();
         long contentSize = event.getContentSize().toKilobytes();
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
-//        if (percent != threadLocal.get().get(chatId)) {
-        Thread.sleep(1_000);
-        threadLocal.get().put(chatId, percent);
-        log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
+        if (percent != threadLocal.get().get(chatId)) {
+            threadLocal.get().put(chatId, percent);
+            log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
 
-        String text = "Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]\n" +
-                "Chunk size: " + event.getBlockSize() + " bytes";
-        EditMessageText message = new EditMessageText(text);
-        message.setChatId(chatId.toString());
-        message.setMessageId(messageId);
-        message.setParseMode(ParseMode.HTML);
-        message.disableWebPagePreview();
+            String text = "Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]\n" +
+                    "Chunk size: " + event.getBlockSize() + " bytes";
+            EditMessageText message = new EditMessageText(text);
+            message.setChatId(chatId.toString());
+            message.setMessageId(messageId);
+            message.setParseMode(ParseMode.HTML);
+            message.disableWebPagePreview();
 
-        try {
-            bot.execute(message);
-        } catch (TelegramApiException e) {
-            log.error(UNEXPECTED_ERROR, e);
-            sendNotification(chatId, e.getMessage());
+            try {
+                bot.execute(message);
+            } catch (TelegramApiException e) {
+                log.error(UNEXPECTED_ERROR, e);
+                sendNotification(chatId, e.getMessage());
+            }
         }
-//        }
     }
 
     @EventListener
