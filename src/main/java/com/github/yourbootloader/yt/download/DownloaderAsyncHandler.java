@@ -62,6 +62,7 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     @Override
     public Response onCompleted() throws Exception {
+        log.info("onCompleted and send file in telegram...");
         if (originalFile.length() >= contentSize.toBytes()) {
             publisher.publishEvent(new FinishDownloadEvent(chat, downloadId, originalFile));
         }

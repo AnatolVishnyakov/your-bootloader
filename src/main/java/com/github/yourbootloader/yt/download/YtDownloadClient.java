@@ -70,13 +70,13 @@ public class YtDownloadClient {
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            int start = (int) file.length();
+            int start = (int) file.length() == 0 ? 0 : (int) file.length();
             int end = 0;
 
             int chunkSizeDefault = 10_485_760;
             while (start < fileSize) {
                 int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
-                end += Math.min(chunkSize, fileSize);
+                end += Math.min(start + chunkSize - 1, dataSize.toBytes());
                 log.info("Chunk bytes={}-{} downloading... ", start, end);
 
                 client.prepareGet(url)
