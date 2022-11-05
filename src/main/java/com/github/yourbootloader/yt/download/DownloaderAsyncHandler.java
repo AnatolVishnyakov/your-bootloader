@@ -17,7 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Асинхронный обработчик, позволяет продолжить
@@ -33,6 +36,12 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     private final UUID downloadId;
     private ApplicationEventPublisher publisher;
     private DataSize contentSize;
+
+    // TODO отладка скорости скачивания
+    AtomicLong timeout = new AtomicLong();
+    AtomicLong counter = new AtomicLong();
+    AtomicReference<Long> time = new AtomicReference<>(System.currentTimeMillis());
+    LocalDateTime start = LocalDateTime.now();
 
     public DownloaderAsyncHandler(Chat chat, File originalFile) throws IOException {
         this.chat = chat;
@@ -55,6 +64,10 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     @Override
     public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
+        // TODO отладка скорости скачивания
+        log.info("timeout: {}", System.currentTimeMillis() - timeout.get());
+        timeout.set(System.currentTimeMillis());
+
         State state = super.onBodyPartReceived(bodyPart);
         publisher.publishEvent(new ProgressIndicatorEvent(chat, contentSize, originalFile.length(), bodyPart.getBodyPartBytes().length, downloadId));
         return state;

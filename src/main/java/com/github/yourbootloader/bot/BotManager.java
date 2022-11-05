@@ -63,23 +63,23 @@ public class BotManager {
         int percent = (int) ((downloadedContent * 100.0) / contentSize);
 //        if (percent != threadLocal.get().get(chatId)) {
         Thread.sleep(1_000);
-            threadLocal.get().put(chatId, percent);
-            log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
+        threadLocal.get().put(chatId, percent);
+        log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
 
-            String text = "Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]\n" +
-                    "Chunk size: " + event.getBlockSize() + " bytes";
-            EditMessageText message = new EditMessageText(text);
-            message.setChatId(chatId.toString());
-            message.setMessageId(messageId);
-            message.setParseMode(ParseMode.HTML);
-            message.disableWebPagePreview();
+        String text = "Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]\n" +
+                "Chunk size: " + event.getBlockSize() + " bytes";
+        EditMessageText message = new EditMessageText(text);
+        message.setChatId(chatId.toString());
+        message.setMessageId(messageId);
+        message.setParseMode(ParseMode.HTML);
+        message.disableWebPagePreview();
 
-            try {
-                bot.execute(message);
-            } catch (TelegramApiException e) {
-                log.error(UNEXPECTED_ERROR, e);
-                sendNotification(chatId, e.getMessage());
-            }
+        try {
+            bot.execute(message);
+        } catch (TelegramApiException e) {
+            log.error(UNEXPECTED_ERROR, e);
+            sendNotification(chatId, e.getMessage());
+        }
 //        }
     }
 
