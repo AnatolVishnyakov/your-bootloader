@@ -77,6 +77,7 @@ public class YtDownloadClient {
             while (start < fileSize) {
                 int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
                 end += Math.min(chunkSize, fileSize);
+                log.info("Chunk bytes={}-{} downloading... ", start, end);
 
                 client.prepareGet(url)
                         .setRangeOffset(file.length())
