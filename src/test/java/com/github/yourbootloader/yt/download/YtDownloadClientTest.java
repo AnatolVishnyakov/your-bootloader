@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
@@ -38,6 +39,7 @@ class YtDownloadClientTest {
 
     //        String ytUrl = "https://speed.hetzner.de/100MB.bin";
     private final YDProperties ydProperties;
+    private final YtDownloadClient ytDownloadClient;
     private static final int CHUNK_SIZE = 10_485_760;
     private static final DefaultAsyncHttpClientConfig CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setRequestTimeout(4_000_000) // 1.1 час
@@ -54,23 +56,7 @@ class YtDownloadClientTest {
             .setHttpClientCodecMaxHeaderSize(CHUNK_SIZE)
             .setHttpClientCodecMaxInitialLineLength(CHUNK_SIZE)
             .setHttpClientCodecInitialBufferSize(CHUNK_SIZE)
-
-//            .addChannelOption(ChannelOption.MAX_MESSAGES_PER_READ)
-//            .setAllocator(PooledByteBufAllocator.DEFAULT)
             .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT)
-//            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new DefaultMaxBytesRecvByteBufAllocator(8_192, 8_192))
-//            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(8_192))
-//            .setAllocator(PreferHeapByteBufAllocator.DEFAULT)
-
-//            .addChannelOption(ChannelOption.AUTO_READ, true)
-//            .addChannelOption(ChannelOption.MAX_MESSAGES_PER_READ, CHUNK_SIZE)
-//            .addChannelOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 100)
-//            .addChannelOption(ChannelOption.SO_TIMEOUT, 4_000_000)
-
-//            .setSoLinger(CHUNK_SIZE)
-//            .setSoSndBuf(CHUNK_SIZE)
-//            .setSoRcvBuf(CHUNK_SIZE)
-
             .build();
 
     @TempDir
@@ -181,15 +167,9 @@ class YtDownloadClientTest {
     }
 
     @Test
-    void foo() throws IOException, InterruptedException {
-        String s;
-        Process p = Runtime.getRuntime().exec("youtube-dl https://www.youtube.com/watch?v=02V-doGJBqo -x");
-        BufferedReader br = new BufferedReader(
-                new InputStreamReader(p.getInputStream()));
-        while ((s = br.readLine()) != null)
-            System.out.println("line: " + s);
-        p.waitFor();
-        System.out.println("exit: " + p.exitValue());
-        p.destroy();
+    @SneakyThrows
+    void debugYtDownloadClientHandler() {
+        String ytUrl = Files.readAllLines(resource.toPath()).get(0);
+        ytDownloadClient.realDownload(3, ytUrl, UUID.randomUUID().toString() + ".mp3", DataSize.ofKilobytes(31_273).toBytes());
     }
 }
