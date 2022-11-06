@@ -41,13 +41,7 @@ public class YtDownloadClient {
     private void establishConnection() {
     }
 
-    private void download() throws Exception {
-        DataSize dataSize = DataSize.ofBytes(fileSize);
-        log.info("Размер скачиваемого содержимого: {} Mb ({} Kb)", dataSize.toMegabytes(), dataSize.toKilobytes());
-        File file = tempFileGenerator.create(fileName + "." + dataSize.toBytes());
-
-        validate(file);
-
+    private void download(int start, int end, DataSize dataSize, File file) throws Exception {
         DefaultAsyncHttpClientConfig clientConfig = new DefaultAsyncHttpClientConfig.Builder()
                 .setRequestTimeout(DEFAULT_TIMEOUT)
                 .setReadTimeout(DEFAULT_TIMEOUT)
@@ -71,26 +65,15 @@ public class YtDownloadClient {
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
-            int start = (int) file.length() == 0 ? 0 : (int) file.length();
-            int end = 0;
-
-            int chunkSizeDefault = 10_485_760 / 2;
-            while (start < fileSize) {
-                int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
-                end += Math.min(start + chunkSize - 1, dataSize.toBytes());
-                log.info("Chunk bytes={}-{} downloading... ", start, end);
-
-                HttpHeaders headers = Utils.newHttpHeaders();
-                if (start < end) {
-                    headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
-                }
-
-                client.prepareGet(url)
-                        .setRangeOffset(file.length())
-                        .setHeaders(headers)
-                        .execute(downloaderAsyncHandler).get();
-                start += chunkSize + 1;
+            HttpHeaders headers = Utils.newHttpHeaders();
+            if (start < end) {
+                headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
             }
+
+            client.prepareGet(url)
+                    .setRangeOffset(file.length())
+                    .setHeaders(headers)
+                    .execute(downloaderAsyncHandler).get();
         }
     }
 
@@ -108,8 +91,26 @@ public class YtDownloadClient {
         this.fileName = fileName;
         this.fileSize = fileSize;
 
-        establishConnection();
-        download();
+        DataSize dataSize = DataSize.ofBytes(fileSize);
+        log.info("Размер скачиваемого содержимого: {} Mb ({} Kb)", dataSize.toMegabytes(), dataSize.toKilobytes());
+        File file = tempFileGenerator.create(fileName + "." + dataSize.toBytes());
+
+        validate(file);
+
+        int start = (int) file.length() == 0 ? 0 : (int) file.length();
+        int end = 0;
+
+        int chunkSizeDefault = 10_485_760;
+        while (start < fileSize) {
+            int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
+            end += Math.min(start + chunkSize - 1, dataSize.toBytes());
+            log.info("Chunk bytes={}-{} downloading... ", start, end);
+
+            establishConnection();
+            download(start, end, dataSize, file);
+
+            start += chunkSize + 1;
+        }
         log.info("Download finished...");
     }
 
