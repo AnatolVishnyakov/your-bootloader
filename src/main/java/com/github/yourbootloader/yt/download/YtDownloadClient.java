@@ -48,14 +48,14 @@ public class YtDownloadClient {
                 .setConnectTimeout(DEFAULT_TIMEOUT)
                 .setMaxRequestRetry(3)
                 .setThreadPoolName(YtDownloadClient.class.getSimpleName())
-                .setHttpClientCodecMaxChunkSize(8_192 * 2)
-//                .setChunkedFileChunkSize(8_192 * 2)
+                .setHttpClientCodecMaxChunkSize(8_192 * 3)
+                .setChunkedFileChunkSize(8_192 * 3)
                 .addIOExceptionFilter(new ResumableIOExceptionFilter())
                 .addRequestFilter(new ThrottleRequestFilter(1_000))
                 .setIoThreadsCount(10)
 //                .setTcpNoDelay(true)
-//                .setKeepAlive(true)
-//                .setSoKeepAlive(true)
+                .setKeepAlive(true)
+                .setSoKeepAlive(true)
                 .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(8_192, 8_192 * 4, 131_072))
                 .build();
 
