@@ -26,7 +26,23 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class YtDownloadClient {
+
     private static final int DEFAULT_TIMEOUT = 10_000_000;
+    private static final DefaultAsyncHttpClientConfig ASYNC_HTTP_CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
+            .setRequestTimeout(DEFAULT_TIMEOUT)
+            .setReadTimeout(DEFAULT_TIMEOUT)
+            .setConnectTimeout(DEFAULT_TIMEOUT)
+            .setMaxRequestRetry(3)
+            .setThreadPoolName(YtDownloadClient.class.getSimpleName())
+            .setHttpClientCodecMaxChunkSize(8_192 * 3)
+            .setChunkedFileChunkSize(8_192 * 3)
+            .addIOExceptionFilter(new ResumableIOExceptionFilter())
+            .addRequestFilter(new ThrottleRequestFilter(1_000))
+            .setIoThreadsCount(10)
+            .setKeepAlive(true)
+            .setSoKeepAlive(true)
+            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(8_192, 8_192 * 4, 131_072))
+            .build();
 
     private final YDProperties ydProperties;
     private final TempFileGenerator tempFileGenerator;
@@ -42,29 +58,12 @@ public class YtDownloadClient {
     }
 
     private void download(int start, int end, DataSize dataSize, File file) throws Exception {
-        DefaultAsyncHttpClientConfig clientConfig = new DefaultAsyncHttpClientConfig.Builder()
-                .setRequestTimeout(DEFAULT_TIMEOUT)
-                .setReadTimeout(DEFAULT_TIMEOUT)
-                .setConnectTimeout(DEFAULT_TIMEOUT)
-                .setMaxRequestRetry(3)
-                .setThreadPoolName(YtDownloadClient.class.getSimpleName())
-                .setHttpClientCodecMaxChunkSize(8_192 * 3)
-                .setChunkedFileChunkSize(8_192 * 3)
-                .addIOExceptionFilter(new ResumableIOExceptionFilter())
-                .addRequestFilter(new ThrottleRequestFilter(1_000))
-                .setIoThreadsCount(10)
-//                .setTcpNoDelay(true)
-                .setKeepAlive(true)
-                .setSoKeepAlive(true)
-                .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(8_192, 8_192 * 4, 131_072))
-                .build();
-
         DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
         downloaderAsyncHandler.setApplicationEventPublisher(publisher);
         downloaderAsyncHandler.setContentSize(dataSize);
         log.info("File length: {}", file.length());
 
-        try (AsyncHttpClient client = Dsl.asyncHttpClient(clientConfig)) {
+        try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
             HttpHeaders headers = Utils.newHttpHeaders();
             if (start < end) {
                 headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
@@ -73,7 +72,8 @@ public class YtDownloadClient {
             client.prepareGet(url)
                     .setRangeOffset(file.length())
                     .setHeaders(headers)
-                    .execute(downloaderAsyncHandler).get();
+                    .execute(downloaderAsyncHandler)
+                    .get();
         }
     }
 
