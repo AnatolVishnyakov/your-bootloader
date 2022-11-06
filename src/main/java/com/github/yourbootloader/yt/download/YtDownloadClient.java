@@ -49,7 +49,7 @@ public class YtDownloadClient {
                 .setMaxRequestRetry(3)
                 .setThreadPoolName(YtDownloadClient.class.getSimpleName())
 //                .setHttpClientCodecMaxChunkSize(8_192 * 5)
-//                .setChunkedFileChunkSize(8_192 * 4)
+                .setChunkedFileChunkSize(8_192 * 2)
                 .addIOExceptionFilter(new ResumableIOExceptionFilter())
                 .addRequestFilter(new ThrottleRequestFilter(1_000))
                 .setIoThreadsCount(10)
