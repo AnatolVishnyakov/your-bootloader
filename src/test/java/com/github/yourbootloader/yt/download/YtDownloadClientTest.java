@@ -37,7 +37,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 class YtDownloadClientTest {
 
-    //        String ytUrl = "https://speed.hetzner.de/100MB.bin";
+    // String ytUrl = "https://speed.hetzner.de/100MB.bin";
     private final YDProperties ydProperties;
     private final YtDownloadClient ytDownloadClient;
     private static final int CHUNK_SIZE = 10_485_760;
@@ -139,7 +139,7 @@ class YtDownloadClientTest {
 
         try (BufferedInputStream in = new BufferedInputStream(url.openStream());
              FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
-            byte[] dataBuffer = new byte[1024];
+            byte[] dataBuffer = new byte[8_192 * 2];
             int bytesRead;
             int counter = 0;
 
@@ -155,9 +155,9 @@ class YtDownloadClientTest {
                 );
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
                 if (current - prev > 100) {
-                    dataBuffer = new byte[dataBuffer.length - 1024];
+                    dataBuffer = new byte[dataBuffer.length / 2];
                 } else {
-                    dataBuffer = new byte[dataBuffer.length + 1024];
+                    dataBuffer = new byte[dataBuffer.length * 2];
                 }
                 prev = current;
             }
@@ -170,6 +170,6 @@ class YtDownloadClientTest {
     @SneakyThrows
     void debugYtDownloadClientHandler() {
         String ytUrl = Files.readAllLines(resource.toPath()).get(0);
-        ytDownloadClient.realDownload(3, ytUrl, UUID.randomUUID().toString() + ".mp3", DataSize.ofKilobytes(31_273).toBytes());
+        ytDownloadClient.realDownload(ytUrl, UUID.randomUUID() + ".mp3", DataSize.ofKilobytes(31_273).toBytes());
     }
 }

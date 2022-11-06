@@ -41,7 +41,8 @@ public class YtDownloadClient {
             .setIoThreadsCount(10)
             .setKeepAlive(true)
             .setSoKeepAlive(true)
-            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(8_192, 8_192 * 4, 131_072))
+            .setTcpNoDelay(true)
+            .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator())
             .build();
 
     private final YDProperties ydProperties;
@@ -101,7 +102,7 @@ public class YtDownloadClient {
         int chunkSizeDefault = 10_485_760;
         while (start < fileSize) {
             int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
-            end += Math.min(start + chunkSize - 1, dataSize.toBytes());
+            end = (int) Math.min(start + chunkSize - 1, dataSize.toBytes());
             log.info("Chunk bytes={}-{} downloading... ", start, end);
 
             establishConnection();
