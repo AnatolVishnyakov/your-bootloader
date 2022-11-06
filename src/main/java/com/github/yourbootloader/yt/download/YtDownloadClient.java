@@ -87,7 +87,7 @@ public class YtDownloadClient {
 
                 client.prepareGet(url)
                         .setRangeOffset(file.length())
-                        .setHeaders(Utils.newHttpHeaders())
+                        .setHeaders(headers)
                         .execute(downloaderAsyncHandler).get();
                 start += chunkSize + 1;
             }
