@@ -74,7 +74,7 @@ public class YtDownloadClient {
             int start = (int) file.length() == 0 ? 0 : (int) file.length();
             int end = 0;
 
-            int chunkSizeDefault = 10_485_760;
+            int chunkSizeDefault = 10_485_760 / 2;
             while (start < fileSize) {
                 int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
                 end += Math.min(start + chunkSize - 1, dataSize.toBytes());
