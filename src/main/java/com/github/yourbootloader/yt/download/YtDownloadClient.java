@@ -14,6 +14,7 @@ import org.asynchttpclient.filter.ThrottleRequestFilter;
 import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.objects.Chat;
@@ -79,10 +80,14 @@ public class YtDownloadClient {
                 end += Math.min(start + chunkSize - 1, dataSize.toBytes());
                 log.info("Chunk bytes={}-{} downloading... ", start, end);
 
+                HttpHeaders headers = Utils.newHttpHeaders();
+                if (start < end) {
+                    headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
+                }
+
                 client.prepareGet(url)
                         .setRangeOffset(file.length())
                         .setHeaders(Utils.newHttpHeaders())
-                        .setHeader(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end)
                         .execute(downloaderAsyncHandler).get();
                 start += chunkSize + 1;
             }
