@@ -50,7 +50,6 @@ public class YtDownloadClient {
 
     // TODO вынести
     private String url;
-    private String fileName;
     private Long fileSize;
     private Chat chat;
 
@@ -85,10 +84,9 @@ public class YtDownloadClient {
         }
     }
 
-    public void realDownload(int retries, String url, String fileName, Long fileSize) throws Exception {
+    public void realDownload(String url, String fileName, Long fileSize) throws Exception {
         log.info("Скачивание url: {}", url);
         this.url = url;
-        this.fileName = fileName;
         this.fileSize = fileSize;
 
         DataSize dataSize = DataSize.ofBytes(fileSize);

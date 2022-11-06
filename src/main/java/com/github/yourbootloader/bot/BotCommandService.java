@@ -18,6 +18,6 @@ public class BotCommandService {
     @SneakyThrows
     public void download(Chat chat, String url, String filename, Long filesize) {
         ytDownloadClient.setChat(chat);
-        ytDownloadClient.realDownload(3, url, filename, filesize);
+        ytDownloadClient.realDownload(url, filename, filesize);
     }
 }
