@@ -15,6 +15,7 @@ import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.objects.Chat;
@@ -85,6 +86,7 @@ public class YtDownloadClient {
         }
     }
 
+    @Async
     public void realDownload(String url, String fileName, Long fileSize) throws Exception {
         log.info("Скачивание url: {}", url);
         this.url = url;
