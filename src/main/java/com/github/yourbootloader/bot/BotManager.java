@@ -68,7 +68,8 @@ public class BotManager {
             log.info("Download " + downloadedContent + " Kb of " + contentSize + " Kb [" + percent + "%]");
 
             String text = "Скачано " + downloadedContent + " Kb из " + contentSize + " Kb [" + percent + "%]\n" +
-                    "Chunk size: " + event.getBlockSize() + " bytes";
+                    "Chunk size: " + event.getBlockSize() + " bytes\n" +
+                    "Delay: " + event.getDelay() + " (ms)";
             EditMessageText message = new EditMessageText(text);
             message.setChatId(chatId.toString());
             message.setMessageId(messageId);

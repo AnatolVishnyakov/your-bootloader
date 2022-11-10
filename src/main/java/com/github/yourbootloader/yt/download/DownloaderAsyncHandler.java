@@ -33,6 +33,7 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     private final UUID downloadId;
     private ApplicationEventPublisher publisher;
     private DataSize contentSize;
+    private long prevReceiveTime = System.currentTimeMillis();
 
     public DownloaderAsyncHandler(Chat chat, File originalFile) throws IOException {
         this.chat = chat;
@@ -56,7 +57,10 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     @Override
     public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
         State state = super.onBodyPartReceived(bodyPart);
-        publisher.publishEvent(new ProgressIndicatorEvent(chat, contentSize, originalFile.length(), bodyPart.getBodyPartBytes().length, downloadId));
+        long currentCallTime = System.currentTimeMillis();
+        publisher.publishEvent(new ProgressIndicatorEvent(chat, contentSize, originalFile.length(),
+                bodyPart.getBodyPartBytes().length, downloadId, currentCallTime - prevReceiveTime));
+        prevReceiveTime = currentCallTime;
         return state;
     }
 

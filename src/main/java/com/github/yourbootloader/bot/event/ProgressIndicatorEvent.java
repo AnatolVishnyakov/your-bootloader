@@ -18,4 +18,7 @@ public class ProgressIndicatorEvent {
     int blockSize;
 
     UUID downloadId;
+
+    long delay;
+
 }
