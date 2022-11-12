@@ -99,14 +99,14 @@ public class YtDownloadClient {
 
         int start = 0;
         int end = 0;
+        int index = 1;
 
         int chunkSizeDefault = 10_485_760;
-        File file = tempFileGenerator.create(fileName + "." + dataSize.toBytes());
-        start = (int) file.length() == 0 ? 0 : (int) file.length();
-
         while (start < fileSize) {
+            File file = tempFileGenerator.create(fileName + "." + (index++) + "." + dataSize.toBytes());
             int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
 
+            start = (int) file.length() == 0 ? 0 : (int) file.length();
             end = (int) Math.min(start + chunkSize - 1, dataSize.toBytes() - 1);
             log.info("Chunk bytes={}-{} downloading... ", start, end);
 
