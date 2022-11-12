@@ -71,7 +71,7 @@ public class YtDownloadClient {
             }
 
             client.prepareGet(url)
-//                    .setRangeOffset(file.length())
+                    .setRangeOffset(file.length())
                     .setHeaders(headers)
                     .execute(downloaderAsyncHandler)
                     .get();
@@ -110,11 +110,11 @@ public class YtDownloadClient {
             end = (int) Math.min(start + chunkSize - 1, dataSize.toBytes() - 1);
             log.info("Chunk bytes={}-{} downloading... ", start, end);
 
-            dataSize = DataSize.ofBytes(end);
             establishConnection();
             download(start, end, dataSize, file);
 
             start += chunkSize + 1;
+            dataSize = DataSize.ofBytes(end);
         }
         log.info("Download finished...");
     }
