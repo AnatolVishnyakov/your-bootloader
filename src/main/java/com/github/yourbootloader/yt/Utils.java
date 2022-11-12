@@ -1594,6 +1594,10 @@ public class Utils {
         HEADERS.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         HEADERS.add("Accept-Encoding", "gzip, deflate");
         HEADERS.add("Accept-Language", "en-us,en;q=0.5");
+        HEADERS.set("Vary", "Origin");
+        HEADERS.set("Cross-Origin-Resource-Policy", "cross-origin");
+        HEADERS.set("X-Content-Type-Options", "nosniff");
+        HEADERS.set("Youtubedl-no-compression", "True ");
     }
 
     public static String randomChromeVersion() {
