@@ -58,14 +58,13 @@ public class YtDownloadClient {
     private void establishConnection() {
     }
 
-    private void download(int start, int end, DataSize dataSize, File file) throws Exception {
+    private void download(int start, int end, DataSize dataSize, File file, HttpHeaders headers) throws Exception {
         DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
         downloaderAsyncHandler.setApplicationEventPublisher(publisher);
         downloaderAsyncHandler.setContentSize(dataSize);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
-            HttpHeaders headers = Utils.newHttpHeaders();
             if (start < end) {
                 headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
             }
@@ -101,6 +100,7 @@ public class YtDownloadClient {
         int start = (int) file.length() == 0 ? 0 : (int) file.length();
         int end = 0;
 
+        HttpHeaders headers = Utils.newHttpHeaders();
         int chunkSizeDefault = 10_485_760;
         while (start < fileSize) {
             int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
@@ -108,7 +108,7 @@ public class YtDownloadClient {
             log.info("Chunk bytes={}-{} downloading... ", start, end);
 
             establishConnection();
-            download(start, end, dataSize, file);
+            download(start, end, dataSize, file, headers);
 
             start += chunkSize + 1;
         }
