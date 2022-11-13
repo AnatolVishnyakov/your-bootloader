@@ -114,7 +114,6 @@ public class YtDownloadClient {
             download(start, end, dataSize, file);
 
             start += chunkSize + 1;
-            dataSize = DataSize.ofBytes(end);
         }
         log.info("Download finished...");
     }
