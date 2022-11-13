@@ -103,7 +103,7 @@ public class YtDownloadClient {
 
         int chunkSizeDefault = 10_485_760;
         while (start < fileSize) {
-            File file = tempFileGenerator.create(fileName + "." + (index++) + "." + dataSize.toBytes());
+            File file = tempFileGenerator.create(fileName + "." + index + "." + dataSize.toBytes());
             int chunkSize = ThreadLocalRandom.current().nextInt((int) (chunkSizeDefault * 0.95), chunkSizeDefault);
 
             start = (int) file.length() == 0 ? 0 : (int) file.length();
