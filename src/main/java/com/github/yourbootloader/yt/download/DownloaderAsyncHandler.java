@@ -9,14 +9,12 @@ import org.asynchttpclient.Response;
 import org.asynchttpclient.handler.resumable.ResumableAsyncHandler;
 import org.asynchttpclient.handler.resumable.ResumableRandomAccessFileListener;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.util.UUID;
 
 /**
@@ -25,7 +23,6 @@ import java.util.UUID;
  * загрузка была прервана.
  */
 @Slf4j
-@Retryable
 class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     private final File originalFile;
@@ -35,19 +32,14 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     private DataSize contentSize;
     private long prevReceiveTime = System.currentTimeMillis();
 
-    public DownloaderAsyncHandler(Chat chat, File originalFile) throws IOException {
+    public DownloaderAsyncHandler(Chat chat, File originalFile) throws FileNotFoundException {
         this.chat = chat;
         this.originalFile = originalFile;
         this.downloadId = UUID.randomUUID();
 
-        RandomAccessFile randomAccessFile = new RandomAccessFile(originalFile, "rw");
-        this.setResumableListener(new ResumableRandomAccessFileListener(randomAccessFile) {
-            @Override
-            public void onBytesReceived(ByteBuffer buffer) throws IOException {
-                randomAccessFile.seek(randomAccessFile.length());
-                randomAccessFile.write(buffer.array());
-            }
-        });
+        ResumableRandomAccessFileListener listener = new ResumableRandomAccessFileListener(
+                new RandomAccessFile(originalFile, "rw"));
+        this.setResumableListener(listener);
     }
 
     public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
