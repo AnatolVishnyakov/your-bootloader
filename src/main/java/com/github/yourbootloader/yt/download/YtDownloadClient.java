@@ -2,6 +2,8 @@ package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.config.YDProperties;
 import com.github.yourbootloader.yt.Utils;
+import com.github.yourbootloader.yt.download.v2.ProgressListener;
+import com.github.yourbootloader.yt.download.v2.YtDownloadAsyncHandler;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -59,9 +61,13 @@ public class YtDownloadClient {
     }
 
     private void download(int start, int end, DataSize dataSize, File file, HttpHeaders headers) throws Exception {
-        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
-        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
-        downloaderAsyncHandler.setContentSize(dataSize);
+//        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
+//        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
+//        downloaderAsyncHandler.setContentSize(dataSize);
+        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
+        ytDownloadAsyncHandler.setFile(file);
+        ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
+                publisher, chat, dataSize, file));
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
@@ -70,18 +76,11 @@ public class YtDownloadClient {
             }
 
             client.prepareGet(url)
-                    .setRangeOffset(file.length())
+//                    .setRangeOffset(file.length())
                     .setHeaders(headers)
-                    .execute(downloaderAsyncHandler)
+//                    .execute(downloaderAsyncHandler)
+                    .execute(ytDownloadAsyncHandler)
                     .get();
-        }
-    }
-
-    private void validate(File file) {
-        if (DataSize.ofBytes(fileSize).toMegabytes() > ydProperties.getMaxFileSize() ||
-                DataSize.ofBytes(file.length()).toMegabytes() > ydProperties.getMaxFileSize() ||
-                DataSize.ofBytes(fileSize - file.length() + file.length()).toMegabytes() > ydProperties.getMaxFileSize()) {
-            throw new RuntimeException("Лимит на скачивание файла превысил " + ydProperties.getMaxFileSize() + " Mb.");
         }
     }
 
@@ -94,8 +93,6 @@ public class YtDownloadClient {
         DataSize dataSize = DataSize.ofBytes(fileSize);
         log.info("Размер скачиваемого содержимого: {} Mb ({} Kb)", dataSize.toMegabytes(), dataSize.toKilobytes());
         File file = tempFileGenerator.create(fileName + "." + dataSize.toBytes());
-
-        validate(file);
 
         int start = (int) file.length() == 0 ? 0 : (int) file.length();
         int end = 0;
