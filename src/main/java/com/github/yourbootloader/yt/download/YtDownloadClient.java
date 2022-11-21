@@ -53,15 +53,12 @@ public class YtDownloadClient {
 
     private final TempFileGenerator tempFileGenerator;
     private final ApplicationEventPublisher publisher;
-
-    // TODO вынести
-    private String url;
     private Chat chat;
 
     private void establishConnection() {
     }
 
-    private void download(int start, int end, DataSize dataSize, File file, HttpHeaders headers) throws Exception {
+    private void download(String url, DataSize dataSize, File file, HttpHeaders headers) throws Exception {
         YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
         ytDownloadAsyncHandler.setFile(file);
         ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
@@ -69,10 +66,6 @@ public class YtDownloadClient {
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
-            if (start < end) {
-                headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
-            }
-
             client.prepareGet(url)
                     .setRangeOffset(file.length())
                     .setHeaders(headers)
@@ -82,24 +75,27 @@ public class YtDownloadClient {
     }
 
     @Async
-    public void realDownload(String url, String fileName, Long fileSize) throws Exception {
+    public void realDownload(String url, String fileName, Long contentSize) throws Exception {
         log.info("Downloading is start. Yt url: {}", url);
-        this.url = url;
 
-        DataSize dataSize = DataSize.ofBytes(fileSize);
+        DataSize dataSize = DataSize.ofBytes(contentSize);
         log.info("Size content: {} Mb ({} Kb)", dataSize.toMegabytes(), dataSize.toKilobytes());
         File file = tempFileGenerator.create(fileName + "." + dataSize.toBytes());
 
         int start = (int) file.length() == 0 ? 0 : (int) file.length();
 
         HttpHeaders headers = Utils.newHttpHeaders();
-        while (start < fileSize) {
+        while (start < contentSize) {
             int chunkSize = ThreadLocalRandom.current().nextInt((int) (CHUNK_SIZE_DEFAULT * 0.95), CHUNK_SIZE_DEFAULT);
             int end = (int) Math.min(start + chunkSize - 1, dataSize.toBytes() - 1);
             log.info("Range {}-{} downloading... ", start, end);
 
+            if (start < end) {
+                headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
+            }
+
             establishConnection();
-            download(start, end, dataSize, file, headers);
+            download(url, dataSize, file, headers);
 
             start += chunkSize + 1;
         }
