@@ -37,8 +37,9 @@ public class YtDownloadClient {
     private static final int CHUNK_SIZE_DEFAULT = 10_485_760;
 
     private static final DefaultAsyncHttpClientConfig ASYNC_HTTP_CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
-            .setReadTimeout(6_000_000)
-            .setConnectTimeout(10_000_000)
+            .setReadTimeout(100_000_000)
+            .setRequestTimeout(100_000_000)
+            .setConnectTimeout(100_000_000)
             .setThreadPoolName(YtDownloadClient.class.getSimpleName())
             .setHttpClientCodecMaxChunkSize(8_192 * 3)
             .setChunkedFileChunkSize(8_192 * 3)
@@ -58,7 +59,7 @@ public class YtDownloadClient {
     private void establishConnection() {
     }
 
-    private void download(String url, DataSize dataSize, File file, HttpHeaders headers) throws Exception {
+    private void download(String url, DataSize dataSize, long rangeOffset, File file, HttpHeaders headers) throws Exception {
         YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
         ytDownloadAsyncHandler.setFile(file);
         ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
@@ -67,7 +68,7 @@ public class YtDownloadClient {
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
             client.prepareGet(url)
-                    .setRangeOffset(file.length())
+                    .setRangeOffset(rangeOffset)
                     .setHeaders(headers)
                     .execute(ytDownloadAsyncHandler)
                     .get();
@@ -95,7 +96,7 @@ public class YtDownloadClient {
             }
 
             establishConnection();
-            download(url, dataSize, file, headers);
+            download(url, dataSize, start, file, headers);
 
             start += chunkSize + 1;
         }
