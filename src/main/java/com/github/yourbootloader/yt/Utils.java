@@ -8,7 +8,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @UtilityClass
 public class Utils {
 
-    private static final String[] CHROME_VERSIONS = new String[]{
+    public static final String[] CHROME_VERSIONS = new String[]{
             "74.0.3729.129",
             "76.0.3780.3",
             "76.0.3780.2",
