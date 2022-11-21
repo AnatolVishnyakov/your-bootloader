@@ -35,7 +35,6 @@ public class YtDownloadClient {
             .setRequestTimeout(DEFAULT_TIMEOUT)
             .setReadTimeout(DEFAULT_TIMEOUT)
             .setConnectTimeout(DEFAULT_TIMEOUT)
-            .setMaxRequestRetry(3)
             .setThreadPoolName(YtDownloadClient.class.getSimpleName())
             .setHttpClientCodecMaxChunkSize(8_192 * 3)
             .setChunkedFileChunkSize(8_192 * 3)
@@ -54,16 +53,12 @@ public class YtDownloadClient {
 
     // TODO вынести
     private String url;
-    private Long fileSize;
     private Chat chat;
 
     private void establishConnection() {
     }
 
     private void download(int start, int end, DataSize dataSize, File file, HttpHeaders headers) throws Exception {
-//        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
-//        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
-//        downloaderAsyncHandler.setContentSize(dataSize);
         YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
         ytDownloadAsyncHandler.setFile(file);
         ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
@@ -76,9 +71,8 @@ public class YtDownloadClient {
             }
 
             client.prepareGet(url)
-//                    .setRangeOffset(file.length())
+                    .setRangeOffset(file.length())
                     .setHeaders(headers)
-//                    .execute(downloaderAsyncHandler)
                     .execute(ytDownloadAsyncHandler)
                     .get();
         }
@@ -86,9 +80,8 @@ public class YtDownloadClient {
 
     @Async
     public void realDownload(String url, String fileName, Long fileSize) throws Exception {
-        log.info("Скачивание url: {}", url);
+        log.info("Downloading is start. Yt url: {}", url);
         this.url = url;
-        this.fileSize = fileSize;
 
         DataSize dataSize = DataSize.ofBytes(fileSize);
         log.info("Размер скачиваемого содержимого: {} Mb ({} Kb)", dataSize.toMegabytes(), dataSize.toKilobytes());
