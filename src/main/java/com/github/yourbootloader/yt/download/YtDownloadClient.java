@@ -1,8 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.yt.Utils;
-import com.github.yourbootloader.yt.download.v2.ProgressListener;
-import com.github.yourbootloader.yt.download.v2.YtDownloadAsyncHandler;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -22,6 +20,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.io.File;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Component
@@ -36,7 +35,7 @@ public class YtDownloadClient {
     private static final int CHUNK_SIZE_DEFAULT = 10_485_760;
 
     private static final DefaultAsyncHttpClientConfig ASYNC_HTTP_CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
-            .setReadTimeout(100_000_000)
+            .setReadTimeout(100_400)
             .setRequestTimeout(100_000_000)
             .setConnectTimeout(100_000_000)
             .setThreadPoolName(YtDownloadClient.class.getSimpleName())
@@ -46,7 +45,7 @@ public class YtDownloadClient {
             .addRequestFilter(new ThrottleRequestFilter(1_000))
             .setIoThreadsCount(10)
             .setKeepAlive(true)
-            .setSoKeepAlive(true)
+//            .setSoKeepAlive(true)
             .setTcpNoDelay(true)
             .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator())
             .build();
@@ -59,23 +58,27 @@ public class YtDownloadClient {
     }
 
     private void download(String url, DataSize dataSize, long rangeOffset, File file, HttpHeaders headers) throws Exception {
-        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
-        ytDownloadAsyncHandler.setFile(file);
-        ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
-                publisher, chat, dataSize, file));
+//        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
+//        ytDownloadAsyncHandler.setFile(file);
+//        ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
+//                publisher, chat, dataSize, file));
+        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
+        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
+        downloaderAsyncHandler.setContentSize(dataSize);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
             client.prepareGet(url)
-                    .setRangeOffset(rangeOffset)
+//                    .setRangeOffset(rangeOffset)
                     .setHeaders(headers)
-                    .execute(ytDownloadAsyncHandler)
+//                    .execute(ytDownloadAsyncHandler)
+                    .execute(downloaderAsyncHandler)
                     .get();
         }
     }
 
     @Async
-    public void realDownload(String url, String fileName, Long contentSize) throws Exception {
+    public void realDownload(String url, String fileName, Long contentSize) {
         log.info("Downloading is start. Yt url: {}", url);
 
         DataSize dataSize = DataSize.ofBytes(contentSize);
@@ -86,6 +89,7 @@ public class YtDownloadClient {
 
         HttpHeaders headers = Utils.newHttpHeaders();
         while (start < contentSize) {
+            log.info("Headers: {}", headers);
             int chunkSize = ThreadLocalRandom.current().nextInt((int) (CHUNK_SIZE_DEFAULT * 0.95), CHUNK_SIZE_DEFAULT);
             int end = (int) Math.min(start + chunkSize - 1, dataSize.toBytes() - 1);
             log.info("Range {}-{} downloading... ", start, end);
@@ -95,7 +99,15 @@ public class YtDownloadClient {
             }
 
             establishConnection();
-            download(url, dataSize, start, file, headers);
+            try {
+                download(url, dataSize, start, file, headers);
+            } catch (Exception exc) {
+                if (exc.getCause().getClass() != TimeoutException.class) {
+                    return;
+                }
+                log.error(exc.getMessage(), exc);
+                continue;
+            }
 
             start += chunkSize + 1;
         }

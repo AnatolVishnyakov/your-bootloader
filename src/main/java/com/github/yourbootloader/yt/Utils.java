@@ -1,5 +1,6 @@
 package com.github.yourbootloader.yt;
 
+import io.netty.handler.codec.http.HttpHeaderNames;
 import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpHeaders;
 
@@ -1590,11 +1591,13 @@ public class Utils {
     private static final HttpHeaders HEADERS = new HttpHeaders();
 
     static {
-        HEADERS.add("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-        HEADERS.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-        HEADERS.add("Accept-Encoding", "gzip, deflate");
-        HEADERS.add("Accept-Language", "en-us,en;q=0.5");
-        HEADERS.set("Vary", "Origin");
+        HEADERS.set(HttpHeaderNames.ACCEPT_CHARSET.toString(), "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+        HEADERS.set(HttpHeaderNames.CONTENT_TYPE.toString(), "audio/webm");
+        HEADERS.set(HttpHeaderNames.CACHE_CONTROL.toString(), "private, max-age=21299");
+        HEADERS.set(HttpHeaderNames.ACCEPT.toString(), "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+        HEADERS.set(HttpHeaderNames.ACCEPT_ENCODING.toString(), "gzip, deflate");
+        HEADERS.set(HttpHeaderNames.ACCEPT_LANGUAGE.toString(), "en-us,en;q=0.5");
+        HEADERS.set(HttpHeaderNames.VARY.toString(), "Origin");
         HEADERS.set("Cross-Origin-Resource-Policy", "cross-origin");
         HEADERS.set("X-Content-Type-Options", "nosniff");
         HEADERS.set("Youtubedl-no-compression", "True ");
@@ -1606,7 +1609,7 @@ public class Utils {
     }
 
     public static HttpHeaders newHttpHeaders() {
-        HEADERS.add("User-Agent", String.format(USER_AGENT_TPL, randomChromeVersion()));
+        HEADERS.set(HttpHeaderNames.USER_AGENT.toString(), String.format(USER_AGENT_TPL, randomChromeVersion()));
         return HEADERS;
     }
 }
