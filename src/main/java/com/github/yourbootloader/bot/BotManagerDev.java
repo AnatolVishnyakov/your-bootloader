@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class BotManagerDev {
 
     private final AtomicLong prevByteReceived = new AtomicLong();
-    private AtomicReference<Long> savePrevTime = new AtomicReference<>(System.currentTimeMillis());
+    private final AtomicReference<Long> savePrevTime = new AtomicReference<>(System.currentTimeMillis());
 
     @EventListener
     public void onProgressIndicatorEventDebug(ProgressIndicatorEvent event) {

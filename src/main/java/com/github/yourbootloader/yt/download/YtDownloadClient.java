@@ -1,6 +1,8 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.yt.Utils;
+import com.github.yourbootloader.yt.download.v2.ProgressListener;
+import com.github.yourbootloader.yt.download.v2.YtDownloadAsyncHandler;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -32,7 +34,7 @@ public class YtDownloadClient {
      * May be useful for bypassing bandwidth throttling
      * imposed by a webserver (experimental)
      */
-    private static final int CHUNK_SIZE_DEFAULT = 10_485_760;
+    private static final int CHUNK_SIZE_DEFAULT = ((int) DataSize.ofMegabytes(2).toBytes() / 2);//10_485_760;
 
     private static final DefaultAsyncHttpClientConfig ASYNC_HTTP_CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setReadTimeout(100_400)
@@ -58,21 +60,21 @@ public class YtDownloadClient {
     }
 
     private void download(String url, DataSize dataSize, long rangeOffset, File file, HttpHeaders headers) throws Exception {
-//        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
-//        ytDownloadAsyncHandler.setFile(file);
-//        ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
-//                publisher, chat, dataSize, file));
-        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
-        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
-        downloaderAsyncHandler.setContentSize(dataSize);
+        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
+        ytDownloadAsyncHandler.setFile(file);
+        ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
+                publisher, chat, dataSize, file));
+//        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
+//        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
+//        downloaderAsyncHandler.setContentSize(dataSize);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
             client.prepareGet(url)
-//                    .setRangeOffset(rangeOffset)
+                    .setRangeOffset(rangeOffset)
                     .setHeaders(headers)
-//                    .execute(ytDownloadAsyncHandler)
-                    .execute(downloaderAsyncHandler)
+                    .execute(ytDownloadAsyncHandler)
+//                    .execute(downloaderAsyncHandler)
                     .get();
         }
     }
@@ -86,12 +88,13 @@ public class YtDownloadClient {
         File file = tempFileGenerator.create(fileName + "." + dataSize.toBytes());
 
         int start = (int) file.length() == 0 ? 0 : (int) file.length();
+        int end;
 
         HttpHeaders headers = Utils.newHttpHeaders();
         while (start < contentSize) {
             log.info("Headers: {}", headers);
             int chunkSize = ThreadLocalRandom.current().nextInt((int) (CHUNK_SIZE_DEFAULT * 0.95), CHUNK_SIZE_DEFAULT);
-            int end = (int) Math.min(start + chunkSize - 1, dataSize.toBytes() - 1);
+            end = (int) Math.min(start + chunkSize - 1, dataSize.toBytes() - 1);
             log.info("Range {}-{} downloading... ", start, end);
 
             if (start < end) {
