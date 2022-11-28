@@ -1,8 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.yt.Utils;
-import com.github.yourbootloader.yt.download.v2.ProgressListener;
-import com.github.yourbootloader.yt.download.v2.YtDownloadAsyncHandler;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -34,7 +32,7 @@ public class YtDownloadClient {
      * May be useful for bypassing bandwidth throttling
      * imposed by a webserver (experimental)
      */
-    private static final int CHUNK_SIZE_DEFAULT = ((int) DataSize.ofMegabytes(2).toBytes() / 2);//10_485_760;
+    private static final int CHUNK_SIZE_DEFAULT = 10_485_760;
 
     private static final DefaultAsyncHttpClientConfig ASYNC_HTTP_CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setReadTimeout(100_400)
