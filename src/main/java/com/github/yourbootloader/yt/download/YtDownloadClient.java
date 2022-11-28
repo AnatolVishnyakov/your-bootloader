@@ -60,21 +60,21 @@ public class YtDownloadClient {
     }
 
     private void download(String url, DataSize dataSize, long rangeOffset, File file, HttpHeaders headers) throws Exception {
-        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
-        ytDownloadAsyncHandler.setFile(file);
-        ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
-                publisher, chat, dataSize, file));
-//        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
-//        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
-//        downloaderAsyncHandler.setContentSize(dataSize);
+//        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
+//        ytDownloadAsyncHandler.setFile(file);
+//        ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
+//                publisher, chat, dataSize, file));
+        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
+        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
+        downloaderAsyncHandler.setContentSize(dataSize);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
             client.prepareGet(url)
                     .setRangeOffset(rangeOffset)
                     .setHeaders(headers)
-                    .execute(ytDownloadAsyncHandler)
-//                    .execute(downloaderAsyncHandler)
+//                    .execute(ytDownloadAsyncHandler)
+                    .execute(downloaderAsyncHandler)
                     .get();
         }
     }
