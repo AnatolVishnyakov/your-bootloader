@@ -32,6 +32,8 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
     private DataSize contentSize;
     private long prevReceiveTime = System.currentTimeMillis();
 
+    private boolean isSent = false;
+
     public DownloaderAsyncHandler(Chat chat, File originalFile) throws FileNotFoundException {
         this.chat = chat;
         this.originalFile = originalFile;
@@ -53,6 +55,11 @@ class DownloaderAsyncHandler extends ResumableAsyncHandler {
         publisher.publishEvent(new ProgressIndicatorEvent(chat, contentSize, originalFile.length(),
                 bodyPart.getBodyPartBytes().length, downloadId, currentCallTime - prevReceiveTime));
         prevReceiveTime = currentCallTime;
+        // TODO костыль
+        if (DataSize.ofBytes(originalFile.length()).toMegabytes() > 99 && !isSent) {
+            publisher.publishEvent(new FinishDownloadEvent(chat, downloadId, originalFile));
+            isSent = true;
+        }
         return state;
     }
 
