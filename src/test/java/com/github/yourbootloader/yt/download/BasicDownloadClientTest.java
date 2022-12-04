@@ -32,16 +32,17 @@ public class BasicDownloadClientTest {
 
     private static final int CHUNK_SIZE = 1024;
     private static final int SIZE = 1024 * 10;
+    private static final byte[] content = new byte[SIZE];
+    static {
+        Arrays.fill(content, (byte) 1);
+    }
 
     private ClientAndServer mockServer;
-    private final byte[] content = new byte[SIZE];
     private final int port = 1090;
 
     @BeforeEach
     @SneakyThrows
     void startMockServer() {
-        Arrays.fill(content, (byte) 1);
-
         Configuration configuration = new Configuration();
         mockServer = startClientAndServer(configuration, port);
         mockServer.when(
