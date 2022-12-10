@@ -8,8 +8,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 @Slf4j
 @Component
 public class StartCommand implements Command {
-    private static final String START = "/start";
-
     @Override
     public boolean canHandle(Update message) {
         return message.hasMessage() &&
