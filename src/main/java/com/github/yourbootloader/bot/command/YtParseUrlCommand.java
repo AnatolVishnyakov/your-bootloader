@@ -50,12 +50,6 @@ public class YtParseUrlCommand implements Command {
         Message message = update.getMessage();
         String url = message.getText();
         log.info("Youtube url: {}", url);
-//                 .filter(format -> format.get("ext") != null && format.get("ext").equals("webm"))
-//                .min(Comparator.comparing(format -> ((Long) format.get("filesize"))))
-//                .orElseThrow(() -> {
-//                    sendNotification(bot, chat.getId(), "Не удалось получить аудио формат");
-//                    return new RuntimeException("Not found audio format!");
-//                });
         YtVideoInfo info = botQueryService.getVideoInfo(url);
         List<Map<String, Object>> formats = StreamEx.of(info.getFormats())
                 .filter(format -> format.get("ext") != null && format.get("format_note").equals("tiny"))
