@@ -2,7 +2,6 @@ package com.github.yourbootloader.bot.command;
 
 import com.github.yourbootloader.bot.Bot;
 import com.github.yourbootloader.bot.BotQueryService;
-import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
 import com.github.yourbootloader.utils.UserContextHolder;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
 public class YtParseUrlCommand implements Command {
 
     private final BotQueryService botQueryService;
-    private final CommandCache commandCache;
 
     @Override
     public boolean canHandle(Update message) {
