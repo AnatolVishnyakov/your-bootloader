@@ -38,9 +38,13 @@ public class YtDownloadCommand implements Command {
         String callbackFormatId = update.getCallbackQuery().getData();
         List<VideoInfoDto> videosInfo = UserContextHolder.getContext().getVideoInfo();
         VideoInfoDto videoInfo = videosInfo.stream()
+                .peek(v -> log.info("Format: {}", v.getFormatId()))
                 .filter(v -> v.getFormatId().equals(Integer.parseInt(callbackFormatId)))
                 .findAny()
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(() -> {
+                    sendNotification(bot, chat.getId(), "Not found format tag.");
+                    return new RuntimeException();
+                });
         int formatId = videoInfo.getFormatId();
         long filesize = videoInfo.getFilesize();
         List<VideoInfoDto> collect = videosInfo.stream()
