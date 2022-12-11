@@ -64,7 +64,7 @@ public class YtParseUrlCommand implements Command {
 
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chat.getId().toString());
-        sendMessage.setText("<->");
+        sendMessage.setText("Select format:");
 
         List<VideoInfoDto> videosInfo = new ArrayList<>();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
