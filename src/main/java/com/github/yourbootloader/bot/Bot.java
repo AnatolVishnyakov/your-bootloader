@@ -1,9 +1,8 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.bot.command.Command;
-import com.github.yourbootloader.bot.exception.CommandNotFoundException;
+import com.github.yourbootloader.bot.command.UndefinedCommand;
 import com.github.yourbootloader.config.BotConfig;
-import com.github.yourbootloader.utils.StreamCollectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.util.streamex.StreamEx;
@@ -27,7 +26,8 @@ public class Bot extends TelegramLongPollingBot {
         log.info("onUpdateReceived: {}", update.getMessage());
         StreamEx.of(commands)
                 .filter(command -> command.canHandle(update))
-                .collect(StreamCollectors.atMostOneRow(() -> new CommandNotFoundException(update.getMessage().getText())))
+                .findAny()
+                .orElseGet(UndefinedCommand::new)
                 .handle(this, update);
     }
 
