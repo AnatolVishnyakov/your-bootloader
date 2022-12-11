@@ -9,6 +9,7 @@ import com.github.yourbootloader.yt.extractor.YtVideoInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.util.streamex.StreamEx;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
@@ -84,6 +85,18 @@ public class YtParseUrlCommand implements Command {
                 filesizeInString = filesize.toKilobytes() + " Kb";
             }
             inlineKeyboardButton.setText(String.format("audio [%s / %s / %s]", format.get("format_note"), format.get("ext"), filesizeInString));
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("format_id", format.get("format_id"));
+            jsonObject.put("filesize", format.get("filesize"));
+            log.debug("Json: {}", jsonObject);
+            videosInfo.add(
+                    new VideoInfoDto(
+                            ((Integer) format.get("format_id")),
+                            info.getTitle(),
+                            ((Long) format.get("filesize")),
+                            ((String) format.get("url"))
+                    )
+            );
             log.info("format id: {}, video url: {}", format.get("format_id"), format.get("url"));
 
             inlineKeyboardButton.setCallbackData(String.valueOf(format.get("format_id")));
