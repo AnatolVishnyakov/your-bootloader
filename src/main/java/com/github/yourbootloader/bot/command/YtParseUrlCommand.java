@@ -4,6 +4,7 @@ import com.github.yourbootloader.bot.Bot;
 import com.github.yourbootloader.bot.BotQueryService;
 import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
+import com.github.yourbootloader.utils.UserContextHolder;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
 import com.github.yourbootloader.yt.extractor.YtVideoInfo;
 import lombok.RequiredArgsConstructor;
@@ -101,11 +102,11 @@ public class YtParseUrlCommand implements Command {
             );
             log.info("format id: {}, video url: {}", format.get("format_id"), format.get("url"));
 
-            inlineKeyboardButton.setCallbackData(jsonObject.toString());
+            inlineKeyboardButton.setCallbackData(String.valueOf(format.get("format_id")));
             rowInline.add(inlineKeyboardButton);
         }
 
-        commandCache.save(chat.getId(), videosInfo);
+        UserContextHolder.setContext(chat, videosInfo);
         markupInline.setKeyboard(rowsInline);
         sendMessage.setReplyMarkup(markupInline);
 

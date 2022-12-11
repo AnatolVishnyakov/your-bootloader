@@ -2,13 +2,12 @@ package com.github.yourbootloader.bot.command;
 
 import com.github.yourbootloader.bot.Bot;
 import com.github.yourbootloader.bot.BotCommandService;
-import com.github.yourbootloader.bot.command.cache.CommandCache;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
 import com.github.yourbootloader.bot.event.RemoveMessageEvent;
+import com.github.yourbootloader.utils.UserContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 public class YtDownloadCommand implements Command {
 
     private final BotCommandService botCommandService;
-    private final CommandCache commandCache;
     private final ApplicationEventPublisher publisher;
 
     @Override
@@ -39,11 +37,14 @@ public class YtDownloadCommand implements Command {
         log.info("Download: {}", update.getCallbackQuery().getData());
         Message message = update.getCallbackQuery().getMessage();
         Chat chat = message.getChat();
-        JSONObject callbackData = new JSONObject(update.getCallbackQuery().getData());
-        log.debug("Callback Json: {}", callbackData);
-        List<VideoInfoDto> videosInfo = commandCache.get(chat.getId());
-        int formatId = callbackData.optInt("format_id");
-        long filesize = callbackData.optLong("filesize");
+        String callbackFormatId = update.getCallbackQuery().getData();
+        List<VideoInfoDto> videosInfo = UserContextHolder.getContext().getVideoInfo();
+        VideoInfoDto videoInfo = videosInfo.stream()
+                .filter(v -> v.getFormatId().equals(Integer.parseInt(callbackFormatId)))
+                .findAny()
+                .orElseThrow(RuntimeException::new);
+        int formatId = videoInfo.getFormatId();
+        long filesize = videoInfo.getFilesize();
         List<VideoInfoDto> collect = videosInfo.stream()
                 .filter(v -> v.getFormatId().equals(formatId))
                 .collect(Collectors.toList());
@@ -59,7 +60,6 @@ public class YtDownloadCommand implements Command {
             sendNotification(bot, chat.getId(), "Повторите отправку url!");
             return;
         }
-        commandCache.delete(chat.getId());
         publisher.publishEvent(new RemoveMessageEvent(chat.getId().toString(), message.getMessageId()));
         botCommandService.download(chat, url, title, filesize);
     }
