@@ -7,7 +7,6 @@ import com.github.yourbootloader.utils.UserContextHolder;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
 import com.github.yourbootloader.yt.extractor.YtVideoInfo;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import one.util.streamex.StreamEx;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,11 +100,5 @@ public class YtParseUrlCommand implements Command {
             log.error("Unexpected error", e);
             sendNotification(bot, update.getMessage().getChatId(), "Повторите отправку url!");
         }
-    }
-
-    @SneakyThrows
-    private void sendNotification(Bot bot, Long chatId, String text) {
-        SendMessage message = new SendMessage(chatId.toString(), text);
-        bot.execute(message);
     }
 }

@@ -6,12 +6,10 @@ import com.github.yourbootloader.bot.dto.VideoInfoDto;
 import com.github.yourbootloader.bot.event.RemoveMessageEvent;
 import com.github.yourbootloader.utils.UserContextHolder;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -62,11 +60,5 @@ public class YtDownloadCommand implements Command {
         }
         publisher.publishEvent(new RemoveMessageEvent(chat.getId().toString(), message.getMessageId()));
         botCommandService.download(chat, url, title, filesize);
-    }
-
-    @SneakyThrows
-    private void sendNotification(Bot bot, Long chatId, String text) {
-        SendMessage message = new SendMessage(chatId.toString(), text);
-        bot.execute(message);
     }
 }
