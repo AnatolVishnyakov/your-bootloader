@@ -75,21 +75,23 @@ public class YtDownloadClient {
     }
 
     @Async
-    public void realDownload(String url, String fileName, Long contentSize) {
+    public void realDownload(String url, String fileName, Long contentLength) {
         log.info("Downloading is start. Yt url: {}", url);
+        log.info("Content-Length: {} Mb ({} Kb)",
+                DataSize.ofBytes(contentLength).toMegabytes(),
+                DataSize.ofBytes(contentLength).toKilobytes()
+        );
 
-        DataSize dataSize = DataSize.ofBytes(contentSize);
-        log.info("Size content: {} Mb ({} Kb)", dataSize.toMegabytes(), dataSize.toKilobytes());
-        File file = tempFileGenerator.create(fileName + "." + dataSize.toBytes());
+        File file = tempFileGenerator.create(fileName + "." + contentLength);
 
         int start = (int) file.length() == 0 ? 0 : (int) file.length();
         int end;
 
         HttpHeaders headers = Utils.newHttpHeaders();
-        while (start < contentSize) {
+        while (start < contentLength) {
             log.info("Headers: {}", headers);
             int chunkSize = ThreadLocalRandom.current().nextInt((int) (CHUNK_SIZE_DEFAULT * 0.95), CHUNK_SIZE_DEFAULT);
-            end = (int) Math.min(start + chunkSize, dataSize.toBytes() - 1);
+            end = (int) Math.min(start + chunkSize, contentLength - 1);
             log.info("Range {}-{} downloading... ", start, end);
 
             if (start < end) {
@@ -98,7 +100,7 @@ public class YtDownloadClient {
 
             establishConnection();
             try {
-                download(url, dataSize, start, file, headers);
+                download(url, DataSize.ofBytes(contentLength), start, file, headers);
             } catch (Exception exc) {
                 if (exc.getCause().getClass() != TimeoutException.class) {
                     return;
