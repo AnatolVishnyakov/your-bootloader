@@ -16,6 +16,6 @@ public class StartCommand implements Command {
 
     @Override
     public void handle(Bot bot, Update message) {
-        log.info("Start command");
+        log.info("Start command: {}", message);
     }
 }
