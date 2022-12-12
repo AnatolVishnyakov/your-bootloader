@@ -47,7 +47,6 @@ public class YtDownloadClient {
             .addRequestFilter(new ThrottleRequestFilter(1_000))
             .setIoThreadsCount(10)
             .setKeepAlive(true)
-//            .setSoKeepAlive(true)
             .setTcpNoDelay(true)
             .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator())
             .build();
@@ -64,9 +63,6 @@ public class YtDownloadClient {
         ytDownloadAsyncHandler.setFile(file);
         ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
                 publisher, chat, dataSize, file));
-//        DownloaderAsyncHandler downloaderAsyncHandler = new DownloaderAsyncHandler(chat, file);
-//        downloaderAsyncHandler.setApplicationEventPublisher(publisher);
-//        downloaderAsyncHandler.setContentSize(dataSize);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
@@ -74,7 +70,6 @@ public class YtDownloadClient {
 //                    .setRangeOffset(rangeOffset)
                     .setHeaders(headers)
                     .execute(ytDownloadAsyncHandler)
-//                    .execute(downloaderAsyncHandler)
                     .get();
         }
     }
