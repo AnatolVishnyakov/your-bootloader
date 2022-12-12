@@ -3,6 +3,7 @@ package com.github.yourbootloader.yt.download.v2;
 import com.github.yourbootloader.bot.event.FailureDownloadEvent;
 import com.github.yourbootloader.bot.event.FinishDownloadEvent;
 import com.github.yourbootloader.bot.event.ProgressIndicatorEvent;
+import com.github.yourbootloader.bot.event.StartDownloadEvent;
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class ProgressListener implements TransferListener {
     @Override
     public void onRequestHeadersSent(HttpHeaders headers) {
         log.info("Headers sent: {}", headers);
+        publisher.publishEvent(new StartDownloadEvent(chat));
     }
 
     @Override
