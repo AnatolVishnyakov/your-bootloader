@@ -58,7 +58,7 @@ public class YtDownloadClient {
     private void establishConnection() {
     }
 
-    private void download(String url, DataSize dataSize, long rangeOffset, File file, HttpHeaders headers) throws Exception {
+    private void download(String url, DataSize dataSize, File file, HttpHeaders headers) throws Exception {
         YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
         ytDownloadAsyncHandler.setFile(file);
         ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
@@ -67,7 +67,6 @@ public class YtDownloadClient {
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
             client.prepareGet(url)
-//                    .setRangeOffset(rangeOffset)
                     .setHeaders(headers)
                     .execute(ytDownloadAsyncHandler)
                     .get();
@@ -100,7 +99,7 @@ public class YtDownloadClient {
 
             establishConnection();
             try {
-                download(url, DataSize.ofBytes(contentLength), start, file, headers);
+                download(url, DataSize.ofBytes(contentLength), file, headers);
             } catch (Exception exc) {
                 if (exc.getCause().getClass() != TimeoutException.class) {
                     return;
