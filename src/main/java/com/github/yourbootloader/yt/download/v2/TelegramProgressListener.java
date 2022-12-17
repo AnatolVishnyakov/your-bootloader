@@ -16,7 +16,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Slf4j
 @RequiredArgsConstructor
-public class DefaultTransferListener implements TransferListener {
+public class TelegramProgressListener implements TransferListener {
 
     private static final String UNEXPECTED_ERROR = "An unexpected error occurred!";
 

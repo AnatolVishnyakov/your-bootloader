@@ -1,11 +1,13 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.yt.Utils;
+import com.github.yourbootloader.yt.download.v2.DefaultProgressListener;
 import com.github.yourbootloader.yt.download.v2.YtDownloadAsyncHandler;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
@@ -50,7 +52,8 @@ public class YtDownloadClient {
             .build();
 
     private final TempFileGenerator tempFileGenerator;
-    private TransferListener listener;
+    @Setter
+    private TransferListener listener = new DefaultProgressListener();
 
     private void establishConnection() {
     }
@@ -70,8 +73,7 @@ public class YtDownloadClient {
     }
 
     @Async
-    public void realDownload(String url, String fileName, Long contentLength, TransferListener listener) {
-        this.listener = listener;
+    public void realDownload(String url, String fileName, Long contentLength) {
         log.info("Downloading is start. Yt url: {}", url);
         log.info("Content-Length: {} Mb ({} Kb)",
                 DataSize.ofBytes(contentLength).toMegabytes(),

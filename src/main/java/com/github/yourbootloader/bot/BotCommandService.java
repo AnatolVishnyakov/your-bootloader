@@ -1,7 +1,7 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.yt.download.YtDownloadClient;
-import com.github.yourbootloader.yt.download.v2.DefaultTransferListener;
+import com.github.yourbootloader.yt.download.v2.TelegramProgressListener;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ public class BotCommandService {
 
     @SneakyThrows
     public void download(Bot bot, Chat chat, String url, String filename, Long contentLength) {
-        DefaultTransferListener listener = new DefaultTransferListener(bot, chat, contentLength);
-        ytDownloadClient.realDownload(url, filename, contentLength, listener);
+        ytDownloadClient.realDownload(url, filename, contentLength);
+        ytDownloadClient.setListener(new TelegramProgressListener(bot, chat, contentLength));
     }
 }
