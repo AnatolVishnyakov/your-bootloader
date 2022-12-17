@@ -88,8 +88,15 @@ public class TelegramProgressListener implements TransferListener {
 
             try {
                 bot.execute(message);
-            } catch (TelegramApiException e) {
+            } catch (Throwable e) {
                 log.error(UNEXPECTED_ERROR, e);
+                if (e.getMessage().contains("message to edit not found")) {
+                    SendMessage msg = new SendMessage(String.valueOf(chat.getId()), msgText);
+                    try {
+                        messageId = bot.execute(msg).getMessageId();
+                    } catch (TelegramApiException ignored) {
+                    }
+                }
                 sendNotification(chat.getId(), e.getMessage());
             }
             senderHistory.put(chat, currentTimeMs);

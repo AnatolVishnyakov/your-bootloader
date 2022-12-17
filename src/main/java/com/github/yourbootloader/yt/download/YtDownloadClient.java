@@ -15,8 +15,8 @@ import org.asynchttpclient.Dsl;
 import org.asynchttpclient.filter.ThrottleRequestFilter;
 import org.asynchttpclient.handler.TransferListener;
 import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
+import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 
@@ -26,6 +26,7 @@ import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Component
+//@Scope("prototype")
 @RequiredArgsConstructor
 public class YtDownloadClient {
 
@@ -34,7 +35,7 @@ public class YtDownloadClient {
      * May be useful for bypassing bandwidth throttling
      * imposed by a webserver (experimental)
      */
-    private static final int CHUNK_SIZE_DEFAULT = 10_485_760;
+    private static final int CHUNK_SIZE_DEFAULT = 10_485_760 / 10;
 
     private static final DefaultAsyncHttpClientConfig ASYNC_HTTP_CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setReadTimeout(100_400)
@@ -70,7 +71,6 @@ public class YtDownloadClient {
         }
     }
 
-    @Async
     public void download(String url, String fileName, Long contentLength) {
         log.info("Downloading is start. Yt url: {}", url);
         log.info("Content-Length: {} Mb ({} Kb)",
