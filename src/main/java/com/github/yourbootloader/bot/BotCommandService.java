@@ -18,7 +18,7 @@ public class BotCommandService {
 
     @SneakyThrows
     public void download(Bot bot, Chat chat, String url, String filename, Long contentLength) {
-        ytDownloadClient.download(url, filename, contentLength);
         ytDownloadClient.setListener(new TelegramProgressListener(bot, chat, contentLength));
+        ytDownloadClient.download(url, filename, contentLength);
     }
 }
