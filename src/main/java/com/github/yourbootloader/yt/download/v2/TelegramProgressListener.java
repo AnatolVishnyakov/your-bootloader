@@ -79,7 +79,7 @@ public class TelegramProgressListener implements TransferListener {
         );
         log.info(msgText);
 
-        if (currentTimeMs - senderHistory.get(chat) > TimeUnit.MILLISECONDS.toSeconds(2_000)) {
+        if (Math.abs(currentTimeMs - senderHistory.get(chat)) > TimeUnit.MILLISECONDS.toSeconds(2_000)) {
             EditMessageText message = new EditMessageText(msgText);
             message.setChatId(chat.getId().toString());
             message.setMessageId(messageId);
