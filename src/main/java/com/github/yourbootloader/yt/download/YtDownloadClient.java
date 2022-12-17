@@ -32,7 +32,7 @@ public class YtDownloadClient {
      * May be useful for bypassing bandwidth throttling
      * imposed by a webserver (experimental)
      */
-    private static final int CHUNK_SIZE_DEFAULT = 10_485_760 / 10;
+    private static final int CHUNK_SIZE_DEFAULT = 10_485_760;
 
     private static final DefaultAsyncHttpClientConfig ASYNC_HTTP_CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setReadTimeout(100_400)
