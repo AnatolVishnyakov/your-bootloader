@@ -23,6 +23,7 @@ import java.util.UUID;
  * загрузка была прервана.
  */
 @Slf4j
+@Deprecated
 class DownloaderAsyncHandler extends ResumableAsyncHandler {
 
     private final File originalFile;

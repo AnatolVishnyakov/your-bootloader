@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt.download.v2;
+package com.github.yourbootloader.yt.download;
 
 import io.netty.handler.codec.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;

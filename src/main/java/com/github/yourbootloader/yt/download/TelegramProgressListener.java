@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt.download.v2;
+package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.bot.Bot;
 import io.netty.handler.codec.http.HttpHeaders;

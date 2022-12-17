@@ -1,8 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.yt.Utils;
-import com.github.yourbootloader.yt.download.v2.DefaultProgressListener;
-import com.github.yourbootloader.yt.download.v2.YtDownloadAsyncHandler;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -15,7 +13,6 @@ import org.asynchttpclient.Dsl;
 import org.asynchttpclient.filter.ThrottleRequestFilter;
 import org.asynchttpclient.handler.TransferListener;
 import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
-import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;

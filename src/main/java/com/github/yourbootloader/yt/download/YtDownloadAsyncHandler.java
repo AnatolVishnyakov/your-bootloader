@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt.download.v2;
+package com.github.yourbootloader.yt.download;
 
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.HttpResponseBodyPart;
