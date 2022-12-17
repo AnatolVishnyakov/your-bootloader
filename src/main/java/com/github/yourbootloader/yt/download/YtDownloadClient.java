@@ -58,7 +58,7 @@ public class YtDownloadClient {
     private void establishConnection() {
     }
 
-    private void download(String url, File file, HttpHeaders headers) throws Exception {
+    private void download0(String url, File file, HttpHeaders headers) throws Exception {
         YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
         ytDownloadAsyncHandler.setFile(file);
         ytDownloadAsyncHandler.addTransferListener(listener);
@@ -73,7 +73,7 @@ public class YtDownloadClient {
     }
 
     @Async
-    public void realDownload(String url, String fileName, Long contentLength) {
+    public void download(String url, String fileName, Long contentLength) {
         log.info("Downloading is start. Yt url: {}", url);
         log.info("Content-Length: {} Mb ({} Kb)",
                 DataSize.ofBytes(contentLength).toMegabytes(),
@@ -98,7 +98,7 @@ public class YtDownloadClient {
 
             establishConnection();
             try {
-                download(url, file, headers);
+                download0(url, file, headers);
             } catch (Exception exc) {
                 if (exc.getCause().getClass() != TimeoutException.class) {
                     return;
