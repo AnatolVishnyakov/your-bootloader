@@ -71,7 +71,7 @@ public class BasicDownloadClientTest {
         byte[] expectedContent = new byte[SIZE];
         try (AsyncHttpClient client = asyncHttpClient()) {
             TransferCompletionHandler tl = new TransferCompletionHandler();
-            tl.addTransferListener(new CustomTransferListener(expectedContent));
+//            tl.addTransferListener(new CustomTransferListener(expectedContent));
             client.prepareGet(ytUrl)
                     .setHeaders(Utils.newHttpHeaders())
                     .setHeader("Range", "bytes=0-" + content.length)
