@@ -1,6 +1,7 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.yt.download.YtDownloadClient;
+import com.github.yourbootloader.yt.download.v2.DefaultTransferListener;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +17,8 @@ public class BotCommandService {
     private final YtDownloadClient ytDownloadClient;
 
     @SneakyThrows
-    public void download(Chat chat, String url, String filename, Long filesize) {
-        ytDownloadClient.setChat(chat);
-        ytDownloadClient.realDownload(url, filename, filesize);
+    public void download(Bot bot, Chat chat, String url, String filename, Long contentLength) {
+        DefaultTransferListener listener = new DefaultTransferListener(bot, chat, contentLength);
+        ytDownloadClient.realDownload(url, filename, contentLength, listener);
     }
 }

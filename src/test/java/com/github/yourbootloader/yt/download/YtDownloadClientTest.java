@@ -170,6 +170,6 @@ class YtDownloadClientTest {
     @SneakyThrows
     void debugYtDownloadClientHandler() {
         String ytUrl = Files.readAllLines(resource.toPath()).get(0);
-        ytDownloadClient.realDownload(ytUrl, UUID.randomUUID() + ".mp3", DataSize.ofKilobytes(31_273).toBytes());
+//        ytDownloadClient.realDownload(ytUrl, UUID.randomUUID() + ".mp3", DataSize.ofKilobytes(31_273).toBytes());
     }
 }

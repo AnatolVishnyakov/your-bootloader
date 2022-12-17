@@ -1,7 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.yt.Utils;
-import com.github.yourbootloader.yt.download.v2.ProgressListener;
 import com.github.yourbootloader.yt.download.v2.YtDownloadAsyncHandler;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
@@ -12,13 +11,12 @@ import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
 import org.asynchttpclient.filter.ThrottleRequestFilter;
+import org.asynchttpclient.handler.TransferListener;
 import org.asynchttpclient.handler.resumable.ResumableIOExceptionFilter;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
-import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.io.File;
 import java.util.concurrent.ThreadLocalRandom;
@@ -52,17 +50,15 @@ public class YtDownloadClient {
             .build();
 
     private final TempFileGenerator tempFileGenerator;
-    private final ApplicationEventPublisher publisher;
-    private Chat chat;
+    private TransferListener listener;
 
     private void establishConnection() {
     }
 
-    private void download(String url, DataSize dataSize, File file, HttpHeaders headers) throws Exception {
+    private void download(String url, File file, HttpHeaders headers) throws Exception {
         YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
         ytDownloadAsyncHandler.setFile(file);
-        ytDownloadAsyncHandler.addTransferListener(new ProgressListener(
-                publisher, chat, dataSize, file));
+        ytDownloadAsyncHandler.addTransferListener(listener);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
@@ -74,7 +70,8 @@ public class YtDownloadClient {
     }
 
     @Async
-    public void realDownload(String url, String fileName, Long contentLength) {
+    public void realDownload(String url, String fileName, Long contentLength, TransferListener listener) {
+        this.listener = listener;
         log.info("Downloading is start. Yt url: {}", url);
         log.info("Content-Length: {} Mb ({} Kb)",
                 DataSize.ofBytes(contentLength).toMegabytes(),
@@ -99,7 +96,7 @@ public class YtDownloadClient {
 
             establishConnection();
             try {
-                download(url, DataSize.ofBytes(contentLength), file, headers);
+                download(url, file, headers);
             } catch (Exception exc) {
                 if (exc.getCause().getClass() != TimeoutException.class) {
                     return;
@@ -111,9 +108,5 @@ public class YtDownloadClient {
             start += chunkSize + 1;
         }
         log.info("Download finished...");
-    }
-
-    public void setChat(Chat chat) {
-        this.chat = chat;
     }
 }

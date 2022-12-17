@@ -63,6 +63,6 @@ public class YtDownloadCommand implements Command {
             return;
         }
         publisher.publishEvent(new RemoveMessageEvent(chat.getId().toString(), message.getMessageId()));
-        botCommandService.download(chat, url, title, filesize);
+        botCommandService.download(bot, chat, url, title, filesize);
     }
 }
