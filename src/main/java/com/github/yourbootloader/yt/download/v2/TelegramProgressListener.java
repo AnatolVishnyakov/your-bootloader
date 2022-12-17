@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 public class TelegramProgressListener implements TransferListener {
 
     private static final String UNEXPECTED_ERROR = "An unexpected error occurred!";
-    private static final Map<Chat, Long> LAST_SEND_NOTIFICATION = new ConcurrentHashMap<>();
+    private static final Map<Chat, Long> senderHistory = new ConcurrentHashMap<>();
 
     private final Bot bot;
     private final Chat chat;
@@ -39,7 +39,7 @@ public class TelegramProgressListener implements TransferListener {
         this.bot = bot;
         this.chat = chat;
         this.contentLength = contentLength;
-        LAST_SEND_NOTIFICATION.put(chat, System.currentTimeMillis());
+        senderHistory.put(chat, System.currentTimeMillis());
     }
 
     @Override
@@ -79,7 +79,7 @@ public class TelegramProgressListener implements TransferListener {
         );
         log.info(msgText);
 
-        if (currentTimeMs - LAST_SEND_NOTIFICATION.get(chat) > TimeUnit.MILLISECONDS.toSeconds(2_000)) {
+        if (currentTimeMs - senderHistory.get(chat) > TimeUnit.MILLISECONDS.toSeconds(2_000)) {
             EditMessageText message = new EditMessageText(msgText);
             message.setChatId(chat.getId().toString());
             message.setMessageId(messageId);
@@ -92,7 +92,7 @@ public class TelegramProgressListener implements TransferListener {
                 log.error(UNEXPECTED_ERROR, e);
                 sendNotification(chat.getId(), e.getMessage());
             }
-            LAST_SEND_NOTIFICATION.put(chat, currentTimeMs);
+            senderHistory.put(chat, currentTimeMs);
         }
         prevTimeMs = currentTimeMs;
     }
