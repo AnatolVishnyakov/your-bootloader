@@ -2,7 +2,6 @@ package com.github.yourbootloader.yt.download.v2;
 
 import com.github.yourbootloader.bot.Bot;
 import io.netty.handler.codec.http.HttpHeaders;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.handler.TransferListener;
@@ -14,11 +13,15 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
 @Slf4j
-@RequiredArgsConstructor
 public class TelegramProgressListener implements TransferListener {
 
     private static final String UNEXPECTED_ERROR = "An unexpected error occurred!";
+    private static final Map<Chat, Long> LAST_SEND_NOTIFICATION = new ConcurrentHashMap<>();
 
     private final Bot bot;
     private final Chat chat;
@@ -26,6 +29,13 @@ public class TelegramProgressListener implements TransferListener {
     private int messageId;
     private long downloadedBytes;
     private long prevTimeMs;
+
+    public TelegramProgressListener(Bot bot, Chat chat, long contentLength) {
+        this.bot = bot;
+        this.chat = chat;
+        this.contentLength = contentLength;
+        LAST_SEND_NOTIFICATION.put(chat, System.currentTimeMillis());
+    }
 
     @Override
     public void onRequestHeadersSent(HttpHeaders headers) {
@@ -51,6 +61,7 @@ public class TelegramProgressListener implements TransferListener {
     public void onBytesReceived(byte[] bytes) {
         long currentTimeMs = System.currentTimeMillis();
         downloadedBytes += bytes.length;
+        long delayBetweenReceivingBytes = currentTimeMs - prevTimeMs;
 
         int percent = (int) ((downloadedBytes * 100.0) / contentLength);
         String msgText = String.format(
@@ -59,21 +70,24 @@ public class TelegramProgressListener implements TransferListener {
                 DataSize.ofBytes(contentLength).toKilobytes(),
                 percent,
                 bytes.length,
-                currentTimeMs - prevTimeMs
+                delayBetweenReceivingBytes
         );
         log.info(msgText);
 
-        EditMessageText message = new EditMessageText(msgText);
-        message.setChatId(chat.getId().toString());
-        message.setMessageId(messageId);
-        message.setParseMode(ParseMode.HTML);
-        message.disableWebPagePreview();
+        if (currentTimeMs - LAST_SEND_NOTIFICATION.get(chat) > TimeUnit.MILLISECONDS.toSeconds(1_000)) {
+            EditMessageText message = new EditMessageText(msgText);
+            message.setChatId(chat.getId().toString());
+            message.setMessageId(messageId);
+            message.setParseMode(ParseMode.HTML);
+            message.disableWebPagePreview();
 
-        try {
-            bot.execute(message);
-        } catch (TelegramApiException e) {
-            log.error(UNEXPECTED_ERROR, e);
-            sendNotification(chat.getId(), e.getMessage());
+            try {
+                bot.execute(message);
+            } catch (TelegramApiException e) {
+                log.error(UNEXPECTED_ERROR, e);
+                sendNotification(chat.getId(), e.getMessage());
+            }
+            LAST_SEND_NOTIFICATION.put(chat, currentTimeMs);
         }
         prevTimeMs = currentTimeMs;
     }
