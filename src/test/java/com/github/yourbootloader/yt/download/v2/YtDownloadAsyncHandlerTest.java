@@ -64,9 +64,7 @@ class YtDownloadAsyncHandlerTest {
         if (!outputFile.exists()) {
             outputFile.createNewFile();
         }
-        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
-        ytDownloadAsyncHandler.setFile(outputFile);
-//        ytDownloadAsyncHandler.addTransferListener(new ProgressListener());
+        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler(outputFile, new DefaultProgressListener());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(new DefaultAsyncHttpClientConfig.Builder().build())) {
             client.prepareGet(ytUrl)

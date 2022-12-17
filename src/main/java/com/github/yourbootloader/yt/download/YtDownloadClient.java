@@ -59,9 +59,7 @@ public class YtDownloadClient {
     }
 
     private void download0(String url, File file, HttpHeaders headers) throws Exception {
-        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler();
-        ytDownloadAsyncHandler.setFile(file);
-        ytDownloadAsyncHandler.addTransferListener(listener);
+        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler(file, listener);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {

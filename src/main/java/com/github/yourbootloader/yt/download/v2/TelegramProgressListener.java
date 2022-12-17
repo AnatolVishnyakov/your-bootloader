@@ -2,17 +2,22 @@ package com.github.yourbootloader.yt.download.v2;
 
 import com.github.yourbootloader.bot.Bot;
 import io.netty.handler.codec.http.HttpHeaders;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.handler.TransferListener;
 import org.springframework.util.unit.DataSize;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
+import org.telegram.telegrambots.meta.api.methods.send.SendAudio;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.File;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +79,7 @@ public class TelegramProgressListener implements TransferListener {
         );
         log.info(msgText);
 
-        if (currentTimeMs - LAST_SEND_NOTIFICATION.get(chat) > TimeUnit.MILLISECONDS.toSeconds(1_000)) {
+        if (currentTimeMs - LAST_SEND_NOTIFICATION.get(chat) > TimeUnit.MILLISECONDS.toSeconds(2_000)) {
             EditMessageText message = new EditMessageText(msgText);
             message.setChatId(chat.getId().toString());
             message.setMessageId(messageId);
@@ -94,22 +99,44 @@ public class TelegramProgressListener implements TransferListener {
 
     @Override
     public void onBytesSent(long amount, long current, long total) {
-
+        log.info("call onBytesSent()");
     }
 
     @Override
     public void onRequestResponseCompleted() {
+        log.info("call onRequestResponseCompleted()");
+    }
 
+    public void onRequestResponseCompleted(File downloadedFile) {
+        log.info("Complete the download process!");
+
+        SendAudio SendAudioRequest = new SendAudio();
+        SendAudioRequest.setChatId(String.valueOf(chat.getId()));
+        SendAudioRequest.setAudio(new InputFile(downloadedFile));
+        SendAudioRequest.setCaption(downloadedFile.getName());
+        try {
+            bot.execute(SendAudioRequest);
+        } catch (TelegramApiException e) {
+            log.error(UNEXPECTED_ERROR, e);
+            sendNotification(chat.getId(), "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());
+        }
+        onRemoveMessage(chat.getId(), messageId);
     }
 
     @Override
     public void onThrowable(Throwable t) {
-
+        log.info("call onThrowable()");
     }
 
     @SneakyThrows
     private void sendNotification(Long chatId, String text) {
         SendMessage message = new SendMessage(chatId.toString(), text);
+        bot.execute(message);
+    }
+
+    @SneakyThrows
+    public void onRemoveMessage(@NonNull Long chatId, int messageId) {
+        DeleteMessage message = new DeleteMessage(chatId.toString(), messageId);
         bot.execute(message);
     }
 }
