@@ -5,8 +5,8 @@ import com.github.yourbootloader.yt.download.listener.DefaultProgressListener;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 
@@ -44,14 +46,16 @@ public class YtDownloadClient {
             .build();
 
     private final TempFileGenerator tempFileGenerator;
-    @Setter
-    private TransferListener listener = new DefaultProgressListener();
+    @Getter
+    private final List<TransferListener> listeners = new ArrayList<TransferListener>() {{
+        add(new DefaultProgressListener());
+    }};
 
     private void establishConnection() {
     }
 
     private void download0(String url, File file, HttpHeaders headers) throws Exception {
-        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler(file, listener);
+        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler(file, listeners);
         log.info("File length: {}", file.length());
 
         try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {

@@ -66,13 +66,13 @@ class YtDownloadAsyncHandlerTest {
         if (!outputFile.exists()) {
             outputFile.createNewFile();
         }
-        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler(outputFile, new DefaultProgressListener());
-
-        try (AsyncHttpClient client = Dsl.asyncHttpClient(new DefaultAsyncHttpClientConfig.Builder().build())) {
-            client.prepareGet(ytUrl)
-                    .setHeaders(Utils.newHttpHeaders())
-                    .execute(ytDownloadAsyncHandler)
-                    .get();
-        }
+//        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler(outputFile, new DefaultProgressListener());
+//
+//        try (AsyncHttpClient client = Dsl.asyncHttpClient(new DefaultAsyncHttpClientConfig.Builder().build())) {
+//            client.prepareGet(ytUrl)
+//                    .setHeaders(Utils.newHttpHeaders())
+//                    .execute(ytDownloadAsyncHandler)
+//                    .get();
+//        }
     }
 }

@@ -12,19 +12,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 @Slf4j
 public class YtDownloadAsyncHandler extends TransferCompletionHandler {
 
     private final File outputFile;
     private final OutputStream outputStream;
-    private final TransferListener listener;
+    private final List<TransferListener> listeners;
 
-    public YtDownloadAsyncHandler(File file, TransferListener listener) throws IOException {
+    public YtDownloadAsyncHandler(File file, List<TransferListener> listeners) throws IOException {
         this.outputFile = file;
         this.outputStream = Files.newOutputStream(outputFile.toPath(), StandardOpenOption.APPEND);
-        this.listener = listener;
-        this.addTransferListener(listener);
+        this.listeners = listeners;
+        listeners.forEach(this::addTransferListener);
     }
 
     @Override
@@ -36,8 +37,8 @@ public class YtDownloadAsyncHandler extends TransferCompletionHandler {
     @Override
     public Response onCompleted(Response response) throws Exception {
         outputStream.close();
-        if (listener instanceof TelegramProgressListener) {
-            ((TelegramProgressListener) listener).onRequestResponseCompleted(outputFile);
+        if (listeners instanceof TelegramProgressListener) {
+            ((TelegramProgressListener) listeners).onRequestResponseCompleted(outputFile);
         }
         return super.onCompleted(response);
     }
