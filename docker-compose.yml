@@ -11,7 +11,7 @@ services:
     image: your-bootloader:latest
     container_name: 'your-bootloader'
     volumes:
-      - /tmp/trash:/home/document/trash:z
+      - /tmp/trash:/home/document/trash:Z
     build:
       context: .
       dockerfile: Dockerfile
