@@ -55,6 +55,8 @@ public class YtDownloadClient {
     }
 
     private void download0(String url, File file, HttpHeaders headers) throws Exception {
+        log.info("Headers: {}", headers);
+
         YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler(file, listeners);
         log.info("File length: {}", file.length());
 
@@ -76,16 +78,13 @@ public class YtDownloadClient {
         File file = tempFileGenerator.create(fileName + "." + contentLength);
 
         int start = (int) file.length() == 0 ? 0 : (int) file.length();
-        int end;
 
         HttpHeaders headers = Utils.newHttpHeaders();
         while (start < contentLength) {
-            log.info("Headers: {}", headers);
             int chunkSize = ThreadLocalRandom.current().nextInt((int) (CONTENT_PARTITION_ON_LENGTH * 0.95), CONTENT_PARTITION_ON_LENGTH);
-            end = (int) Math.min(start + chunkSize, contentLength - 1);
-            log.info("Range {}-{} downloading... ", start, end);
 
-            if (start < end) {
+            if (start < contentLength) {
+                int end = (int) Math.min(start + chunkSize, contentLength - 1);
                 headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
             }
 
