@@ -12,7 +12,6 @@ import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
 import org.asynchttpclient.handler.TransferListener;
 import org.springframework.http.HttpHeaders;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 
@@ -32,15 +31,19 @@ public class YtDownloadClient {
      * May be useful for bypassing bandwidth throttling
      * imposed by a webserver (experimental)
      */
-    private static final int CHUNK_SIZE_DEFAULT = 10_485_760;
+    private static final int CONTENT_PARTITION_ON_LENGTH = 10_485_760;
+    private static final int READ_TIMEOUT_IN_MILLIS = 60_000;
+    private static final int REQUEST_TIMEOUT_IN_MILLIS = 3_600_000;
+    private static final int CONNECT_TIMEOUT_IN_MILLIS = 3_600_000;
+    private static final int CHUNK_SIZE = 8_192 * 2;
 
     private static final DefaultAsyncHttpClientConfig ASYNC_HTTP_CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
             .setThreadPoolName(YtDownloadClient.class.getSimpleName())
-            .setReadTimeout(60 * 1_000) // 60 sec
-            .setRequestTimeout(60 * 60 * 1_000) // 1 hour
-            .setConnectTimeout(60 * 60 * 1_000) // 1 hour
-            .setHttpClientCodecMaxChunkSize(8_192 * 3)
-            .setChunkedFileChunkSize(8_192 * 3)
+            .setReadTimeout(READ_TIMEOUT_IN_MILLIS)
+            .setRequestTimeout(REQUEST_TIMEOUT_IN_MILLIS)
+            .setConnectTimeout(CONNECT_TIMEOUT_IN_MILLIS)
+            .setHttpClientCodecMaxChunkSize(CHUNK_SIZE)
+            .setChunkedFileChunkSize(CHUNK_SIZE)
             .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator())
             .build();
 
@@ -63,7 +66,6 @@ public class YtDownloadClient {
         }
     }
 
-    @Async
     public void download(String url, String fileName, Long contentLength) {
         log.info("Downloading is start. Yt url: {}", url);
         log.info("Content-Length: {} Mb ({} Kb)",
@@ -79,7 +81,7 @@ public class YtDownloadClient {
         HttpHeaders headers = Utils.newHttpHeaders();
         while (start < contentLength) {
             log.info("Headers: {}", headers);
-            int chunkSize = ThreadLocalRandom.current().nextInt((int) (CHUNK_SIZE_DEFAULT * 0.95), CHUNK_SIZE_DEFAULT);
+            int chunkSize = ThreadLocalRandom.current().nextInt((int) (CONTENT_PARTITION_ON_LENGTH * 0.95), CONTENT_PARTITION_ON_LENGTH);
             end = (int) Math.min(start + chunkSize, contentLength - 1);
             log.info("Range {}-{} downloading... ", start, end);
 
