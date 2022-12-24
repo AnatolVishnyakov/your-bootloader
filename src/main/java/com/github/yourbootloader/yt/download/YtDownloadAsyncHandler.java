@@ -1,5 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
+import com.github.yourbootloader.yt.download.listener.TelegramProgressListener;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.HttpResponseBodyPart;
 import org.asynchttpclient.Response;

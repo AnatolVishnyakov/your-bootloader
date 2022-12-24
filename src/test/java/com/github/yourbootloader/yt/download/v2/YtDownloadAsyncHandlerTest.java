@@ -3,7 +3,7 @@ package com.github.yourbootloader.yt.download.v2;
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import com.github.yourbootloader.config.YDProperties;
 import com.github.yourbootloader.yt.Utils;
-import com.github.yourbootloader.yt.download.DefaultProgressListener;
+import com.github.yourbootloader.yt.download.listener.DefaultProgressListener;
 import com.github.yourbootloader.yt.download.YtDownloadAsyncHandler;
 import com.github.yourbootloader.yt.extractor.legacy.YoutubePageParser;
 import lombok.RequiredArgsConstructor;

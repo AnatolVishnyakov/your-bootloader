@@ -1,4 +1,4 @@
-package com.github.yourbootloader.yt.download;
+package com.github.yourbootloader.yt.download.listener;
 
 import com.github.yourbootloader.bot.Bot;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -76,7 +76,6 @@ public class TelegramProgressListener implements TransferListener {
                 bytes.length,
                 delayBetweenReceivingBytes
         );
-        log.info(msgText);
 
         if (Math.abs(currentTimeMs - senderHistory.get(chat)) > 500) {
 

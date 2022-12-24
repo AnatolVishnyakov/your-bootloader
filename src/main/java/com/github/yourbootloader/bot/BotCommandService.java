@@ -1,7 +1,7 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.yt.download.YtDownloadClient;
-import com.github.yourbootloader.yt.download.TelegramProgressListener;
+import com.github.yourbootloader.yt.download.listener.TelegramProgressListener;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
