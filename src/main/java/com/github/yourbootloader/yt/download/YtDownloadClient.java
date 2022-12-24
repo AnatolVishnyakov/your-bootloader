@@ -1,7 +1,6 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.yt.Utils;
-import com.github.yourbootloader.yt.download.listener.DefaultProgressListener;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -47,9 +46,7 @@ public class YtDownloadClient {
 
     private final TempFileGenerator tempFileGenerator;
     @Getter
-    private final List<TransferListener> listeners = new ArrayList<TransferListener>() {{
-        add(new DefaultProgressListener());
-    }};
+    private final List<TransferListener> listeners = new ArrayList<>();
 
     private void establishConnection() {
     }
