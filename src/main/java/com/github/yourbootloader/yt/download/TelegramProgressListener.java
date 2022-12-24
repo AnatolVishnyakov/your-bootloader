@@ -20,7 +20,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class TelegramProgressListener implements TransferListener {
@@ -79,7 +78,8 @@ public class TelegramProgressListener implements TransferListener {
         );
         log.info(msgText);
 
-        if (Math.abs(currentTimeMs - senderHistory.get(chat)) > TimeUnit.SECONDS.toMillis(1)) {
+        if (Math.abs(currentTimeMs - senderHistory.get(chat)) > 500) {
+
             EditMessageText message = new EditMessageText(msgText);
             message.setChatId(chat.getId().toString());
             message.setMessageId(messageId);
@@ -96,8 +96,9 @@ public class TelegramProgressListener implements TransferListener {
                         messageId = bot.execute(msg).getMessageId();
                     } catch (TelegramApiException ignored) {
                     }
+                } else {
+                    sendNotification(chat.getId(), e.getMessage());
                 }
-                sendNotification(chat.getId(), e.getMessage());
             }
             senderHistory.put(chat, currentTimeMs);
         }
@@ -116,6 +117,10 @@ public class TelegramProgressListener implements TransferListener {
 
     public void onRequestResponseCompleted(File downloadedFile) {
         log.info("Complete the download process!");
+        if (downloadedFile.length() <= 0) {
+            log.warn("File is empty!");
+            return;
+        }
 
         SendAudio SendAudioRequest = new SendAudio();
         SendAudioRequest.setChatId(String.valueOf(chat.getId()));
