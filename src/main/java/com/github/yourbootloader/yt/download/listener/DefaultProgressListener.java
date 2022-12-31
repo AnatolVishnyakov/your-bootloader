@@ -4,12 +4,16 @@ import io.netty.handler.codec.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.handler.TransferListener;
+import org.springframework.util.unit.DataSize;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @RequiredArgsConstructor
 public class DefaultProgressListener implements TransferListener {
 
     private long lastTimeMsReceivedByte = System.currentTimeMillis();
+    private final AtomicLong receivedBytes = new AtomicLong(0);
 
     @Override
     public void onRequestHeadersSent(HttpHeaders headers) {
@@ -24,7 +28,10 @@ public class DefaultProgressListener implements TransferListener {
     @Override
     public void onBytesReceived(byte[] bytes) {
         long currentTimeMillis = System.currentTimeMillis();
-        log.info("Bytes received: {} (delay: {} ms)", bytes.length, currentTimeMillis - lastTimeMsReceivedByte);
+        long allReceivedBytes = receivedBytes.addAndGet(bytes.length);
+        log.info("Bytes received: {} Kb (chunk: {}, delay: {} ms)",
+                DataSize.ofBytes(allReceivedBytes).toKilobytes(),
+                bytes.length, currentTimeMillis - lastTimeMsReceivedByte);
         lastTimeMsReceivedByte = currentTimeMillis;
     }
 

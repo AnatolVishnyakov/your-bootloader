@@ -1,11 +1,11 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.yt.Utils;
+import com.github.yourbootloader.yt.download.listener.DefaultProgressListener;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
@@ -19,11 +19,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class YtDownloadClient {
 
     /**
@@ -32,9 +32,9 @@ public class YtDownloadClient {
      * imposed by a webserver (experimental)
      */
     private static final int CONTENT_PARTITION_ON_LENGTH = 10_485_760;
-    private static final int READ_TIMEOUT_IN_MILLIS = 60_000;
-    private static final int REQUEST_TIMEOUT_IN_MILLIS = 3_600_000;
-    private static final int CONNECT_TIMEOUT_IN_MILLIS = 3_600_000;
+    private static final int READ_TIMEOUT_IN_MILLIS = (int) TimeUnit.SECONDS.toMillis(60);
+    private static final int REQUEST_TIMEOUT_IN_MILLIS = (int) TimeUnit.MINUTES.toMillis(60);
+    private static final int CONNECT_TIMEOUT_IN_MILLIS = (int) TimeUnit.MINUTES.toMillis(60);
     private static final int CHUNK_SIZE = 8_192 * 2;
 
     private static final DefaultAsyncHttpClientConfig ASYNC_HTTP_CLIENT_CONFIG = new DefaultAsyncHttpClientConfig.Builder()
@@ -50,6 +50,11 @@ public class YtDownloadClient {
     private final TempFileGenerator tempFileGenerator;
     @Getter
     private final List<TransferListener> listeners = new ArrayList<>();
+
+    public YtDownloadClient(TempFileGenerator tempFileGenerator) {
+        this.tempFileGenerator = tempFileGenerator;
+        listeners.add(new DefaultProgressListener());
+    }
 
     private void establishConnection() {
     }
