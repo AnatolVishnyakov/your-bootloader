@@ -80,18 +80,17 @@ public class YtDownloadClient {
                 DataSize.ofBytes(contentLength).toKilobytes()
         );
 
-        File file = tempFileGenerator.create(fileName + "." + contentLength);
-
-        int start = (int) file.length() == 0 ? 0 : (int) file.length();
+        int chunkSize = ThreadLocalRandom.current().nextInt((int) (CONTENT_PARTITION_ON_LENGTH * 0.95), CONTENT_PARTITION_ON_LENGTH);
+        long indexPart = contentLength / chunkSize;
+        int start = 0;
 
         HttpHeaders headers = Utils.newHttpHeaders();
-        while (start < contentLength) {
-            int chunkSize = ThreadLocalRandom.current().nextInt((int) (CONTENT_PARTITION_ON_LENGTH * 0.95), CONTENT_PARTITION_ON_LENGTH);
+        while (indexPart >= 0) {
 
-            if (start < contentLength) {
-                int end = (int) Math.min(start + chunkSize, contentLength - 1);
-                headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
-            }
+            File file = tempFileGenerator.create(fileName + "." + indexPart + "." + contentLength);
+
+            int end = (int) Math.min(start + chunkSize, contentLength - 1);
+            headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
 
             establishConnection();
             try {
@@ -104,6 +103,7 @@ public class YtDownloadClient {
                 continue;
             }
 
+            indexPart--;
             start += chunkSize + 1;
         }
         log.info("Download finished...");

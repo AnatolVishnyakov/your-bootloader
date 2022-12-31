@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @YoutubeDownloaderTest
@@ -66,9 +68,9 @@ class YtDownloadClientTest {
     @BeforeEach
     @SneakyThrows
     public void init() {
-        ydProperties.setDownloadPath(tempDir.toString());
+        ydProperties.setDownloadPath("/Users/vishnyakov-ap/Documents/trash");
 
-        String url = "https://youtu.be/zcjKJ7FHDLM";
+        String url = "https://www.youtube.com/watch?v=o6wnNHt5SDQ";
         String fileAbsolutePath = "/Users/vishnyakov-ap/IdeaProjects/your-bootloader/src/test/resources/yt-url.txt";
         resource = new File(fileAbsolutePath);
 
@@ -170,6 +172,11 @@ class YtDownloadClientTest {
     @SneakyThrows
     void debugYtDownloadClientHandler() {
         String ytUrl = Files.readAllLines(resource.toPath()).get(0);
-//        ytDownloadClient.realDownload(ytUrl, UUID.randomUUID() + ".mp3", DataSize.ofKilobytes(31_273).toBytes());
+        Matcher matcher = Pattern.compile("clen=(?<len>\\d+)").matcher(ytUrl);
+        if (!matcher.find()) {
+            throw new RuntimeException("Not found content length.");
+        }
+        long contentLength = Long.parseLong(matcher.group("len"));
+        ytDownloadClient.download(ytUrl, UUID.randomUUID() + ".mp3", contentLength);
     }
 }

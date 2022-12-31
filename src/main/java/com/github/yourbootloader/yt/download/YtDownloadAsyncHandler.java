@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public class YtDownloadAsyncHandler extends TransferCompletionHandler {
@@ -37,9 +38,11 @@ public class YtDownloadAsyncHandler extends TransferCompletionHandler {
     @Override
     public Response onCompleted(Response response) throws Exception {
         outputStream.close();
-        if (listeners instanceof TelegramProgressListener) {
-            ((TelegramProgressListener) listeners).onRequestResponseCompleted(outputFile);
-        }
+        Optional<TransferListener> telegramTransferListener = listeners.stream()
+                .filter(l -> l instanceof TelegramProgressListener)
+                .findFirst();
+        telegramTransferListener.ifPresent(transferListener -> ((TelegramProgressListener) transferListener)
+                .onRequestResponseCompleted(outputFile));
         return super.onCompleted(response);
     }
 }
