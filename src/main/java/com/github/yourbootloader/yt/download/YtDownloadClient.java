@@ -83,6 +83,7 @@ public class YtDownloadClient {
         int chunkSize = ThreadLocalRandom.current().nextInt((int) (CONTENT_PARTITION_ON_LENGTH * 0.95), CONTENT_PARTITION_ON_LENGTH);
         long indexPart = contentLength / chunkSize;
         int start = 0;
+        int repeat = 3;
 
         HttpHeaders headers = Utils.newHttpHeaders();
         while (indexPart >= 0) {
@@ -95,10 +96,15 @@ public class YtDownloadClient {
             establishConnection();
             try {
                 download0(url, file, headers);
-                if (file.length() > 0) {
-                    indexPart--;
-                    start += chunkSize + 1;
+                if (file.length() <= 0) {
+                    if (repeat == 0) {
+                        throw new RuntimeException("Error for download.");
+                    }
+                    repeat--;
+                    continue;
                 }
+                indexPart--;
+                start += chunkSize + 1;
             } catch (Exception exc) {
                 if (exc.getCause().getClass() != TimeoutException.class) {
                     return;
