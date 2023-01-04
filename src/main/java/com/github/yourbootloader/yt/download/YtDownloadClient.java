@@ -84,11 +84,10 @@ public class YtDownloadClient {
         long indexPart = contentLength / chunkSize;
         int start = 0;
         int repeat = 3;
+        File file = tempFileGenerator.create(fileName + "." + indexPart + "." + contentLength);
 
         HttpHeaders headers = Utils.newHttpHeaders();
         while (indexPart >= 0) {
-
-            File file = tempFileGenerator.create(fileName + "." + indexPart + "." + contentLength);
 
             int end = (int) Math.min(start + chunkSize, contentLength - 1);
             headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
