@@ -106,9 +106,10 @@ public class YtDownloadClient {
                 indexPart--;
                 start += chunkSize + 1;
             } catch (Exception exc) {
-                if (exc.getCause().getClass() != TimeoutException.class) {
+                if (exc.getCause() != null && exc.getCause().getClass() != TimeoutException.class) {
                     return;
                 }
+                repeat--;
                 log.error(exc.getMessage(), exc);
                 continue;
             }
