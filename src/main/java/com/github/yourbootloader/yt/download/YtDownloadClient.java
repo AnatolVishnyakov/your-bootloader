@@ -95,8 +95,10 @@ public class YtDownloadClient {
             establishConnection();
             try {
                 download0(url, file, headers);
-                indexPart--;
-                start += chunkSize + 1;
+                if (file.length() > 0) {
+                    indexPart--;
+                    start += chunkSize + 1;
+                }
             } catch (Exception exc) {
                 if (exc.getCause().getClass() != TimeoutException.class) {
                     return;
