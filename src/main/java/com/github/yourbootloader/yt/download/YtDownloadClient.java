@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Component
@@ -81,13 +80,11 @@ public class YtDownloadClient {
         );
 
         int chunkSize = ThreadLocalRandom.current().nextInt((int) (CONTENT_PARTITION_ON_LENGTH * 0.95), CONTENT_PARTITION_ON_LENGTH);
-        long indexPart = contentLength / chunkSize;
         int start = 0;
-        File file = tempFileGenerator.create(fileName + "." + indexPart + "." + contentLength);
+        File file = tempFileGenerator.create(fileName + "." + contentLength);
 
         HttpHeaders headers = Utils.newHttpHeaders();
-        while (indexPart >= 0) {
-
+        while (start < contentLength) {
             int end = (int) Math.min(start + chunkSize, contentLength - 1);
             headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
 
@@ -98,13 +95,10 @@ public class YtDownloadClient {
                     log.error("Content can't be download.");
                     break;
                 }
-                indexPart--;
                 start += chunkSize + 1;
             } catch (Exception exc) {
-                if (exc.getCause() != null && exc.getCause().getClass() != TimeoutException.class) {
-                    return;
-                }
                 log.error(exc.getMessage(), exc);
+                break;
             }
 
         }
