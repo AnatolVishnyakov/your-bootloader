@@ -112,6 +112,8 @@ public class TelegramProgressListener implements TransferListener {
     @Override
     public void onRequestResponseCompleted() {
         log.info("call onRequestResponseCompleted()");
+        onRemoveMessage(chat.getId(), messageId);
+        sendNotification(chat.getId(), "Не получилось скачать. :(");
     }
 
     public void onRequestResponseCompleted(File downloadedFile) {
