@@ -1,7 +1,6 @@
 package com.github.yourbootloader.bot;
 
 import com.github.yourbootloader.bot.command.Command;
-import com.github.yourbootloader.bot.command.UndefinedCommand;
 import com.github.yourbootloader.config.BotConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,7 @@ public class Bot extends TelegramLongPollingBot {
         StreamEx.of(commands)
                 .filter(command -> command.canHandle(update))
                 .findAny()
-                .orElseGet(UndefinedCommand::new)
+                .orElseGet(Command::undefinedCommand)
                 .handle(this, update);
     }
 
