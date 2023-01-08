@@ -2,10 +2,10 @@ package com.github.yourbootloader.bot.command;
 
 import com.github.yourbootloader.bot.Bot;
 import com.github.yourbootloader.bot.BotQueryService;
+import com.github.yourbootloader.bot.dto.VideoFormatsDto;
 import com.github.yourbootloader.bot.dto.VideoInfoDto;
 import com.github.yourbootloader.utils.UserContextHolder;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
-import com.github.yourbootloader.yt.extractor.YtVideoInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.util.streamex.StreamEx;
@@ -48,8 +48,8 @@ public class YtParseUrlCommand implements Command {
         Message message = update.getMessage();
         String url = message.getText();
         log.info("Youtube url: {}", url);
-        YtVideoInfo info = botQueryService.getVideoInfo(url);
-        List<Map<String, Object>> formats = StreamEx.of(info.getFormats())
+        VideoFormatsDto videoFormats = botQueryService.getVideoFormats(url);
+        List<Map<String, Object>> formats = StreamEx.of(videoFormats.getFormats())
                 .filter(format -> format.get("ext") != null && format.get("format_note").equals("tiny"))
                 .sorted(Comparator.comparing(m -> {
                     String formatNote = (String) m.get("format_note");
@@ -92,7 +92,7 @@ public class YtParseUrlCommand implements Command {
             videosInfo.add(
                     new VideoInfoDto(
                             ((Integer) format.get("format_id")),
-                            info.getTitle(),
+                            videoFormats.getTitle(),
                             ((Long) format.get("filesize")),
                             ((String) format.get("url"))
                     )
