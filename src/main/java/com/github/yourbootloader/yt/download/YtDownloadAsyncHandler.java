@@ -1,6 +1,7 @@
 package com.github.yourbootloader.yt.download;
 
 import com.github.yourbootloader.yt.download.listener.TelegramProgressListener;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.HttpResponseBodyPart;
 import org.asynchttpclient.Response;
@@ -30,13 +31,17 @@ public class YtDownloadAsyncHandler extends TransferCompletionHandler {
     }
 
     @Override
-    public State onBodyPartReceived(HttpResponseBodyPart content) throws Exception {
-        outputStream.write(content.getBodyPartBytes());
+    @SneakyThrows
+    public State onBodyPartReceived(HttpResponseBodyPart content) {
+        if (content.length() != 0) {
+            outputStream.write(content.getBodyPartBytes());
+        }
         return super.onBodyPartReceived(content);
     }
 
     @Override
-    public Response onCompleted(Response response) throws Exception {
+    @SneakyThrows
+    public Response onCompleted(Response response) {
         outputStream.close();
         Optional<TransferListener> telegramTransferListener = listeners.stream()
                 .filter(l -> l instanceof TelegramProgressListener)
@@ -44,5 +49,12 @@ public class YtDownloadAsyncHandler extends TransferCompletionHandler {
         telegramTransferListener.ifPresent(transferListener -> ((TelegramProgressListener) transferListener)
                 .onRequestResponseCompleted(outputFile));
         return super.onCompleted(response);
+    }
+
+    @Override
+    @SneakyThrows
+    public void onThrowable(Throwable t) {
+        outputStream.close();
+        super.onThrowable(t);
     }
 }
