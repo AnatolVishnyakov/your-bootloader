@@ -16,7 +16,7 @@ public class ExpressionSeparator {
             return Collections.emptyList();
         }
 
-        List<String> result = new ArrayList<>();
+        List<String> result = new LinkedList<>();
 
         String delim = args.getDelimiter();
         List<String> skipDelims = args.getSkipDelimiters();

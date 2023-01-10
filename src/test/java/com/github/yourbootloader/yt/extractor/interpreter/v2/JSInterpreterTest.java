@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -59,5 +60,15 @@ class JSInterpreterTest {
             JSInterpreter jsInterpreter = new JSInterpreter(jsContent);
             assertEquals(2, jsInterpreter.separateAtParen(jsContent, null).size());
         }
+    }
+
+    @Test
+    @SneakyThrows
+    void interpretStatement01() {
+        Path folderJsData = Paths.get("src/test/resources/testdata/jscontent");
+        Path jsContentPath = folderJsData.resolve("content-01.js");
+        String jsContent = String.join("", Files.readAllLines(jsContentPath));
+        JSInterpreter jsInterpreter = new JSInterpreter(jsContent);
+        jsInterpreter.interpretStatement(jsContent, new HashMap<>(), 100);
     }
 }

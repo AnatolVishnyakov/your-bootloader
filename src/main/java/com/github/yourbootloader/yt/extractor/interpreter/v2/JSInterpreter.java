@@ -1,12 +1,11 @@
 package com.github.yourbootloader.yt.extractor.interpreter.v2;
 
 import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.DefaultSeparateArgs;
+import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.StatementResultDto;
 import lombok.extern.slf4j.Slf4j;
+import org.intellij.lang.annotations.Language;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,13 +52,40 @@ public class JSInterpreter {
         );
     }
 
-    public void interpretStatement(String stmt, Map<Object, Object> localVars, int allowRecursion) {
+    public StatementResultDto interpretStatement(String stmt, Map<Object, Object> localVars, int allowRecursion) {
         if (allowRecursion < 0) {
             throw new RuntimeException("Recursion limit reached");
         }
         allowRecursion -= 1;
 
+        boolean shouldReturn = false;
+        LinkedList<String> subStatements = (LinkedList<String>) separate(stmt, ";", null, null); // TODO return emptyList
+        String expr = stmt = subStatements.pop().strip();
+//        for (String subStmt : subStatements) {
+//            StatementResultDto result = this.interpretStatement(subStmt, localVars, allowRecursion);
+//            if (result.isShouldReturn()) {
+//                return result;
+//            }
+//        }
 
+        Matcher m = match("(?<var>(?:var|const|let)\\s)|return(?:\\s+|(?=[\"'])|$)|(?<throw>throw\\s+)", stmt);
+        if (m.find()) {
+            expr = stmt.substring(m.group(0).length()).strip();
+            if (m.group("throw") != null) {
+                throw new RuntimeException("raise JS_Throw(self.interpret_expression(expr, local_vars, allow_recursion))");
+            }
+            shouldReturn = m.group("var") == null;
+        }
+        if (expr == null) {
+            return new StatementResultDto(null, shouldReturn);
+        }
+        System.out.println();
+        return null;
+    }
+
+    private Matcher match(@Language("RegExp") String regex, String text) {
+        Pattern pattern = Pattern.compile(regex);
+        return pattern.matcher(text);
     }
 
     public String extractFunctionFromCode(List<String> argNames) {
