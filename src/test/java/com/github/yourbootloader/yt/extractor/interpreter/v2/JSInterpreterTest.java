@@ -49,5 +49,15 @@ class JSInterpreterTest {
             JSInterpreter jsInterpreter = new JSInterpreter(null);
             assertEquals("4", jsInterpreter.separate("/]", ",", 0, null));
         }
+
+        @Test
+        @SneakyThrows
+        void separatedAtParen01() {
+            Path folderJsData = Paths.get("src/test/resources/testdata/jscontent");
+            Path jsContentPath = folderJsData.resolve("content-01.js");
+            String jsContent = String.join("", Files.readAllLines(jsContentPath));
+            JSInterpreter jsInterpreter = new JSInterpreter(jsContent);
+            assertEquals(2, jsInterpreter.separateAtParen(jsContent, null).size());
+        }
     }
 }

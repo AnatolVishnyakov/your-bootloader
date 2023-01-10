@@ -36,6 +36,20 @@ public class JSInterpreter {
         return new ExpressionSeparator().separate(expr, new DefaultSeparateArgs(delim, maxSplit, skipDelims));
     }
 
+    public List<String> separateAtParen(String expr, String delim) {
+        if (delim == null) {
+            delim = _MATCHING_PARENS.get(expr.substring(0, 1));
+        }
+        List<String> separated = separate(expr, delim, null, null);
+        if (separated.size() > 2) {
+            throw new RuntimeException("No terminating paren " + delim + " in " + expr.substring(0, 100));
+        }
+        return Arrays.asList(
+                separated.get(0).substring(1).strip(),
+                separated.get(1).strip()
+        );
+    }
+
     public void interpretStatement(String stmt, Map<Object, Object> localVars, int allowRecursion) {
         if (allowRecursion < 0) {
             throw new RuntimeException("Recursion limit reached");
