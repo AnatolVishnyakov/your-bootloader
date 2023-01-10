@@ -18,8 +18,8 @@ public class ExpressionSeparator {
 
         List<String> result = new ArrayList<>();
 
-        String delim = args.getDelim();
-        List<String> skipDelims = args.getSkipDelims();
+        String delim = args.getDelimiter();
+        List<String> skipDelims = args.getSkipDelimiters();
         Integer maxSplit = args.getMaxSplit();
 
         Map<String, Integer> counters = StreamEx.of(_MATCHING_PARENS.values()).toMap(v -> 0);
