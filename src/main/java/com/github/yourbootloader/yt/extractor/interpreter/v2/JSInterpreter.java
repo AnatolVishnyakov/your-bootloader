@@ -25,11 +25,14 @@ public class JSInterpreter {
     );
 
     private int namedObjectCounter = 0;
-
     private final String code;
+    private final Map<?, ?> objects;
+    private final Map<?, ?> functions;
 
     public JSInterpreter(String code) {
         this.code = code;
+        this.objects = new HashMap<>();
+        this.functions = new HashMap<>();
     }
 
     public List<String> separate(String expr, String delim, Integer maxSplit, List<String> skipDelims) {
@@ -45,8 +48,8 @@ public class JSInterpreter {
             throw new RuntimeException("No terminating paren " + delim + " in " + expr.substring(0, 100));
         }
         return Arrays.asList(
-                separated.get(0).substring(1).strip(),
-                separated.get(1).strip()
+                separated.get(0).substring(1).replaceAll("^[ \t]+|[ \t]+$", ""),
+                separated.get(1).replaceAll("^[ \t]+|[ \t]+$", "")
         );
     }
 
