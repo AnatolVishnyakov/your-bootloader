@@ -6,13 +6,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @YoutubeDownloaderTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -62,5 +67,23 @@ class YoutubeIETest {
 //        assertEquals("For Those That Wish To Exist", ytVideoInfo.getAlbum());
 //        assertEquals("Architects", ytVideoInfo.getCreator());
 //        assertEquals("Animals", ytVideoInfo.getAltTitle());
+    }
+
+    @Test
+    void realExtract1() {
+        String url = "https://www.youtube.com/watch?v=OCJi5hVdiZU";
+        YtVideoInfo ytVideoInfo = youtubeIE.realExtract(url);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "https://www.youtube.com/watch?v=123",
+            "https://youtu.be/123"
+    })
+    void validUrlFormat(String url) {
+        Pattern pattern = Pattern.compile(YoutubeIE._VALID_URL);
+        Matcher matcher = pattern.matcher(url);
+
+        assertTrue(matcher.find());
     }
 }
