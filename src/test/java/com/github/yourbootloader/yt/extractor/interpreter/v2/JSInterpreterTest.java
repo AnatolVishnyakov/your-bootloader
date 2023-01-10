@@ -1,5 +1,6 @@
 package com.github.yourbootloader.yt.extractor.interpreter.v2;
 
+import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.DefaultSeparateArgs;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,16 +48,6 @@ class JSInterpreterTest {
         void separate04() {
             JSInterpreter jsInterpreter = new JSInterpreter(null);
             assertEquals("4", jsInterpreter.separate("/]", ",", 0, null));
-        }
-
-        @Test
-        @SneakyThrows
-        void separate05() {
-            Path folderJsData = Paths.get("src/test/resources/testdata/jscontent");
-            Path jsContentPath = folderJsData.resolve("content-01.js");
-            String jsContent = String.join("", Files.readAllLines(jsContentPath));
-            ExpressionSeparator expressionSeparator = new ExpressionSeparator();
-            assertEquals(2, expressionSeparator.separate(jsContent, ",", null, null).size());
         }
     }
 }

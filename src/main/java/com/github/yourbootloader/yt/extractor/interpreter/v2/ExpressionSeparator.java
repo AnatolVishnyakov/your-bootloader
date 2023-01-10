@@ -1,5 +1,6 @@
 package com.github.yourbootloader.yt.extractor.interpreter.v2;
 
+import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.DefaultSeparateArgs;
 import lombok.extern.slf4j.Slf4j;
 import one.util.streamex.StreamEx;
 
@@ -10,14 +11,16 @@ import static com.github.yourbootloader.yt.extractor.interpreter.v2.JSInterprete
 @Slf4j
 public class ExpressionSeparator {
 
-    public List<String> separate(String expr, String delim, Integer maxSplit, List<String> skipDelims) {
+    public List<String> separate(String expr, DefaultSeparateArgs args) {
         if (expr == null || expr.isEmpty()) {
             return Collections.emptyList();
         }
+
         List<String> result = new ArrayList<>();
-        if (delim == null) {
-            delim = ",";
-        }
+
+        String delim = args.getDelim();
+        List<String> skipDelims = args.getSkipDelims();
+        Integer maxSplit = args.getMaxSplit();
 
         Map<String, Integer> counters = StreamEx.of(_MATCHING_PARENS.values()).toMap(v -> 0);
         int start = 0, splits = 0, pos = 0, delimLen = delim.length() - 1;
@@ -99,12 +102,12 @@ public class ExpressionSeparator {
         return !escaping;
     }
 
-    private static boolean charInCounters(String _char, Map<String, Integer> counters) {
-        return counters.containsKey(_char);
+    private static boolean charInCounters(String symbol, Map<String, Integer> counters) {
+        return counters.containsKey(symbol);
     }
 
-    private boolean charInMatchingParens(String _char) {
-        return _MATCHING_PARENS.containsKey(_char);
+    private boolean charInMatchingParens(String symbol) {
+        return _MATCHING_PARENS.containsKey(symbol);
     }
 
     private boolean notInQuote(String inQuote) {
