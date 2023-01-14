@@ -38,7 +38,6 @@ public class TelegramProgressListener implements TransferListener {
         this.bot = bot;
         this.chat = chat;
         this.contentLength = contentLength;
-        senderHistory.put(chat, System.currentTimeMillis());
     }
 
     @Override
@@ -48,17 +47,19 @@ public class TelegramProgressListener implements TransferListener {
 
     @Override
     public void onResponseHeadersReceived(HttpHeaders headers) {
-        SendMessage message = new SendMessage(String.valueOf(chat.getId()), "Скачивание начинается...");
+        if (!senderHistory.containsKey(chat)) {
+            SendMessage message = new SendMessage(String.valueOf(chat.getId()), "Скачивание начинается...");
 
-        try {
-            Message msg = bot.execute(message);
-            this.messageId = msg.getMessageId();
-        } catch (TelegramApiException e) {
-            log.error(UNEXPECTED_ERROR, e);
-            sendNotification(chat.getId(), e.getMessage());
-            throw new RuntimeException(e);
+            try {
+                Message msg = bot.execute(message);
+                this.messageId = msg.getMessageId();
+            } catch (TelegramApiException e) {
+                log.error(UNEXPECTED_ERROR, e);
+                sendNotification(chat.getId(), e.getMessage());
+                throw new RuntimeException(e);
+            }
+            senderHistory.put(chat, System.currentTimeMillis());
         }
-
     }
 
     @Override
@@ -135,11 +136,13 @@ public class TelegramProgressListener implements TransferListener {
             sendNotification(chat.getId(), "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());
         }
         onRemoveMessage(chat.getId(), messageId);
+        senderHistory.remove(chat);
     }
 
     @Override
     public void onThrowable(Throwable t) {
         log.info("call onThrowable()");
+        senderHistory.remove(chat);
     }
 
     @SneakyThrows
