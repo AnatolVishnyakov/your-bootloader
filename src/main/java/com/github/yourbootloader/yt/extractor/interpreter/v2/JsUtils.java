@@ -34,13 +34,10 @@ public class JsUtils {
             "&", (a, b) -> a & b
     );
 
-/*
-
-_SC_OPERATORS = (
-    ('?', None),
-    ('??', None),
-    ('||', None),
-    ('&&', None),
-)
-    * */
+    static final Map<String, BiFunction<Integer, Integer, ?>> SC_OPERATORS = Map.of(
+            "?", null,
+            "??", null,
+            "||", null,
+            "&&", null
+    );
 }
