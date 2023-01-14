@@ -1,6 +1,6 @@
 package com.github.yourbootloader.yt.extractor.interpreter.v2;
 
-import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.DefaultSeparateArgs;
+import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.StatementResultDto;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -10,8 +10,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JSInterpreterTest {
 
@@ -70,5 +73,24 @@ class JSInterpreterTest {
         String jsContent = String.join("", Files.readAllLines(jsContentPath));
         JSInterpreter jsInterpreter = new JSInterpreter(jsContent);
         jsInterpreter.interpretStatement(jsContent, new HashMap<>(), 100);
+    }
+
+    @Nested
+    class InterpretStatement {
+        @Test
+        void checkVarConstLetPattern() {
+            String stmt = "var b=a.split(\"\")";
+            Matcher matcher = Pattern.compile(JSInterpreter.VAR_CONST_LET_PATTERN).matcher(stmt);
+            assertTrue(matcher.find());
+            assertEquals("b=a.split(\"\")", stmt.substring(matcher.group(0).length()).strip());
+        }
+
+        @Test
+        void checkStringValue() {
+            String stmt = "\"1969-12-31T18:00:48.000-06:00\"";
+            JSInterpreter jsInterpreter = new JSInterpreter(stmt);
+            StatementResultDto result = jsInterpreter.interpretStatement(stmt, new HashMap<>(), 100);
+            System.out.println();
+        }
     }
 }

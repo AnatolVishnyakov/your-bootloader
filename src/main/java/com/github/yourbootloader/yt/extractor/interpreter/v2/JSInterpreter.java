@@ -22,6 +22,8 @@ public class JSInterpreter {
     public static final List<String> OP_CHARS = Arrays.asList(
             ",", "&", "/", ">", "|", ";", "?", "<", "%", "*", "!", "-", "+", "^", "="
     );
+    @Language("RegExp")
+    public static final String VAR_CONST_LET_PATTERN = "(?<var>(?:var|const|let)\\s)|return(?:\\s+|(?=[\"'])|$)|(?<throw>throw\\s+)";
 
     private int namedObjectCounter = 0;
     private final String code;
@@ -32,6 +34,13 @@ public class JSInterpreter {
         this.code = code;
         this.objects = new HashMap<>();
         this.functions = new HashMap<>();
+    }
+
+    public void regexFlags(String expr) {
+        boolean flags = 0;
+        if (expr == null || expr.isEmpty()) {
+
+        }
     }
 
     public List<String> separate(String expr, String delim, Integer maxSplit, List<String> skipDelims) {
@@ -68,7 +77,8 @@ public class JSInterpreter {
 //            }
 //        }
 
-        Matcher m = match("(?<var>(?:var|const|let)\\s)|return(?:\\s+|(?=[\"'])|$)|(?<throw>throw\\s+)", stmt);
+        // определение переменной
+        Matcher m = Pattern.compile(VAR_CONST_LET_PATTERN).matcher(stmt);
         if (m.find()) {
             expr = stmt.substring(m.group(0).length()).strip();
             if (m.group("throw") != null) {
@@ -76,16 +86,24 @@ public class JSInterpreter {
             }
             shouldReturn = m.group("var") == null;
         }
-        if (expr == null) {
+        if (expr == null || expr.isEmpty()) {
             return new StatementResultDto(null, shouldReturn);
         }
-        System.out.println();
-        return null;
-    }
 
-    private Matcher match(@Language("RegExp") String regex, String text) {
-        Pattern pattern = Pattern.compile(regex);
-        return pattern.matcher(text);
+        // определение строк
+        if (_QUOTES.contains(expr.substring(0, 1))) {
+            List<String> separateResult = separate(expr, expr.substring(0, 1), 1, null);
+            String inner = separateResult.get(0);
+            String outer = separateResult.get(1);
+            if (expr.substring(0, 1).equals("/")) {
+//                flags, outer = self._regex_flags(outer)
+//                inner = re.compile(inner[1:], flags=flags)  # , strict=True))
+            } else {
+//                inner = json.loads(js_to_json(inner + expr[0]))  # , strict=True))
+            }
+        }
+
+        return null;
     }
 
     public String extractFunctionFromCode(List<String> argNames) {
