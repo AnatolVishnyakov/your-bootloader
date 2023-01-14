@@ -1,14 +1,22 @@
 package com.github.yourbootloader.yt.extractor.interpreter.v2;
 
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 public class JsUtils {
 
-    static Map<String, Function<?, ?>> OPERATORS = Map.of(
-//            ">>",
+    static Map<String, BiFunction<Integer, Integer, Integer>> OPERATORS = Map.of(
+            ">>", (a, b) -> a >> b,
+            "<<", (a, b) -> a << b,
+            "+", Integer::sum,
+            "-", (a, b) -> a - b,
+            "*", (a, b) -> a * b,
+            "%", (a, b) -> a % b,
+            "/", (a, b) -> a / b,
+            "**", (a, b) -> (int) Math.pow((double) a, (double) b)
     );
-    /*
+
+/*
 # (op, definition) in order of binding priority, tightest first
 # avoid dict to maintain order
 # definition None => Defined in JSInterpreter._operator

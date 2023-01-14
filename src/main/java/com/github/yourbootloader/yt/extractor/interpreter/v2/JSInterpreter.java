@@ -105,11 +105,12 @@ public class JSInterpreter {
         return null;
     }
 
-    private Pair<> regexFlags(String expr) {
+    private Pair<?, ?> regexFlags(String expr) {
         boolean flags = false;
         if (expr == null || expr.isEmpty()) {
 
         }
+        return null;
     }
 
     public String extractFunctionFromCode(List<String> argNames) {
