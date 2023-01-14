@@ -1,5 +1,6 @@
 package com.github.yourbootloader.yt.extractor.interpreter.v2;
 
+import com.github.yourbootloader.yt.extractor.dto.Pair;
 import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.DefaultSeparateArgs;
 import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.StatementResultDto;
 import lombok.extern.slf4j.Slf4j;
@@ -36,11 +37,8 @@ public class JSInterpreter {
         this.functions = new HashMap<>();
     }
 
-    public void regexFlags(String expr) {
-        boolean flags = 0;
-        if (expr == null || expr.isEmpty()) {
+    private void opChars() {
 
-        }
     }
 
     public List<String> separate(String expr, String delim, Integer maxSplit, List<String> skipDelims) {
@@ -96,6 +94,7 @@ public class JSInterpreter {
             String inner = separateResult.get(0);
             String outer = separateResult.get(1);
             if (expr.substring(0, 1).equals("/")) {
+                regexFlags(outer);
 //                flags, outer = self._regex_flags(outer)
 //                inner = re.compile(inner[1:], flags=flags)  # , strict=True))
             } else {
@@ -104,6 +103,13 @@ public class JSInterpreter {
         }
 
         return null;
+    }
+
+    private Pair<> regexFlags(String expr) {
+        boolean flags = false;
+        if (expr == null || expr.isEmpty()) {
+
+        }
     }
 
     public String extractFunctionFromCode(List<String> argNames) {
