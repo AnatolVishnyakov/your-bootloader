@@ -27,12 +27,14 @@ public class JsUtils {
             "<", (a, b) -> a < b,
             ">", (a, b) -> a > b
     );
+
+    static final Map<String, BiFunction<Integer, Integer, Integer>> LOG_OPERATORS = Map.of(
+            "|", (a, b) -> a | b,
+            "^", (a, b) -> a ^ b,
+            "&", (a, b) -> a & b
+    );
+
 /*
-_LOG_OPERATORS = (
-    ('|', _js_bit_op(operator.or_)),
-    ('^', _js_bit_op(operator.xor)),
-    ('&', _js_bit_op(operator.and_)),
-)
 
 _SC_OPERATORS = (
     ('?', None),

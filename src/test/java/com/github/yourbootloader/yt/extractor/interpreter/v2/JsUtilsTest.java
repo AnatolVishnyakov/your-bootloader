@@ -31,4 +31,14 @@ class JsUtilsTest {
         assertTrue(JsUtils.COMP_OPERATORS.get("<").apply(2, 3));
         assertTrue(JsUtils.COMP_OPERATORS.get(">").apply(3, 2));
     }
+
+    @Test
+    void testLogOperators() {
+        assertEquals(11, JsUtils.LOG_OPERATORS.get("|").apply(3, 8));
+        assertEquals(0, JsUtils.LOG_OPERATORS.get("^").apply(1, 1));
+        assertEquals(3, JsUtils.LOG_OPERATORS.get("^").apply(1, 2));
+        assertEquals(1, JsUtils.LOG_OPERATORS.get("^").apply(3, 2));
+        assertEquals(1, JsUtils.LOG_OPERATORS.get("&").apply(1, 1));
+        assertEquals(1, JsUtils.LOG_OPERATORS.get("&").apply(1, 3));
+    }
 }
