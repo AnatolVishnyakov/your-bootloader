@@ -2,7 +2,7 @@ package com.github.yourbootloader.yt.extractor.interpreter.v2;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class JsUtilsTest {
     @Test
@@ -16,6 +16,19 @@ class JsUtilsTest {
         assertEquals(60, JsUtils.OPERATORS.get("*").apply(4, 15));
         assertEquals(4, JsUtils.OPERATORS.get("%").apply(4, 15));
         assertEquals(4, JsUtils.OPERATORS.get("/").apply(16, 4));
+        assertEquals(1, JsUtils.OPERATORS.get("/").apply(1000, (int) 1E3));
         assertEquals(8, JsUtils.OPERATORS.get("**").apply(2, 3));
+    }
+
+    @Test
+    void testCompareOperators() {
+        assertFalse(JsUtils.COMP_OPERATORS.get("===").apply(301529828, -9));
+        assertTrue(JsUtils.COMP_OPERATORS.get("!==").apply(2147359943, (int) -1.0));
+        assertTrue(JsUtils.COMP_OPERATORS.get("==").apply(1, 1));
+        assertTrue(JsUtils.COMP_OPERATORS.get("!=").apply(1, 2));
+        assertTrue(JsUtils.COMP_OPERATORS.get("<=").apply(2, 2));
+        assertTrue(JsUtils.COMP_OPERATORS.get(">=").apply(2, 2));
+        assertTrue(JsUtils.COMP_OPERATORS.get("<").apply(2, 3));
+        assertTrue(JsUtils.COMP_OPERATORS.get(">").apply(3, 2));
     }
 }
