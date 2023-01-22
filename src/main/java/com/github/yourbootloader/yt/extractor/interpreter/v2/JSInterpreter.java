@@ -1,15 +1,18 @@
 package com.github.yourbootloader.yt.extractor.interpreter.v2;
 
-import com.github.yourbootloader.yt.extractor.dto.Pair;
 import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.DefaultSeparateArgs;
 import com.github.yourbootloader.yt.extractor.interpreter.v2.dto.StatementResultDto;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.intellij.lang.annotations.Language;
+import org.json.JSONObject;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.lang.String.format;
 
 @Slf4j
 public class JSInterpreter {
@@ -25,6 +28,7 @@ public class JSInterpreter {
     );
     @Language("RegExp")
     public static final String VAR_CONST_LET_PATTERN = "(?<var>(?:var|const|let)\\s)|return(?:\\s+|(?=[\"'])|$)|(?<throw>throw\\s+)";
+    private static final Object OBJ_NAME = "__youtube_dl_jsinterp_obj";
 
     private int namedObjectCounter = 0;
     private final String code;
@@ -91,26 +95,36 @@ public class JSInterpreter {
         // определение строк
         if (_QUOTES.contains(expr.substring(0, 1))) {
             List<String> separateResult = separate(expr, expr.substring(0, 1), 1, null);
-            String inner = separateResult.get(0);
+            Object inner = separateResult.get(0);
             String outer = separateResult.get(1);
             if (expr.substring(0, 1).equals("/")) {
-                regexFlags(outer);
-//                flags, outer = self._regex_flags(outer)
-//                inner = re.compile(inner[1:], flags=flags)  # , strict=True))
+                int flags = regexFlags(outer);
+                inner = Pattern.compile(((String) inner).substring(1), flags);
             } else {
-//                inner = json.loads(js_to_json(inner + expr[0]))  # , strict=True))
+                inner = new JSONObject(inner + expr.substring(0, 1));
             }
+            if (outer == null || outer.isEmpty()) {
+                return new StatementResultDto(inner, shouldReturn);
+            }
+            expr = namedObject(localVars, inner) + outer;
         }
 
         return null;
     }
 
-    private Pair<?, ?> regexFlags(String expr) {
-        boolean flags = false;
-        if (expr == null || expr.isEmpty()) {
+    private String namedObject(Map<Object, Object> localVars, Object obj) {
+        namedObjectCounter += 1;
+        String name = format("%s%d", OBJ_NAME, namedObjectCounter);
+        localVars.put(name, obj);
+        return name;
+    }
 
+    private int regexFlags(String expr) {
+        int flags = 0;
+        if (expr == null || expr.isEmpty()) {
+            return flags;
         }
-        return null;
+        throw new RuntimeException("Unsupported exception: " + expr);
     }
 
     public String extractFunctionFromCode(List<String> argNames) {
@@ -125,5 +139,14 @@ public class JSInterpreter {
             System.out.println();
         }
         throw new RuntimeException();
+    }
+
+    @Value
+    static class ResultDto {
+
+        Object value;
+
+        boolean shouldReturn;
+
     }
 }
