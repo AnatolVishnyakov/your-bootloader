@@ -86,4 +86,12 @@ class YoutubeIETest {
 
         assertTrue(matcher.find());
     }
+
+    // TODO
+    @Test
+    void extractSignatureFunction() {
+        String videoId = "tIjCUuC25tU";
+        String playerUrl = "https://www.youtube.com/s/player/9419f2ea/player_ias.vflset/en_US/base.js";
+        youtubeIE.extractSignatureFunctionV2(videoId, playerUrl);
+    }
 }

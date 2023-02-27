@@ -17,7 +17,7 @@ import static java.lang.String.format;
 @Slf4j
 public class JSInterpreter {
 
-    public static final Map<String, String> _MATCHING_PARENS = new HashMap<String, String>() {{
+    public static final Map<String, String> _MATCHING_PARENS = new HashMap<>() {{
         put("(", ")");
         put("{", "}");
         put("[", "]");
@@ -97,7 +97,7 @@ public class JSInterpreter {
             List<String> separateResult = separate(expr, expr.substring(0, 1), 1, null);
             Object inner = separateResult.get(0);
             String outer = separateResult.get(1);
-            if (expr.substring(0, 1).equals("/")) {
+            if (expr.charAt(0) == '/') {
                 int flags = regexFlags(outer);
                 inner = Pattern.compile(((String) inner).substring(1), flags);
             } else {
@@ -109,6 +109,14 @@ public class JSInterpreter {
             expr = namedObject(localVars, inner) + outer;
         }
 
+        if (expr.startsWith("new ")) {
+            String obj = expr.substring(4);
+            if (obj.startsWith("Date(")) {
+                List<String> pair = this.separateAtParen(obj.substring(4), null);
+                String left = pair.get(0);
+                String right = pair.get(1);
+            }
+        }
         return null;
     }
 

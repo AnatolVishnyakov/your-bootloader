@@ -5,6 +5,10 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -73,6 +77,21 @@ class JSInterpreterTest {
         String jsContent = String.join("", Files.readAllLines(jsContentPath));
         JSInterpreter jsInterpreter = new JSInterpreter(jsContent);
         jsInterpreter.interpretStatement(jsContent, new HashMap<>(), 100);
+    }
+
+    @Test
+    @SneakyThrows
+    void foo() {
+        Path folderJsData = Paths.get("src/test/resources/testdata/jscontent");
+        Path jsContentPath = folderJsData.resolve("content-03.js");
+
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("JavaScript");
+        engine.eval(Files.newBufferedReader(jsContentPath, StandardCharsets.UTF_8));
+
+        Invocable inv = (Invocable) engine;
+        Object result = inv.invokeFunction("gma", "0GPyza2qYoFsejcBO");
+        System.out.println();
     }
 
     @Nested

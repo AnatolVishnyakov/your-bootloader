@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -130,6 +131,74 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         String cacheRes = res.apply(testString);
         // TODO cache
         return res;
+    }
+
+    // TODO _extract_n_function
+    public Function<Object, Object> extractSignatureFunctionV2(String videoId, String playerUrl) {
+        String playerId = this.extractPlayerInfo(playerUrl);
+        assert playerId.equals("9419f2ea");
+
+        String jsCode = this.getPlayerCode(videoId, playerUrl, playerId);
+        assert jsCode != null && !jsCode.isEmpty();
+
+        String funcName = this.extractNFunctionName(jsCode);
+        JSInterpreter jsi = new JSInterpreter(jsCode);
+        Function<Object, Object> funcCode = jsi.extractFunction(funcName);
+        return funcCode;
+    }
+
+    /*
+    def _extract_n_function_name(self, jscode):
+        target = r'(?P<nfunc>[a-zA-Z_$][\w$]*)(?:\[(?P<idx>\d+)\])?'
+        nfunc_and_idx = self._search_regex(
+            r'\.get\("n"\)\)&&\(b=(%s)\([\w$]+\)' % (target, ),
+            jscode, 'Initial JS player n function name')
+        nfunc, idx = re.match(target, nfunc_and_idx).group('nfunc', 'idx')
+        if not idx:
+            return nfunc
+        if int_or_none(idx) == 0:
+            real_nfunc = self._search_regex(
+                r'var %s\s*=\s*\[([a-zA-Z_$][\w$]*)\];' % (re.escape(nfunc), ), jscode,
+                'Initial JS player n function alias ({nfunc}[{idx}])'.format(**locals()))
+            if real_nfunc:
+                return real_nfunc
+        return self._parse_json(self._search_regex(
+            r'var %s\s*=\s*(\[.+?\]);' % (re.escape(nfunc), ), jscode,
+            'Initial JS player n function name ({nfunc}[{idx}])'.format(**locals())), nfunc, transform_source=js_to_json)[int(idx)]
+    * */
+    private String extractNFunctionName(String jsCode) {
+        String target = "(?<nfunc>[a-zA-Z_$][\\w$]*)(?:\\[(?<idx>\\d+)])?";
+        String nFuncAndIdxPattern = "\\.get\\(\"n\"\\)\\)&&\\(b=(%s)\\([\\w$]+\\)";
+        Matcher matcher = Pattern.compile(format(nFuncAndIdxPattern, target)).matcher(jsCode);
+        if (!matcher.find()) {
+            throw new RuntimeException("Initial JS player n function name");
+        }
+        String nFuncAndIdx = matcher.group(1);
+        assert nFuncAndIdx.equals("Hta[0]");
+
+        String nFunc = matcher.group("nfunc");
+        String idx = matcher.group("idx");
+        if (idx == null || idx.isEmpty()) {
+            return nFunc;
+        }
+        if (Integer.parseInt(idx) == 0) {
+            Matcher m = Pattern.compile(format("var %s\\s*=\\s*\\[([a-zA-Z_$][\\w$]*)];", nFunc)).matcher(jsCode);
+            if (m.find()) {
+                return m.group(1);
+            }
+        }
+        throw new RuntimeException("Unsupported exception");
+    }
+
+    private String getPlayerCode(String videoId, String playerUrl, @Nullable String playerId) {
+//        if (playerId == null) {
+        // TODO bad practice - side effect
+//            playerId = this.extractPlayerInfo(playerUrl);
+//        }
+
+        // TODO закэшировать и доставать по playerId
+        String jsPlayerCode = this.downloadWebpage(playerUrl, videoId, 1);
+        return jsPlayerCode;
     }
 
     private Optional<File> getCacheFn(String section, String key, String dtype) {
