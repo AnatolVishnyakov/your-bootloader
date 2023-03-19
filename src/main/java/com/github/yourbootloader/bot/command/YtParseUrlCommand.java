@@ -42,7 +42,7 @@ public class YtParseUrlCommand implements Command {
 
     @Override
     public void handle(Bot bot, Update update) {
-        log.info("Youtube download command");
+        log.info("Youtube parsing url.");
 
         Chat chat = update.getMessage().getChat();
         Message message = update.getMessage();
@@ -60,20 +60,11 @@ public class YtParseUrlCommand implements Command {
                 }))
                 .collect(Collectors.toList());
 
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chat.getId().toString());
-        sendMessage.setText("Select format:");
-
         List<VideoInfoDto> videosInfo = new ArrayList<>();
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
         for (int i = 0; i < formats.size(); i++) {
-            if (i % 2 == 0) {
-                rowsInline.add(rowInline);
-                rowInline = new ArrayList<>();
-            }
             Map<String, Object> format = formats.get(i);
             InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
 
@@ -102,8 +93,14 @@ public class YtParseUrlCommand implements Command {
             inlineKeyboardButton.setCallbackData(String.valueOf(format.get("format_id")));
             rowInline.add(inlineKeyboardButton);
         }
+        rowsInline.add(rowInline);
 
         UserContextHolder.setContext(chat, videosInfo);
+
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chat.getId().toString());
+        sendMessage.setText("Select format:");
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         markupInline.setKeyboard(rowsInline);
         sendMessage.setReplyMarkup(markupInline);
 
