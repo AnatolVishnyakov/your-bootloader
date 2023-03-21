@@ -63,9 +63,9 @@ public class YtParseUrlCommand implements Command {
         List<VideoInfoDto> videosInfo = new ArrayList<>();
 
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
         for (int i = 0; i < formats.size(); i++) {
             Map<String, Object> format = formats.get(i);
+            List<InlineKeyboardButton> rowInline = new ArrayList<>();
             InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
 
             String filesizeInString;
@@ -92,8 +92,8 @@ public class YtParseUrlCommand implements Command {
 
             inlineKeyboardButton.setCallbackData(String.valueOf(format.get("format_id")));
             rowInline.add(inlineKeyboardButton);
+            rowsInline.add(rowInline);
         }
-        rowsInline.add(rowInline);
 
         UserContextHolder.setContext(chat, videosInfo);
 
