@@ -284,13 +284,11 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
     }
 
     @Override
-    public YtVideoInfo realExtract(String _url) {
-        String url = Utils.unsmuggleUrl(_url).getOne();
+    public YtVideoInfo realExtract(String url) {
         String videoId = this.matchId(url);
-        String baseUrl = this.httpScheme() + ":" + "//www.youtube.com/";
-        String webPageUrl = baseUrl + "watch?v=" + videoId;
+        String webPageUrl = "https://www.youtube.com/watch?v=" + videoId;
         String webpage = this.downloadWebpage(webPageUrl + "&bpctr=9999999999&has_verified=1", videoId, 3);
-        return realExtract(_url, webpage);
+        return realExtract(url, webpage);
     }
 
     public YtVideoInfo realExtract(String _url, String webpage) {
@@ -495,52 +493,27 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         boolean isLive = videoDetails.optBoolean("isLive");
         String ownerProfileUrl = microformat.optString("ownerProfileUrl");
 
-//        Map<String, Object> info = new HashMap<String, Object>() {{
-//            put("id", videoId);
-//            put("title", videoTitle);
-//            put("formats", formats);
-//            put("thumbnails", thumbnails);
-//            put("description", videoDescription);
-//            put("upload_date", microformat.optString("uploadDate"));
-//            put("uploader", videoDetails.optString("author"));
-//            put("uploader_id", null);
-//            put("uploader_url", ownerProfileUrl);
-//            put("channel_id", channelId);
-//            put("channel_url", channelId != null && !channelId.isEmpty() ? "https://www.youtube.com/channel/" + channelId : null);
-//            put("duration", duration);
-//            put("view_count", Optional.ofNullable(videoDetails.optInt("viewCount"))
-//                    .orElseGet(() -> microformat.optInt("viewCount")));
-//            put("average_rating", videoDetails.optFloat("averageRating"));
-//            put("age_limit", null);
-//            put("webpage_url", webPageUrl);
-//            put("categories", Collections.singletonList(category));
-//            put("tags", null);
-//            put("is_live", isLive);
-//        }};
-//
-//        return info;
-
         return YtVideoInfo.builder()
                 .id(videoId)
                 .title(videoTitle)
                 .formats(formats)
-                .thumbnails(thumbnails)
-                .description(videoDescription)
-                .uploadDate(microformat.optString("uploadDate"))
-                .uploader(videoDetails.optString("author"))
-                .uploaderId(null)
-                .uploaderUrl(ownerProfileUrl)
-                .channelId(channelId)
-                .channelUrl(channelId != null && !channelId.isEmpty() ? "https://www.youtube.com/channel/" + channelId : null)
-                .duration(duration)
-                .viewCount(Optional.ofNullable(videoDetails.optInt("viewCount"))
-                        .orElseGet(() -> microformat.optInt("viewCount")))
-                .averageRating(videoDetails.optFloat("averageRating"))
-                .ageLimit(null)
-                .webpageUrl(webPageUrl)
-                .categories(Collections.singletonList(category))
-                .tags(null)
-                .isLive(isLive)
+//                .thumbnails(thumbnails)
+//                .description(videoDescription)
+//                .uploadDate(microformat.optString("uploadDate"))
+//                .uploader(videoDetails.optString("author"))
+//                .uploaderId(null)
+//                .uploaderUrl(ownerProfileUrl)
+//                .channelId(channelId)
+//                .channelUrl(channelId != null && !channelId.isEmpty() ? "https://www.youtube.com/channel/" + channelId : null)
+//                .duration(duration)
+//                .viewCount(Optional.ofNullable(videoDetails.optInt("viewCount"))
+//                        .orElseGet(() -> microformat.optInt("viewCount")))
+//                .averageRating(videoDetails.optFloat("averageRating"))
+//                .ageLimit(null)
+//                .webpageUrl(webPageUrl)
+//                .categories(Collections.singletonList(category))
+//                .tags(null)
+//                .isLive(isLive)
                 .build();
     }
 
