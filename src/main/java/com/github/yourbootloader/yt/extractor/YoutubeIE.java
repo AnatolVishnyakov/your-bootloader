@@ -318,7 +318,6 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         String videoTitle = videoDetails.getString("title");
 
         List<Map<String, Object>> formats = new ArrayList<>();
-        String playerUrl = null;
         Function<String, Integer> q = key -> Arrays.asList("tiny", "small", "medium", "large", "hd720", "hd1080", "hd1440", "hd2160", "hd2880", "highres").indexOf(key);
         JSONObject streamingData = Optional.of(playerResponse).map(sd -> sd.optJSONObject("streamingData")).orElse(new JSONObject());
         JSONArray streamingFormats = Optional.of(streamingData).map(sf -> sf.optJSONArray("formats")).orElse(new JSONArray());
@@ -328,6 +327,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             streamingFormats.put(adaptiveFormats.get(i));
         }
 
+        Optional<String> playerUrl = Optional.empty();
         for (int i = 0; i < streamingFormats.length(); i++) {
             JSONObject fmt = streamingFormats.getJSONObject(i);
             if (fmt.has("targetDurationSec") || fmt.has("drmFamilies")) {
@@ -354,23 +354,21 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                     continue;
                 }
 
-                if (playerUrl == null) {
-                    if (webPage == null) {
+                if (!playerUrl.isPresent()) {
+                    playerUrl = Optional.ofNullable(
+                            searchRegex(
+                                    Collections.singletonList("\"(?:PLAYER_JS_URL|jsUrl)\"\\s*:\\s*\"([^\"]+)\""),
+                                    webPage,
+                                    "player URL"
+                            )
+                    );
+
+                    if (!playerUrl.isPresent()) {
                         continue;
                     }
-
-                    playerUrl = searchRegex(
-                            Arrays.asList("\"(?:PLAYER_JS_URL|jsUrl)\"\\s*:\\s*\"([^\"]+)\""),
-                            webPage,
-                            "player URL"
-                    );
                 }
 
-                if (playerUrl == null) {
-                    continue;
-                }
-
-                String signature = decryptSignature(sc.get("s"), videoId, playerUrl);
+                String signature = decryptSignature(sc.get("s"), videoId, playerUrl.get());
                 fmtUrl.set(fmtUrl.get() + "&" + sc.get("sp") + "=" + signature);
             }
 
@@ -393,7 +391,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 put("width", fmt.has("width") ? fmt.get("width") : null);
             }};
 
-            String mimeType = null;
+            String mimeType;
             if (fmt.has("mimeType")) {
                 mimeType = fmt.getString("mimeType");
                 Pattern pattern = Pattern.compile("((?:[^/]+)/(?:[^;]+))(?:;\\s*codecs=\"([^\"]+)\")?");
@@ -659,23 +657,23 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
                 .id(videoId)
                 .title(videoTitle)
                 .formats(formats)
-//                .thumbnails(thumbnails)
-//                .description(videoDescription)
-//                .uploadDate(microformat.optString("uploadDate"))
-//                .uploader(videoDetails.optString("author"))
-//                .uploaderId(null)
-//                .uploaderUrl(ownerProfileUrl)
-//                .channelId(channelId)
-//                .channelUrl(channelId != null && !channelId.isEmpty() ? "https://www.youtube.com/channel/" + channelId : null)
-//                .duration(duration)
-//                .viewCount(Optional.ofNullable(videoDetails.optInt("viewCount"))
-//                        .orElseGet(() -> microformat.optInt("viewCount")))
-//                .averageRating(videoDetails.optFloat("averageRating"))
-//                .ageLimit(null)
-//                .webpageUrl(webPageUrl)
-//                .categories(Collections.singletonList(category))
-//                .tags(null)
-//                .isLive(isLive)
+                .thumbnails(thumbnails)
+                .description(videoDescription)
+                .uploadDate(microformat.optString("uploadDate"))
+                .uploader(videoDetails.optString("author"))
+                .uploaderId(null)
+                .uploaderUrl(ownerProfileUrl)
+                .channelId(channelId)
+                .channelUrl(channelId != null && !channelId.isEmpty() ? "https://www.youtube.com/channel/" + channelId : null)
+                .duration(duration)
+                .viewCount(Optional.ofNullable(videoDetails.optInt("viewCount"))
+                        .orElseGet(() -> microformat.optInt("viewCount")))
+                .averageRating(videoDetails.optFloat("averageRating"))
+                .ageLimit(null)
+                .webpageUrl(webPageUrl)
+                .categories(Collections.singletonList(category))
+                .tags(null)
+                .isLive(isLive)
                 .build();
     }
 
