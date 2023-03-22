@@ -125,9 +125,6 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
             Pattern.compile("/(?<id>[a-zA-Z0-9_-]{8,})/player(?:_ias\\.vflset(?:/[a-zA-Z]{2,3}_[a-zA-Z]{2,3})?|-plasma-ias-(?:phone|tablet)-[a-z]{2}_[A-Z]{2}\\.vflset)/base\\.js$"),
             Pattern.compile("\b(?<id>vfl[a-zA-Z0-9_-]+)\b.*?\\.js$")
     );
-    private static final List<String> _SUBTITLE_FORMATS = Arrays.asList("srv1", "srv2", "srv3", "ttml", "vtt");
-    private static final boolean _GEO_BYPASS = false;
-    private static final String IE_NAME = "youtube";
     private final Map<Object, Object> codeCache;
     private final Map<Pair<String, String>, Function<String, String>> playerCache;
     private final TempFileGenerator tempFileGenerator;
@@ -251,27 +248,6 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         return func.apply(s);
     }
 
-    public void markWatched() {
-        throw new MethodNotImplementedException();
-    }
-
-    public void extractUrls(String webPage) {
-        throw new MethodNotImplementedException();
-    }
-
-    public void extractUrl(String webPage) {
-        throw new MethodNotImplementedException();
-    }
-
-    public void extractId(String url) {
-        throw new MethodNotImplementedException();
-    }
-
-    public List<Object> extractChaptersFromJson(JSONObject data, String videoId, int duration) {
-        log.error("Not implemented!");
-        return Collections.emptyList();
-    }
-
     public JSONObject extractYtInitialVariable(String webPage, String regex, String videoId, String name) {
         return super.parseJson(
                 super.searchRegex(
@@ -291,7 +267,7 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         return realExtract0(url, webpage);
     }
 
-    public YtVideoInfo realExtract0(String url, String webPage) {
+    private YtVideoInfo realExtract0(String url, String webPage) {
         Objects.requireNonNull(webPage, "Web page can't be empty.");
 
         String videoId = this.matchId(url);
