@@ -288,9 +288,171 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         String videoId = this.matchId(url);
         String webPageUrl = "https://www.youtube.com/watch?v=" + videoId;
         String webpage = this.downloadWebpage(webPageUrl + "&bpctr=9999999999&has_verified=1", videoId, 3);
-        return realExtract(url, webpage);
+        return realExtract0(url, webpage);
     }
 
+    public YtVideoInfo realExtract0(String url, String webPage) {
+        Objects.requireNonNull(webPage, "Web page can't be empty.");
+
+        String videoId = this.matchId(url);
+        JSONObject playerResponse = null;
+        if (!webPage.isEmpty()) {
+            playerResponse = this.extractYtInitialVariable(webPage, _YT_INITIAL_PLAYER_RESPONSE_RE, videoId, "initial player response");
+        }
+
+        if (playerResponse == null) {
+            throw new MethodNotImplementedException("Player response");
+        }
+
+        JSONObject playabilityStatus = playerResponse.getJSONObject("playabilityStatus");
+        if (playabilityStatus.has("reason") &&
+                playabilityStatus.getString("reason").equals("Sign in to confirm your age")) {
+            throw new MethodNotImplementedException("Player response playabilityStatus");
+        }
+
+        if (isTrailerVideoId(playabilityStatus)) {
+            throw new MethodNotImplementedException("Trailer video id handler not implements!");
+        }
+
+        JSONObject videoDetails = playerResponse.getJSONObject("videoDetails");
+        String videoTitle = videoDetails.getString("title");
+
+        List<Map<String, Object>> formats = new ArrayList<>();
+        String playerUrl = null;
+        Function<String, Integer> q = key -> Arrays.asList("tiny", "small", "medium", "large", "hd720", "hd1080", "hd1440", "hd2160", "hd2880", "highres").indexOf(key);
+        JSONObject streamingData = Optional.of(playerResponse).map(sd -> sd.optJSONObject("streamingData")).orElse(new JSONObject());
+        JSONArray streamingFormats = Optional.of(streamingData).map(sf -> sf.optJSONArray("formats")).orElse(new JSONArray());
+        JSONArray adaptiveFormats = Optional.of(streamingData).map(sd -> sd.optJSONArray("adaptiveFormats")).orElse(new JSONArray());
+
+        for (int i = 0; i < adaptiveFormats.length(); i++) {
+            streamingFormats.put(adaptiveFormats.get(i));
+        }
+
+        for (int i = 0; i < streamingFormats.length(); i++) {
+            JSONObject fmt = streamingFormats.getJSONObject(i);
+            if (fmt.has("targetDurationSec") || fmt.has("drmFamilies")) {
+                continue;
+            }
+
+            Integer itag = null;
+            String quality = null;
+            if (fmt.has("itag") && fmt.has("quality")) {
+                itag = fmt.getInt("itag");
+                quality = fmt.getString("quality");
+            }
+
+            if (fmt.has("type") && fmt.getString("type").equals("FORMAT_STREAM_TYPE_OTF")) {
+                continue;
+            }
+
+            AtomicReference<String> fmtUrl = new AtomicReference<>(fmt.optString("url"));
+            if (fmtUrl.get() == null || fmtUrl.get().isEmpty()) {
+                Map<String, String> sc = Utils.parseQs(fmt.optString("signatureCipher"));
+                fmtUrl.set(sc.get("url"));
+                String encryptedSig = sc.get("s");
+                if (sc.isEmpty() || fmtUrl.get() == null || encryptedSig == null) {
+                    continue;
+                }
+
+                if (playerUrl == null) {
+                    if (webPage == null) {
+                        continue;
+                    }
+
+                    playerUrl = searchRegex(
+                            Arrays.asList("\"(?:PLAYER_JS_URL|jsUrl)\"\\s*:\\s*\"([^\"]+)\""),
+                            webPage,
+                            "player URL"
+                    );
+                }
+
+                if (playerUrl == null) {
+                    continue;
+                }
+
+                String signature = decryptSignature(sc.get("s"), videoId, playerUrl);
+                fmtUrl.set(fmtUrl.get() + "&" + sc.get("sp") + "=" + signature);
+            }
+
+            float tbr = fmt.has("averageBitrate")
+                    ? fmt.getFloat("averageBitrate")
+                    : (fmt.has("bitrate") ? fmt.getFloat("bitrate") : 1000);
+
+            Integer finalItag = itag;
+            String finalQuality = quality;
+            Map<String, Object> dct = new HashMap<String, Object>() {{
+                put("asr", fmt.has("audioSampleRate") ? fmt.getInt("audioSampleRate") : null);
+                put("filesize", fmt.has("contentLength") ? fmt.getLong("contentLength") : null);
+                put("format_id", finalItag);
+                put("format_note", fmt.has("qualityLabel") ? fmt.getString("qualityLabel") : finalQuality);
+                put("fps", fmt.has("fps") ? fmt.getInt("fps") : null);
+                put("height", fmt.has("height") ? fmt.get("height") : null);
+                put("quality", q.apply(finalQuality));
+                put("tbr", tbr);
+                put("url", fmtUrl.get());
+                put("width", fmt.has("width") ? fmt.get("width") : null);
+            }};
+
+            String mimeType = null;
+            if (fmt.has("mimeType")) {
+                mimeType = fmt.getString("mimeType");
+                Pattern pattern = Pattern.compile("((?:[^/]+)/(?:[^;]+))(?:;\\s*codecs=\"([^\"]+)\")?");
+                Matcher matcher = pattern.matcher(mimeType);
+                if (matcher.find()) {
+                    dct.put("ext", mimeType2Ext(matcher.group(1)));
+                    dct.putAll(parseCodecs(matcher.group(2)));
+                }
+            }
+
+            boolean noAudio = dct.get("acodec") == null;
+            boolean noVideo = dct.get("vcodec") == null;
+
+            if (noAudio) {
+                dct.put("vbr", tbr);
+            }
+            if (noVideo) {
+                dct.put("abr", tbr);
+            }
+            if (noAudio || noVideo) {
+                dct.put("downloader_options", new HashMap<String, Object>() {{
+                    put("http_chunk_size", 10485760);
+                }});
+                if (dct.containsKey("ext")) {
+                    dct.put("container", dct.get("ext") + "_dash");
+                }
+            }
+
+            formats.add(dct);
+        }
+
+        if (streamingData.has("hlsManifestUrl")) {
+            String hlsManifestUrl = streamingData.getString("hlsManifestUrl");
+            throw new MethodNotImplementedException("Hls manifest url: " + hlsManifestUrl);
+        }
+
+        if (((boolean) downloader.getParams("youtube_include_dash_manifest"))) {
+            if (streamingData.has("dashManifestUrl")) {
+                String dashManifestUrl = streamingData.getString("dashManifestUrl");
+                if (dashManifestUrl != null && !dashManifestUrl.isEmpty()) {
+                    throw new MethodNotImplementedException("Manifest url not implemented!");
+                }
+            }
+        }
+
+        if (formats.isEmpty()) {
+            throw new MethodNotImplementedException("Formats not found. Implements another source");
+        }
+        // TODO implements sort formats
+        // TODO implements keywords
+
+        return YtVideoInfo.builder()
+                .id(videoId)
+                .title(videoTitle)
+                .formats(formats)
+                .build();
+    }
+
+    @Deprecated
     public YtVideoInfo realExtract(String _url, String webpage) {
         Map<Object, Object> smuggledData = Utils.unsmuggleUrl(_url).getTwo();
         String url = Utils.unsmuggleUrl(_url).getOne();
