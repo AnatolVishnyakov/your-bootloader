@@ -7,7 +7,6 @@ import com.github.yourbootloader.yt.download.listener.TelegramProgressListener;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
@@ -47,9 +46,8 @@ public class YtDownloadClient {
             .addChannelOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator())
             .build();
 
-    private final TempFileGenerator tempFileGenerator;
-    @Getter
     private final List<TransferListener> listeners = new ArrayList<>();
+    private final TempFileGenerator tempFileGenerator;
     private final Bot bot;
     private final Chat chat;
 
