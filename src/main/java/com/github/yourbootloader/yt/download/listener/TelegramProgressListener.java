@@ -29,7 +29,7 @@ public class TelegramProgressListener implements TransferListener {
     private final long contentLength;
     private int messageId;
     private long downloadedBytes;
-    private long prevTimeMs;
+    private long prevTimeMs = System.currentTimeMillis();
 
     public TelegramProgressListener(Bot bot, Chat chat, long contentLength) {
         this.bot = bot;
