@@ -44,17 +44,15 @@ public class TelegramProgressListener implements TransferListener {
 
     @Override
     public void onResponseHeadersReceived(HttpHeaders headers) {
-        if (downloadedBytes == 0L) {
-            SendMessage message = new SendMessage(String.valueOf(chat.getId()), "Скачивание начинается...");
+        SendMessage message = new SendMessage(String.valueOf(chat.getId()), "Скачивание начинается...");
 
-            try {
-                Message msg = bot.execute(message);
-                this.messageId = msg.getMessageId();
-            } catch (TelegramApiException e) {
-                log.error(UNEXPECTED_ERROR, e);
-                sendNotification(chat.getId(), e.getMessage());
-                throw new RuntimeException(e);
-            }
+        try {
+            Message msg = bot.execute(message);
+            this.messageId = msg.getMessageId();
+        } catch (TelegramApiException e) {
+            log.error(UNEXPECTED_ERROR, e);
+            sendNotification(chat.getId(), e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -75,7 +73,6 @@ public class TelegramProgressListener implements TransferListener {
         );
 
         if (Math.abs(currentTimeMs - prevTimeMs) > 500) {
-
             EditMessageText message = new EditMessageText(msgText);
             message.setChatId(chat.getId().toString());
             message.setMessageId(messageId);
@@ -135,6 +132,8 @@ public class TelegramProgressListener implements TransferListener {
     @Override
     public void onThrowable(Throwable t) {
         log.info("call onThrowable()");
+        onRemoveMessage(chat.getId(), messageId);
+        sendNotification(chat.getId(), "Error: " + t.getMessage());
     }
 
     @SneakyThrows
