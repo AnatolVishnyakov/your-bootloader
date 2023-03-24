@@ -1,6 +1,5 @@
 package com.github.yourbootloader.scheduler;
 
-import com.github.yourbootloader.yt.download.YtDownloadClient;
 import com.github.yourbootloader.yt.extractor.YoutubeIE;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -16,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class TasksConfiguration {
 
     private final YoutubeIE youtubeIE;
-    private final YtDownloadClient ytDownloadClient;
+//    private final YtDownloadClient ytDownloadClient;
     private final DownloadFolderCleaner downloadFolderCleaner;
 
     @SneakyThrows

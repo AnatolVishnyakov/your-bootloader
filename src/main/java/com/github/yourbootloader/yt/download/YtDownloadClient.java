@@ -1,7 +1,9 @@
 package com.github.yourbootloader.yt.download;
 
+import com.github.yourbootloader.bot.Bot;
 import com.github.yourbootloader.yt.Utils;
 import com.github.yourbootloader.yt.download.listener.DefaultProgressListener;
+import com.github.yourbootloader.yt.download.listener.TelegramProgressListener;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -12,8 +14,8 @@ import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Dsl;
 import org.asynchttpclient.handler.TransferListener;
 import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,7 +24,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-@Component
 public class YtDownloadClient {
 
     /**
@@ -49,9 +50,13 @@ public class YtDownloadClient {
     private final TempFileGenerator tempFileGenerator;
     @Getter
     private final List<TransferListener> listeners = new ArrayList<>();
+    private final Bot bot;
+    private final Chat chat;
 
-    public YtDownloadClient(TempFileGenerator tempFileGenerator) {
+    public YtDownloadClient(TempFileGenerator tempFileGenerator, Bot bot, Chat chat) {
         this.tempFileGenerator = tempFileGenerator;
+        this.bot = bot;
+        this.chat = chat;
         listeners.add(new DefaultProgressListener());
     }
 
@@ -61,6 +66,7 @@ public class YtDownloadClient {
                 DataSize.ofBytes(contentLength).toMegabytes(),
                 DataSize.ofBytes(contentLength).toKilobytes()
         );
+        listeners.add(new TelegramProgressListener(bot, chat, contentLength));
 
         int chunkSize = ThreadLocalRandom.current().nextInt((int) (CONTENT_PARTITION_ON_LENGTH * 0.95), CONTENT_PARTITION_ON_LENGTH);
         File file = tempFileGenerator.createOrGetIfExists(fileName + "." + contentLength);

@@ -1,7 +1,7 @@
 package com.github.yourbootloader.bot;
 
+import com.github.yourbootloader.yt.download.TempFileGenerator;
 import com.github.yourbootloader.yt.download.YtDownloadClient;
-import com.github.yourbootloader.yt.download.listener.TelegramProgressListener;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +13,11 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 @RequiredArgsConstructor
 public class BotCommandService {
 
-    private final YtDownloadClient ytDownloadClient;
+    private final TempFileGenerator tempFileGenerator;
 
     @SneakyThrows
     public void download(Bot bot, Chat chat, String url, String filename, Long contentLength) {
-        ytDownloadClient.getListeners().add(new TelegramProgressListener(bot, chat, contentLength));
+        YtDownloadClient ytDownloadClient = new YtDownloadClient(tempFileGenerator, bot, chat);
         ytDownloadClient.download(url, filename, contentLength);
     }
 }
