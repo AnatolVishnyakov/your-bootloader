@@ -55,23 +55,6 @@ public class YtDownloadClient {
         listeners.add(new DefaultProgressListener());
     }
 
-    private void establishConnection() {
-    }
-
-    private void download0(String url, File file, HttpHeaders headers) throws Exception {
-        log.info("Headers: {}", headers);
-
-        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler(file, listeners);
-        log.info("File length: {}", file.length());
-
-        try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
-            client.prepareGet(url)
-                    .setHeaders(headers)
-                    .execute(ytDownloadAsyncHandler)
-                    .get();
-        }
-    }
-
     public void download(String url, String fileName, Long contentLength) {
         log.info("Downloading is start. Yt url: {}", url);
         log.info("Content-Length: {} Mb ({} Kb)",
@@ -80,15 +63,14 @@ public class YtDownloadClient {
         );
 
         int chunkSize = ThreadLocalRandom.current().nextInt((int) (CONTENT_PARTITION_ON_LENGTH * 0.95), CONTENT_PARTITION_ON_LENGTH);
-        int start = 0;
-        File file = tempFileGenerator.create(fileName + "." + contentLength);
+        File file = tempFileGenerator.createOrGetIfExists(fileName + "." + contentLength);
+        long start = file.length();
 
         HttpHeaders headers = Utils.newHttpHeaders();
-        while (start < contentLength) {
+        while (start <= contentLength) {
             int end = (int) Math.min(start + chunkSize, contentLength - 1);
             headers.set(HttpHeaderNames.RANGE.toString(), "bytes=" + start + "-" + end);
 
-            establishConnection();
             try {
                 download0(url, file, headers);
                 if (file.length() <= 0) {
@@ -100,8 +82,19 @@ public class YtDownloadClient {
                 log.error(exc.getMessage(), exc);
                 break;
             }
-
         }
         log.info("Download finished...");
+    }
+
+    private void download0(String url, File file, HttpHeaders headers) throws Exception {
+        log.info("Headers: {}, File length: {}", headers, file.length());
+
+        YtDownloadAsyncHandler ytDownloadAsyncHandler = new YtDownloadAsyncHandler(file, listeners);
+        try (AsyncHttpClient client = Dsl.asyncHttpClient(ASYNC_HTTP_CLIENT_CONFIG)) {
+            client.prepareGet(url)
+                    .setHeaders(headers)
+                    .execute(ytDownloadAsyncHandler)
+                    .get();
+        }
     }
 }

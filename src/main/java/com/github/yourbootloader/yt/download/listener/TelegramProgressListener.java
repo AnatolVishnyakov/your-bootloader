@@ -18,14 +18,11 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class TelegramProgressListener implements TransferListener {
 
     private static final String UNEXPECTED_ERROR = "An unexpected error occurred!";
-    private static final Map<Chat, Long> senderHistory = new ConcurrentHashMap<>();
 
     private final Bot bot;
     private final Chat chat;
@@ -42,12 +39,12 @@ public class TelegramProgressListener implements TransferListener {
 
     @Override
     public void onRequestHeadersSent(HttpHeaders headers) {
-
+        log.info("call onRequestHeadersSent(...)");
     }
 
     @Override
     public void onResponseHeadersReceived(HttpHeaders headers) {
-        if (!senderHistory.containsKey(chat)) {
+        if (downloadedBytes == 0L) {
             SendMessage message = new SendMessage(String.valueOf(chat.getId()), "Скачивание начинается...");
 
             try {
@@ -58,7 +55,6 @@ public class TelegramProgressListener implements TransferListener {
                 sendNotification(chat.getId(), e.getMessage());
                 throw new RuntimeException(e);
             }
-            senderHistory.put(chat, System.currentTimeMillis());
         }
     }
 
@@ -78,7 +74,7 @@ public class TelegramProgressListener implements TransferListener {
                 delayBetweenReceivingBytes
         );
 
-        if (Math.abs(currentTimeMs - senderHistory.get(chat)) > 500) {
+        if (Math.abs(currentTimeMs - prevTimeMs) > 500) {
 
             EditMessageText message = new EditMessageText(msgText);
             message.setChatId(chat.getId().toString());
@@ -100,7 +96,6 @@ public class TelegramProgressListener implements TransferListener {
                     sendNotification(chat.getId(), e.getMessage());
                 }
             }
-            senderHistory.put(chat, currentTimeMs);
         }
         prevTimeMs = currentTimeMs;
     }
@@ -115,7 +110,6 @@ public class TelegramProgressListener implements TransferListener {
         log.info("call onRequestResponseCompleted()");
         onRemoveMessage(chat.getId(), messageId);
         sendNotification(chat.getId(), "Не получилось скачать. :(");
-        senderHistory.remove(chat);
     }
 
     public void onRequestResponseCompleted(File downloadedFile) {
@@ -136,13 +130,11 @@ public class TelegramProgressListener implements TransferListener {
             sendNotification(chat.getId(), "Не удалось скачать аудио. Возникла ошибка: " + e.getMessage());
         }
         onRemoveMessage(chat.getId(), messageId);
-        senderHistory.remove(chat);
     }
 
     @Override
     public void onThrowable(Throwable t) {
         log.info("call onThrowable()");
-        senderHistory.remove(chat);
     }
 
     @SneakyThrows

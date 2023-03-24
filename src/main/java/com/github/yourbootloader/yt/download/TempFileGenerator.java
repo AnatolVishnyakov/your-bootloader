@@ -19,7 +19,7 @@ public class TempFileGenerator {
 
     private final YDProperties ydProperties;
 
-    public File create(String fileName) {
+    public File createOrGetIfExists(String fileName) {
         log.info("Create temp file {} to directory {}", fileName, ydProperties.getDownloadPath());
         File newTempFile = Paths.get(ydProperties.getDownloadPath())
                 .resolve(prepareFileName(fileName))

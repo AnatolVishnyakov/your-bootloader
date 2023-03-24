@@ -35,7 +35,7 @@ class TempFileGeneratorTest {
     void create() {
         String fileName = "test.mp3";
         String ext = "part";
-        File actualFile = tempFileGenerator.create(fileName);
+        File actualFile = tempFileGenerator.createOrGetIfExists(fileName);
         File expectedFile = tempDir.resolve(fileName.concat(".").concat(ext)).toFile();
 
         assertTrue(expectedFile.exists());
