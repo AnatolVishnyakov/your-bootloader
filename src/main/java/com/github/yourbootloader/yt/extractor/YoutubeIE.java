@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.unit.DataSize;
 
 import java.io.File;
 import java.util.*;
@@ -268,6 +269,8 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
     }
 
     private YtVideoInfo realExtract0(String url, String webPage) {
+        Runtime runtime = Runtime.getRuntime();
+        long startMemoryInKb = DataSize.ofBytes(runtime.totalMemory() - runtime.freeMemory()).toKilobytes();
         Objects.requireNonNull(webPage, "Web page can't be empty.");
 
         String videoId = this.matchId(url);
@@ -419,6 +422,8 @@ public class YoutubeIE extends YoutubeBaseInfoExtractor {
         // TODO implements sort formats
         // TODO implements keywords
 
+        long finishMemoryInKb = DataSize.ofBytes(runtime.totalMemory() - runtime.freeMemory()).toKilobytes();
+        log.info("Method usage memory {} (Kb).", finishMemoryInKb - startMemoryInKb);
         return YtVideoInfo.builder()
                 .id(videoId)
                 .title(videoTitle)

@@ -3,6 +3,7 @@ package com.github.yourbootloader.yt.extractor;
 import com.github.yourbootloader.YoutubeDownloaderTest;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
 @YoutubeDownloaderTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 class YoutubeIETest {
@@ -54,7 +56,12 @@ class YoutubeIETest {
         Mockito.when(youtubeDLService.getParams("youtube_include_dash_manifest"))
                 .thenReturn(false);
 
+//        Runtime runtime = Runtime.getRuntime();
+//        long startMemoryInKb = DataSize.ofBytes(runtime.totalMemory() - runtime.freeMemory()).toKilobytes();
         YtVideoInfo ytVideoInfo = youtubeIE.realExtract(url);
+//        long finishMemoryInKb = DataSize.ofBytes(runtime.totalMemory() - runtime.freeMemory()).toKilobytes();
+//        log.info("Method usage memory {} (Kb).", finishMemoryInKb - startMemoryInKb);
+
         assertEquals("OCJi5hVdiZU", ytVideoInfo.getId());
         assertEquals("Architects - \"Animals\" (Orchestral Version) - Live at Abbey Road", ytVideoInfo.getTitle());
         assertEquals(23, ytVideoInfo.getFormats().size());
