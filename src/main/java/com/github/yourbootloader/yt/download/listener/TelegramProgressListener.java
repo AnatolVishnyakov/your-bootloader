@@ -16,6 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.io.File;
 
@@ -106,7 +107,6 @@ public class TelegramProgressListener implements TransferListener {
     public void onRequestResponseCompleted() {
         log.info("call onRequestResponseCompleted()");
         onRemoveMessage(chat.getId(), messageId);
-        sendNotification(chat.getId(), "Не получилось скачать. :(");
     }
 
     public void onRequestResponseCompleted(File downloadedFile) {
@@ -145,6 +145,10 @@ public class TelegramProgressListener implements TransferListener {
     @SneakyThrows
     public void onRemoveMessage(@NonNull Long chatId, int messageId) {
         DeleteMessage message = new DeleteMessage(chatId.toString(), messageId);
-        bot.execute(message);
+        try {
+            bot.execute(message);
+        } catch (TelegramApiRequestException exc) {
+            log.warn(exc.getMessage());
+        }
     }
 }
