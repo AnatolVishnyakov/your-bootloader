@@ -8,6 +8,7 @@ volumes:
 
 services:
   app:
+    restart: on-failure
     image: your-bootloader:latest
     container_name: 'your-bootloader'
     volumes:
