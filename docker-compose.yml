@@ -10,7 +10,7 @@ services:
   app:
     restart: on-failure
     image: your-bootloader:latest
-    container_name: 'your-bootloader'
+    container_name: 'your-bootloader-bot'
     volumes:
       - /tmp/trash:/home/document/trash:Z
     build:
@@ -20,74 +20,74 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
     ports:
-      - '8080:8080'
+      - '8080:8089'
     networks:
       - monitoring
 
-#  prometheus:
-#    image: prom/prometheus:v2.4.3
-#    container_name: 'prometheus'
-#    volumes:
-#      - prometheus-data:/prometheus
-#      - ./devenv/prometheus:/etc/prometheus
-#    command:
-#      - '--config.file=/etc/prometheus/prometheus.yml'
-#      - '--storage.tsdb.path=/prometheus'
-#      - '--web.console.libraries=/etc/prometheus/console_libraries'
-#      - '--web.console.templates=/etc/prometheus/consoles'
-#      - '--storage.tsdb.retention=200h'
-#      - '--web.enable-lifecycle'
-#    ports:
-#      - '9090:9090'
-#    networks:
-#      - monitoring
-#
-#  influxdb:
-#    image: influxdb:latest
-#    container_name: 'grafana_influxdb'
-#    ports:
-#      - '8086:8086'
-#    volumes:
-##      - ./devenv/influxdb-storage:/var/lib/influxdb
-#      - ./devenv/influxdb.conf:/etc/influxdb/influxdb.conf:ro
-#      - ./devenv/var/lib/influxdb:/var/lib/influxdb
-#      - ./devenv/.influx_history:/.influx_history:rw
-#    env_file:
-#      - devenv/usr/share/influxdb/influxdb.env
-#
-#  grafana:
-#    image: grafana/grafana:8.3.0
-#    container_name: 'grafana'
-#    ports:
-#      - '3000:3000'
-#    volumes:
-#      - ./devenv/grafana.ini:/etc/grafana/grafana.ini
-#      - ./devenv/plugins:/var/lib/grafana/plugins
-#      - ./devenv/provisioning:/etc/grafana/provisioning
-#      - ./devenv/var/lib/grafana:/var/usr/share/grafana
-#      - ./devenv/var/log/grafana:/var/log/grafana
-#    env_file:
-#      - devenv/usr/share/grafana/grafana.env
-#    depends_on:
-#      - prometheus
-#      - influxdb
-#    networks:
-#      - monitoring
-#
-#  node-exporter:
-#    image: prom/node-exporter:latest
-#    container_name: node-exporter
-#    restart: unless-stopped
-#    volumes:
-#      - /proc:/host/proc:ro
-#      - /sys:/host/sys:ro
-#      - /:/rootfs:ro
-#    command:
-#      - '--path.procfs=/host/proc'
-#      - '--path.rootfs=/rootfs'
-#      - '--path.sysfs=/host/sys'
-#      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-#    expose:
-#      - 9100
-#    networks:
-#      - monitoring
+  prometheus:
+    image: prom/prometheus:v2.4.3
+    container_name: 'prometheus-bot'
+    volumes:
+      - prometheus-data:/prometheus
+      - ./devenv/prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - '9090:9099'
+    networks:
+      - monitoring
+
+  influxdb:
+    image: influxdb:latest
+    container_name: 'grafana-influxdb-bot'
+    ports:
+      - '8086:8086'
+    volumes:
+#      - ./devenv/influxdb-storage:/var/lib/influxdb
+      - ./devenv/influxdb.conf:/etc/influxdb/influxdb.conf:ro
+      - ./devenv/var/lib/influxdb:/var/lib/influxdb
+      - ./devenv/.influx_history:/.influx_history:rw
+    env_file:
+      - devenv/usr/share/influxdb/influxdb.env
+
+  grafana:
+    image: grafana/grafana:8.3.0
+    container_name: 'grafana-bot'
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./devenv/grafana.ini:/etc/grafana/grafana.ini
+      - ./devenv/plugins:/var/lib/grafana/plugins
+      - ./devenv/provisioning:/etc/grafana/provisioning
+      - ./devenv/var/lib/grafana:/var/usr/share/grafana
+      - ./devenv/var/log/grafana:/var/log/grafana
+    env_file:
+      - devenv/usr/share/grafana/grafana.env
+    depends_on:
+      - prometheus
+      - influxdb
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
+    networks:
+      - monitoring
