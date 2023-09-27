@@ -20,7 +20,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
     ports:
-      - '8080:8089'
+      - '8089:8080'
     networks:
       - monitoring
 
@@ -38,7 +38,7 @@ services:
       - '--storage.tsdb.retention=200h'
       - '--web.enable-lifecycle'
     ports:
-      - '9090:9099'
+      - '9099:9090'
     networks:
       - monitoring
 
